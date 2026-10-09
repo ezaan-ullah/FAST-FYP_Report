@@ -1202,83 +1202,658 @@ Further pre-training on domain data is established in language, speech and respi
 No reviewed work applies the M2D-X recipe to music, combines noise, a frozen-teacher regularizer and a music-specific CQT teacher in one framework, does so on a small open subset of about 10,000 tracks with one GPU, or measures the retention of general-audio ability next to the music gain under one protocol. This project addresses that gap: it further pre-trains the AudioSet M2D model on FMA with the M2D-X-Music objective, compares each component in a controlled set of arms, and compares the result with music-specific references (Chapter~\ref{ch:m5}).
 
 \chapter{Software Requirement Specifications}
-Describe all modules of requirements and design in clear English text along with the necessary diagram and figures.  Anyone reading your report should be able to reproduce your system/results after reading it. It describes functional requirements, design constraints, and other factors necessary to provide a complete and comprehensive description of the requirements for the software.\\
-For each chapter, provide a paragraph of introduction and at the end, a paragraph of conclusions. Make sure no heading/subheading is blank.  Write text to introduce each section as well. 
-\textcolor{red}{NOTE: This Chapter is optional for Research projects but compulsory for Development projects.}
+\label{ch:srs}
+% --- Helpers for Chapter 4 (use-case tables and wireframes) ---
+\newcommand{\ucfield}[2]{\multicolumn{2}{|P{3.6cm}|}{\textbf{#1}} & \multicolumn{3}{P{11.3cm}|}{#2}\\ \hline}
+\newcommand{\ucbar}[1]{\multicolumn{5}{|c|}{\textbf{#1}}\\ \hline}
+\newcommand{\uchead}{\multicolumn{3}{|c|}{\textbf{Actor Action}} & \multicolumn{2}{c|}{\textbf{System Response}}\\ \hline}
+\newcommand{\ucstep}[4]{#1 & \multicolumn{2}{P{6.4cm}|}{#2} & #3 & #4\\ \hline}
+\newenvironment{usecase}[3]{\begin{table}[!htbp]\centering\caption[#1]{#2}\label{#3}\small\singlespacing\begin{tabular}{|P{0.6cm}|P{2.6cm}|P{3.4cm}|P{0.8cm}|P{6.3cm}|}\hline}{\end{tabular}\end{table}}
+\newcommand{\srsactor}[3]{\begin{scope}[shift={(#1,#2)}]
+  \draw[thick] (0,0.75) circle (0.18); \draw[thick] (0,0.57) -- (0,0.05);
+  \draw[thick] (-0.3,0.4) -- (0.3,0.4); \draw[thick] (0,0.05) -- (-0.22,-0.35);
+  \draw[thick] (0,0.05) -- (0.22,-0.35); \node[font=\scriptsize] at (0,-0.6) {#3};
+\end{scope}}
+\newcommand{\srsframe}[3]{%
+  \draw[black!70, fill=white] (0,0) rectangle (#1,#2);
+  \fill[gray!22] (0,#2-0.6) rectangle (#1,#2);
+  \draw[black!70] (0,0) rectangle (#1,#2); \draw[black!70] (0,#2-0.6) -- (#1,#2-0.6);
+  \node[font=\scriptsize\bfseries, anchor=west] at (0.25,#2-0.3) {M2D Music Dashboard};
+  \node[font=\scriptsize, anchor=east] at (#1-0.25,#2-0.3) {#3};}
+\newcommand{\erbox}[2]{\begin{tabular}{@{\,}l@{\,}}\multicolumn{1}{@{\,}c@{\,}}{\textbf{#1}}\\ \hline #2\end{tabular}}
+\tikzset{
+  wf/.style={draw=black!60, fill=white, rounded corners=1pt},
+  wfpanel/.style={draw=black!45, fill=gray!6, rounded corners=2pt},
+  wftext/.style={font=\scriptsize, anchor=west},
+  wfbtn/.style={draw=black!70, fill=gray!28, rounded corners=2pt, font=\scriptsize, inner sep=3pt},
+  wfhead/.style={font=\scriptsize\bfseries, anchor=west},
+  ucase/.style={ellipse, draw=black!70, fill=blue!6, font=\scriptsize, align=center,
+    minimum width=4.6cm, minimum height=0.72cm, inner sep=1pt},
+  srsnav/.style={draw=black!70, rounded corners=2pt, fill=blue!6, align=center, font=\scriptsize,
+    text width=3.0cm, minimum height=0.9cm},
+  erent/.style={draw=black!70, fill=white, inner sep=0pt, font=\scriptsize},
+  erline/.style={draw=black!70, thick}
+}
+
+This chapter specifies the software that accompanies the research: a small web dashboard, called the \emph{M2D Music Dashboard} in this report, that is built for demonstration only. The dashboard has two purposes. First, it presents the results of the further pre-training study of Chapter~\ref{ch:m5} in a form that a supervisor, an evaluator or another student can explore without reading the result files. Second, it demonstrates four music downstream tasks that belong to the MARBLE benchmark~\cite{ref:Yuan:2023marble}, namely genre classification (GTZAN~\cite{ref:Tzanetakis:2002genre}), music auto-tagging (MagnaTagATune~\cite{ref:Law:2009tagatune}), instrument classification and pitch classification (both NSynth~\cite{ref:Engel:2017nsynth}). A visitor chooses a task, gives an audio clip and sees the prediction of a chosen model. The training and evaluation pipeline itself, the datasets and the models are specified in Chapter~\ref{ch:m5} and are not repeated here; this chapter only covers the web application and its development. The dashboard is deliberately simple and minimal: it has no user accounts, no login and no sign-up, and it runs on the same workstation as the research. The chapter lists the features, the functional requirements, the quality attributes and the non-functional requirements, the assumptions, the use cases, the hardware and software requirements, the planned user interface, the database design and the risks.
+
 \section{List of Features}
-List all important features of your system here.
+\label{sec:srs-features}
+The dashboard is a single-page web application with three views: \emph{Results}, \emph{Demo} and \emph{About}. The following features will be available.
+\begin{itemize}
+  \item \textbf{Results overview.} The aggregate music score $S_{\mathrm{mus}}$ and the retention score $S_{\mathrm{gen}}$ (Section~\ref{sec:m5-eval}) of every model, a table of the per-task scores with their spread over probe seeds, and a bar chart, with a filter by model group (original model, further pre-trained arms, data-size runs and reference models).
+  \item \textbf{Task selection.} Four task cards (genre, tagging, instrument and pitch) that show the dataset, the label set and the metric of each task.
+  \item \textbf{Audio input.} Upload of an audio file (WAV, MP3, FLAC or OGG) or selection of a bundled, openly licensed sample clip, with in-browser playback and a log-mel spectrogram preview.
+  \item \textbf{Model selection.} A choice between the unmodified M2D model (arm A0) and the best further pre-trained model (A$^{*}$); reference models such as MERT-v1-95M~\cite{ref:Li:2024mert} can be added when their probes are available.
+  \item \textbf{Task-specific output.} The top-5 genres with probabilities; the tags above the decision threshold together with the ten highest tag scores; the top-3 instrument families; and the top-3 pitches as MIDI number, note name and frequency. The inference time is shown with every prediction, and the label given by the source dataset is shown for sample clips.
+  \item \textbf{Model comparison.} The same clip can be run through two models and the two outputs are shown side by side, with the labels predicted by only one model highlighted.
+  \item \textbf{About page.} A short description of the project, the models, the datasets and their licenses, and a statement that single-clip predictions are a demonstration, not benchmark results.
+\end{itemize}
+
 \section{Functional Requirements}
-The functional requirements fully describe the external behavior of the system. Identify and list each functionality and give a brief description, along with the user of each functionality.
+\label{sec:srs-fr}
+The functional requirements describe the external behavior of the dashboard. Three kinds of users are involved: the \emph{Visitor}, who uses the web interface (supervisor, evaluator, researcher or student); the \emph{Developer}, who maintains the dashboard and loads results through a command-line script, since there is no administration page; and the \emph{System} itself for automatic behavior. Table~\ref{tab:srs-fr} lists the requirements.
+
+{\small\singlespacing
+\begin{longtable}{P{1.3cm}P{11.25cm}P{2.0cm}}
+\caption[Functional requirements of the dashboard]{Functional requirements of the dashboard. Each requirement has an identifier, a statement and the user to whom it applies.}\label{tab:srs-fr}\\
+\toprule
+\textbf{ID} & \textbf{Requirement} & \textbf{User}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Requirement} & \textbf{User}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+FR-01 & The system shall open on the Results Overview and show $S_{\mathrm{mus}}$ and $S_{\mathrm{gen}}$ for every model stored in the database. & Visitor\\
+FR-02 & The system shall show a table of per-task test scores (mean and standard deviation over probe seeds) with the metric of each task. & Visitor\\
+FR-03 & The visitor shall be able to filter the results by model group: original model, further pre-trained arms, data-size runs and reference models. & Visitor\\
+FR-04 & The system shall draw a bar chart of the mean music score of the selected models. & Visitor\\
+FR-05 & The system shall list the four demonstration tasks with their dataset, number of labels and metric, and the visitor shall be able to select one. & Visitor\\
+FR-06 & The visitor shall be able to upload one audio file in WAV, MP3, FLAC or OGG format of at most 10~MB. & Visitor\\
+FR-07 & The visitor shall be able to select a bundled sample clip instead of uploading a file, and to play the chosen clip in the browser. & Visitor\\
+FR-08 & The system shall check the type, size and readability of an uploaded file and reject an invalid file with an error message that states the reason. & System\\
+FR-09 & The system shall convert the input to mono at the sampling rate of the selected model (16~kHz for M2D), keep at most the first 30~s, compute the log-mel spectrogram with the normalization used in evaluation, and show a preview of it. & System\\
+FR-10 & The visitor shall be able to select the model used for the prediction; A$^{*}$ shall be selected by default. & Visitor\\
+FR-11 & The system shall compute the clip embedding with the frozen encoder (6.08-s windows, padded if shorter, averaged over time) and apply the linear probe of the selected model and task. & System\\
+FR-12 & The system shall display the task-specific output: top-5 genres; tags whose probability exceeds the threshold of the probe and the ten highest tag scores; top-3 instrument families; top-3 pitches with MIDI number $m$, note name and frequency $440\cdot2^{(m-69)/12}$~Hz. It shall also display the inference time, the device used and, for sample clips, the source label. & Visitor\\
+FR-13 & The visitor shall be able to run two models on the same clip and see both outputs side by side, with the labels predicted by only one model highlighted. & Visitor\\
+FR-14 & The system shall queue inference requests when the model is busy and show the position of the request in the queue. & System\\
+FR-15 & The system shall delete an uploaded file as soon as its prediction has been returned. & System\\
+FR-16 & The system shall record anonymous metadata of every prediction (task, model, input source, duration, device, latency and status) in the inference log, without audio or network addresses. & System\\
+FR-17 & The developer shall be able to import evaluation results and register models, probes and sample clips with a command-line script that validates every record before writing it. & Developer\\
+FR-18 & The system shall provide an About page with the project description, the models, the datasets and licenses, and a demonstration disclaimer. & Visitor\\
+\end{longtable}}
+
 \section{Quality Attributes}
+\label{sec:srs-quality}
+The following quality attributes guide the design and will be used to judge whether the dashboard serves its demonstrative purpose. Because the dashboard is a companion to a research study, the attribute that matters most is that it shows the research faithfully.
+
+\subsection{Usability}
+The audience includes evaluators who are not specialists in music information retrieval. The interface therefore uses one page with three tabs and a three-step flow on the Demo tab (choose a task, give audio, run), plain labels such as ``Genre'' rather than dataset codes, and short help texts beside each input. A first-time visitor should be able to obtain a prediction without instructions.
+
+\subsection{Correctness and Consistency}
+A demonstration is useful only if it reflects the models that were evaluated. The dashboard shall reuse the preprocessing, windowing and embedding code of the evaluation pipeline (Section~\ref{sec:m5-eval}) and load the same linear probes, rather than re-implementing them. The scores on the Results tab shall come from the same result files as the tables in the report, imported unchanged, so that the dashboard can never show a number that the report does not.
+
+\subsection{Reliability}
+The dashboard will be shown during evaluations and presentations, where a failure is costly. Invalid inputs shall be rejected with clear messages instead of errors, an inference failure shall not stop the server, and the Results tab shall remain usable even if the model cannot be loaded.
+
+\subsection{Maintainability and Extensibility}
+New checkpoints are produced during the project and the best arm A$^{*}$ is only known at the end. Adding a model or a task shall therefore require only a probe file and new rows in the database, imported with the developer script, without any change to the web code. The backend separates the inference module, the database layer and the web interface so that each can be changed alone.
+
+\subsection{Portability}
+The dashboard shall run on the research workstation and on any machine with a recent Python environment, with or without an NVIDIA GPU, and the frontend shall need nothing more than a web browser.
 
 \section{Non-Functional Requirements}
-This section should describe all the non-functional requirements, including reusability, performance (how many maximum users can access it at a time), extensibility, etc.
+\label{sec:srs-nfr}
+The non-functional requirements state measurable targets for the dashboard. The figures below are design targets for a demonstration on one workstation, not measured results.
+
+\subsection{Performance}
+\begin{itemize}
+  \item For a clip of up to 30~s, the system shall return a prediction within 5~s on the GPU host and within 30~s on CPU, excluding upload time.
+  \item The Results Overview shall load within 2~s on the local network.
+  \item The models and probes shall be loaded once when the server starts, not for every request.
+\end{itemize}
+
+\subsection{Capacity and Concurrency}
+\begin{itemize}
+  \item The system shall serve at least five visitors at the same time, which is enough for a presentation or a lab demonstration.
+  \item Inference requests shall be processed one at a time by a single worker on the GPU, and further requests shall wait in a queue, so that a burst of requests cannot exhaust the GPU memory.
+\end{itemize}
+
+\subsection{Availability}
+\begin{itemize}
+  \item The dashboard shall be available on the local network during the scheduled evaluation and presentation sessions; it is not intended as a permanent public service.
+  \item The server shall start with one command and be ready within two minutes.
+\end{itemize}
+
+\subsection{Security and Privacy}
+\begin{itemize}
+  \item The system shall not create user accounts and shall not store personal data or tracking cookies.
+  \item Uploaded files shall be stored under random names in a temporary directory and deleted after the prediction, or at the latest after ten minutes.
+  \item The server shall enforce the file type and the size limit itself and shall not rely on checks in the browser.
+  \item The web interface shall have read-only access to the result tables; results can be written only through the developer script.
+\end{itemize}
+
+\subsection{Reusability}
+\begin{itemize}
+  \item The inference module (audio loading, embedding and probe prediction) shall be a Python package that can be used without the web server, for example from a notebook.
+  \item The frontend shall obtain all data through a small JSON API, so that another interface could use the same backend.
+\end{itemize}
+
+\subsection{Compatibility}
+\begin{itemize}
+  \item The frontend shall work in current versions of Google Chrome, Mozilla Firefox and Microsoft Edge at a desktop or laptop screen width.
+\end{itemize}
+
 \section{Assumptions}
-List down all the assumptions made for the specification.
+\label{sec:srs-assumptions}
+The specification is based on the following assumptions.
+\begin{itemize}
+  \item The further pre-trained checkpoints and the linear probes of the four demonstration tasks are produced by the evaluation of Chapter~\ref{ch:m5} before the dashboard is finalized.
+  \item The dashboard is hosted on the research workstation with the RTX A4000 GPU, or on a CPU-only machine with slower predictions.
+  \item The inputs are music recordings. The instrument and pitch probes are trained on single isolated notes from NSynth, so their outputs are meaningful only for similar inputs; for other music they are shown for illustration.
+  \item Visitors have basic computer skills and a current web browser, and, to play clips, speakers or headphones.
+  \item The result files imported into the dashboard are the final values produced by the evaluation pipeline.
+  \item Visitors understand that a prediction on one clip illustrates a model and is not a measure of its quality; the benchmark scores are those on the Results tab.
+\end{itemize}
+
 \section{Use Cases}
-This section lists use cases or scenarios from the use-case model if they represent some significant, central functionality of the final system, or if they have a large architectural coverage—they exercise many architectural elements, or if they stress or illustrate a specific, delicate point of the architecture.\\
-The table \ref{tab:2.1} provides a simple use case.
+\label{sec:srs-usecases}
+The use cases below cover the central behavior of the dashboard. Figure~\ref{fig:srs-ucd} shows the use-case diagram: the Visitor takes part in UC-01 to UC-05 through the web interface, and the Developer takes part in UC-06 through the command line. UC-05 extends UC-04 by running a second model on the same clip. Tables~\ref{tab:srs-uc01} to~\ref{tab:srs-uc06} describe each use case in the standard format, with step numbers that alternate between the actor and the system; an alternative step such as 4-A replaces the system response with the same number.
 
-
-\begin{table}[!ht]
+\begin{figure}[htbp]
 \centering
-\caption{ A sample use case is given in the above table. You have to follow this tabular format for use cases. Following is the description of the content required in this section. \textcolor{red}{No separate heading is required or use case tables. Keep them all under a generic use case heading. Also, In the previous version, usecase tables dont have cpation, in this version, we do have. } }
-\label{tab:2.1}
-\begin{tabular}{|lllll|}
-\hline
-\multicolumn{2}{|l|}{\textbf{Name}} &
-  \multicolumn{3}{l|}{Sample Use Case Name Here} \\ \hline
-\multicolumn{2}{|l|}{\textbf{Actors}} &
-  \multicolumn{3}{l|}{Admin, Business Owner, Store Manager} \\ \hline
-\multicolumn{2}{|l|}{\textbf{Summary}} &
-  \multicolumn{3}{l|}{\begin{tabular}[c]{@{}l@{}}The user shall provide their email and password on the login form, \\ and after successful verification, redirect the user to the home page.\end{tabular}} \\ \hline
-\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
-  \multicolumn{3}{l|}{\begin{tabular}[c]{@{}l@{}}The user must be in the database records, either added by any of the\\  authorized users or added manually by a developer.\\ The user must not already be logged in.\end{tabular}} \\ \hline
-\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
-  \multicolumn{3}{l|}{\begin{tabular}[c]{@{}l@{}}The user’s session is successfully established and shall be redirected\\  to the home page.\end{tabular}} \\ \hline
-\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
-  \multicolumn{3}{l|}{None} \\ \hline
-\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
-\multicolumn{3}{|c|}{\textbf{Actor Action}} &
-  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
-\multicolumn{1}{|l|}{1} &
-  \multicolumn{2}{l|}{\begin{tabular}[c]{@{}l@{}}The user opens \\ the login page.\end{tabular}} &
-  \multicolumn{1}{l|}{2} &
-  \begin{tabular}[c]{@{}l@{}}The login page is displayed asking for email and\\  password.\end{tabular} \\ \hline
-\multicolumn{1}{|l|}{2} &
-  \multicolumn{2}{l|}{\begin{tabular}[c]{@{}l@{}}The user enters valid\\  email and password.\end{tabular}} &
-  \multicolumn{1}{l|}{4} &
-  \begin{tabular}[c]{@{}l@{}}The system verifies the email and  password, \\ establishes a session for the user and redirects\\  the user to the home page.\end{tabular} \\ \hline
-\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
-\multicolumn{1}{|l|}{3} &
-  \multicolumn{2}{l|}{\begin{tabular}[c]{@{}l@{}}The user enters invalid\\  email or password.\end{tabular}} &
-  \multicolumn{1}{l|}{4-A} &
-  \begin{tabular}[c]{@{}l@{}}The system responds with an error \\ message: Incorrect email or password entered.\end{tabular} \\ \hline
-\end{tabular}
+\singlespacing
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \draw[black!70, rounded corners=3pt] (2.6,-0.5) rectangle (8.4,6.0);
+  \node[font=\scriptsize\bfseries] at (5.5,5.7) {M2D Music Dashboard};
+  \node[ucase] (uc1) at (5.5,5.0) {UC-01 View Research Results};
+  \node[ucase] (uc2) at (5.5,4.05) {UC-02 Select a Downstream Task};
+  \node[ucase] (uc3) at (5.5,3.1) {UC-03 Provide Audio Input};
+  \node[ucase] (uc4) at (5.5,2.15) {UC-04 Run Inference and View Output};
+  \node[ucase] (uc5) at (5.5,1.2) {UC-05 Compare Two Models};
+  \node[ucase] (uc6) at (5.5,0.2) {UC-06 Import Evaluation Results};
+  \srsactor{0.6}{2.4}{Visitor}
+  \srsactor{10.4}{-0.1}{Developer}
+  \foreach \u in {uc1,uc2,uc3,uc4,uc5} \draw[black!70] (0.95,2.85) -- (\u.west);
+  \draw[black!70] (10.05,0.3) -- (uc6.east);
+  \draw[black!70, dashed, -{Stealth[length=2mm]}] (uc5.east) to[bend right=50]
+    node[right, font=\tiny] {$\langle\langle$extend$\rangle\rangle$} (uc4.east);
+\end{tikzpicture}
+\caption[Use-case diagram of the dashboard]{Use-case diagram of the dashboard. A stick figure labeled Visitor on the left is connected to five use cases inside the system boundary: view research results, select a downstream task, provide audio input, run inference and view output, and compare two models. A dashed arrow marked ``extend'' goes from the comparison use case to the inference use case. A stick figure labeled Developer on the right is connected to the sixth use case, import evaluation results.}
+\label{fig:srs-ucd}
+\end{figure}
+
+\begin{usecase}{UC-01 View Research Results}{Use case UC-01: View Research Results.}{tab:srs-uc01}
+\ucfield{Name}{View Research Results}
+\ucfield{Actors}{Visitor}
+\ucfield{Summary}{The visitor opens the dashboard and reviews the results of the further pre-training study: the aggregate scores, the per-task scores and a chart, filtered by model group.}
+\ucfield{Pre-Conditions}{The server is running. The developer has imported the evaluation results (UC-06).}
+\ucfield{Post-Conditions}{The results of the selected model group are displayed. The database is not changed.}
+\ucfield{Special Requirements}{The scores shall be identical to those reported in the results chapter of this report.}
+\ucbar{Basic Flow}
+\uchead
+\ucstep{1}{The visitor opens the dashboard address in a browser.}{2}{The system loads the results from the database and displays the Results Overview with $S_{\mathrm{mus}}$, $S_{\mathrm{gen}}$, the per-task table and the bar chart.}
+\ucstep{3}{The visitor selects a model group in the filter.}{4}{The system updates the table and the chart to show only the models of that group.}
+\ucbar{Alternative Flow}
+\ucstep{1}{The visitor opens the dashboard before any result has been imported.}{2-A}{The system displays the message ``No results have been imported yet'' and keeps the Demo and About tabs available.}
+\end{usecase}
+
+\begin{usecase}{UC-02 Select a Downstream Task}{Use case UC-02: Select a Downstream Task.}{tab:srs-uc02}
+\ucfield{Name}{Select a Downstream Task}
+\ucfield{Actors}{Visitor}
+\ucfield{Summary}{The visitor chooses one of the four demonstration tasks, and the system shows the labels and the input expected by that task.}
+\ucfield{Pre-Conditions}{The server is running and probes of at least one model exist for the task.}
+\ucfield{Post-Conditions}{The task is selected and the audio input panel is enabled for it.}
+\ucfield{Special Requirements}{For the instrument and pitch tasks the system notes that a single isolated note is expected, as in NSynth.}
+\ucbar{Basic Flow}
+\uchead
+\ucstep{1}{The visitor opens the Demo tab.}{2}{The system displays four task cards with the dataset, the number of labels and the metric of each task.}
+\ucstep{3}{The visitor clicks a task card.}{4}{The system highlights the card, shows the expected input and enables the audio input panel and a model list that contains only the models with a probe for the task.}
+\ucbar{Alternative Flow}
+\ucstep{3}{The visitor clicks a task for which no probe has been registered.}{4-A}{The system shows the card as unavailable with the message ``This task is not available yet''.}
+\end{usecase}
+
+\begin{usecase}{UC-03 Provide Audio Input}{Use case UC-03: Provide Audio Input.}{tab:srs-uc03}
+\ucfield{Name}{Provide Audio Input}
+\ucfield{Actors}{Visitor}
+\ucfield{Summary}{The visitor uploads an audio file or selects a bundled sample clip, which can be played before the prediction.}
+\ucfield{Pre-Conditions}{A task has been selected (UC-02).}
+\ucfield{Post-Conditions}{A valid clip is held by the server for the current request, and a player and a log-mel preview of it are displayed.}
+\ucfield{Special Requirements}{Accepted formats are WAV, MP3, FLAC and OGG, with at most 10~MB per file. Uploaded files are deleted after the prediction.}
+\ucbar{Basic Flow}
+\uchead
+\ucstep{1}{The visitor drags an audio file into the upload area, or clicks \emph{Browse} and selects a file.}{2}{The system checks the type and size, decodes the audio, and displays its duration, a player and a log-mel preview.}
+\ucstep{3}{Alternatively, the visitor selects a sample clip from the list.}{4}{The system loads the clip and displays its source dataset, license and source label, a player and a log-mel preview.}
+\ucbar{Alternative Flow}
+\ucstep{1}{The visitor uploads a file in an unsupported format.}{2-A}{The system displays ``Unsupported file format. Please use WAV, MP3, FLAC or OGG.''}
+\ucstep{1}{The visitor uploads a file larger than 10~MB.}{2-B}{The system displays ``File too large (maximum 10~MB).''}
+\ucstep{1}{The visitor uploads a clip longer than 30~s.}{2-C}{The system accepts the file and displays ``Only the first 30~s will be analyzed.''}
+\ucstep{1}{The visitor uploads a corrupted file.}{2-D}{The system displays ``The file could not be read.''}
+\end{usecase}
+
+\begin{usecase}{UC-04 Run Inference and View Output}{Use case UC-04: Run Inference and View Output.}{tab:srs-uc04}
+\ucfield{Name}{Run Inference and View Output}
+\ucfield{Actors}{Visitor}
+\ucfield{Summary}{The visitor runs the selected model on the clip and sees the task-specific prediction.}
+\ucfield{Pre-Conditions}{A task has been selected (UC-02), a valid clip is available (UC-03) and a model has been selected.}
+\ucfield{Post-Conditions}{The prediction is displayed, an anonymous record is added to the inference log and an uploaded file is deleted.}
+\ucfield{Special Requirements}{The preprocessing and embedding are those of the evaluation pipeline. The response time follows the targets of Section~\ref{sec:srs-nfr}.}
+\ucbar{Basic Flow}
+\uchead
+\ucstep{1}{The visitor selects a model (A$^{*}$ by default) and clicks \emph{Run}.}{2}{The system resamples the clip, computes the log-mel spectrogram and the clip embedding, and applies the linear probe of the model and task.}
+\ucstep{3}{The visitor reads the result.}{4}{The system displays the task-specific output, the inference time, the device and, for a sample clip, the source label.}
+\ucbar{Alternative Flow}
+\ucstep{1}{The visitor clicks \emph{Run} while another request is being processed.}{2-A}{The system queues the request, shows its position and starts it when the model is free.}
+\ucstep{1}{The visitor clicks \emph{Run} on a host without a usable GPU.}{2-B}{The system runs the model on the CPU and notes that the response is slower.}
+\ucstep{1}{The visitor clicks \emph{Run} and the inference fails.}{2-C}{The system displays ``The prediction failed. Please try again.'' and records the failure in the log.}
+\end{usecase}
+
+\begin{usecase}{UC-05 Compare Two Models on a Clip}{Use case UC-05: Compare Two Models on a Clip.}{tab:srs-uc05}
+\ucfield{Name}{Compare Two Models on a Clip}
+\ucfield{Actors}{Visitor}
+\ucfield{Summary}{The visitor runs two models on the same clip and sees their outputs side by side, for example the original M2D model A0 and the further pre-trained model A$^{*}$.}
+\ucfield{Pre-Conditions}{As in UC-04, and probes of both models exist for the selected task.}
+\ucfield{Post-Conditions}{Both predictions are displayed side by side and two records are added to the inference log.}
+\ucfield{Special Requirements}{Both models receive the same decoded clip.}
+\ucbar{Basic Flow}
+\uchead
+\ucstep{1}{The visitor ticks \emph{Compare with} and chooses a second model.}{2}{The system lists the models with a probe for the task, excluding the model already selected.}
+\ucstep{3}{The visitor clicks \emph{Run}.}{4}{The system runs both models one after the other and displays the outputs in two columns, highlighting the labels predicted by only one model.}
+\ucbar{Alternative Flow}
+\ucstep{3}{The visitor clicks \emph{Compare with another model} on an output page.}{4-A}{The system reuses the clip, runs only the second model and opens the comparison view.}
+\end{usecase}
+
+\begin{usecase}{UC-06 Import Evaluation Results}{Use case UC-06: Import Evaluation Results.}{tab:srs-uc06}
+\ucfield{Name}{Import Evaluation Results}
+\ucfield{Actors}{Developer}
+\ucfield{Summary}{The developer runs a command-line script that reads the result files of the evaluation pipeline and registers models, probes, results and sample clips in the database.}
+\ucfield{Pre-Conditions}{The evaluation has finished and its result files exist in the agreed CSV or JSON format. The developer has access to the server.}
+\ucfield{Post-Conditions}{The database contains the new rows, and the Results Overview shows them after a refresh.}
+\ucfield{Special Requirements}{The import is transactional: either all rows of a file are written or none.}
+\ucbar{Basic Flow}
+\uchead
+\ucstep{1}{The developer runs the import script with the path of a result file.}{2}{The script checks every record (known model and task codes, the metric of the task, a score between 0 and 100, at least one seed) and writes all rows in one transaction.}
+\ucstep{3}{The developer opens the dashboard.}{4}{The system displays the updated results.}
+\ucbar{Alternative Flow}
+\ucstep{1}{The file contains an unknown model or task code or a missing field.}{2-A}{The script rejects the whole file, reports the line and the field, and writes nothing.}
+\ucstep{1}{Results for the same model, task and split already exist.}{2-B}{The script stops, unless the replace option is given, in which case the old rows are replaced.}
+\end{usecase}
+
+\clearpage
+\section{Hardware and Software Requirements}
+\label{sec:srs-hwsw}
+The dashboard is small and reuses the environment of the research, so its requirements are modest. The following hardware and software are needed to develop and deploy it.
+
+\subsection{Hardware Requirements}
+\begin{itemize}
+  \item A development and hosting workstation; the research workstation with one NVIDIA RTX A4000 GPU (16~GB) will be used. A GPU is recommended for fast predictions but is not required.
+  \item At least 16~GB of system memory and about 10~GB of free disk space for the checkpoints, probes, sample clips and database.
+  \item A desktop or laptop computer with a web browser for each visitor, with speakers or headphones to play clips.
+  \item A local network connection between the host and the visitors' computers, or the host itself for a single-screen demonstration.
+\end{itemize}
+
+\subsection{Software Requirements}
+\begin{itemize}
+  \item Linux operating system with the NVIDIA driver and CUDA runtime on the host.
+  \item Python 3.10 or above, the language of the backend and of the research code.
+  \item PyTorch and torchaudio for model inference, with the M2D code base and timm~\cite{ref:M2DGit} to build the encoder.
+  \item nnAudio~\cite{ref:Cheuk:2020nnaudio} for the log-mel front-end, as in the evaluation pipeline.
+  \item soundfile and FFmpeg to decode the accepted audio formats.
+  \item FastAPI and the Uvicorn server for the JSON API and for serving the frontend files.
+  \item SQLite with the SQLAlchemy library for the database.
+  \item HTML5, CSS3 and JavaScript for the frontend, with the Chart.js library for charts.
+  \item Git and GitHub for version control, and Visual Studio Code as editor.
+  \item A current web browser such as Google Chrome, Mozilla Firefox or Microsoft Edge.
+\end{itemize}
+
+\section{Graphical User Interface}
+\label{sec:srs-gui}
+This section presents the planned screens of the dashboard as wireframes; screenshots of the implemented dashboard will replace them in the chapter on implementation. All screens share a top bar with the dashboard name and three tabs, Results, Demo and About, so that every view can be reached from every screen. Values shown in the wireframes are placeholders. Figure~\ref{fig:srs-nav} shows the navigation flow, and Figures~\ref{fig:srs-gui-results} to~\ref{fig:srs-gui-about} show the screens with the use cases that each one covers.
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[srsnav] (r) at (0,0) {Results Overview\\(landing page)};
+  \node[srsnav] (i) at (5,0) {Demo: task and input};
+  \node[srsnav] (o) at (10,0) {Demo: output};
+  \node[srsnav] (c) at (10,-2.4) {Comparison view};
+  \node[srsnav] (a) at (0,-2.4) {About};
+  \draw[m5arrow] (r) -- node[above, font=\tiny] {Demo tab} (i);
+  \draw[m5arrow] (i) -- node[above, font=\tiny] {Run} (o);
+  \draw[m5arrow] (o) to[bend right=30] node[above, font=\tiny] {Change input or task} (i);
+  \draw[m5arrow] (i) -- node[below left, font=\tiny, pos=0.45] {Run with \emph{Compare with} ticked} (c);
+  \draw[m5arrow] (o) -- node[right, font=\tiny] {Compare with another model} (c);
+  \draw[m5arrow, {Stealth[length=2mm]}-{Stealth[length=2mm]}] (r) -- node[left, font=\tiny] {About / Results tab} (a);
+\end{tikzpicture}
+\caption[Navigation flow of the dashboard]{Navigation flow of the dashboard. The visitor starts on the Results Overview. The Demo tab leads to the task and input screen; clicking Run leads to the output screen, or to the comparison view when a second model is selected. From the output screen the visitor can go back to change the input or task, or open the comparison view. The About page is reachable through the tabs from every screen.}
+\label{fig:srs-nav}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \srsframe{14}{8.6}{\underline{\textbf{Results}}\qquad Demo\qquad About}
+  \node[font=\small\bfseries, anchor=west] at (0.3,7.55) {Research Results};
+  \node[font=\scriptsize, anchor=west, text=black!70] at (0.3,7.1) {Further pre-training of M2D on 10,000 FMA tracks, frozen-feature linear evaluation};
+  \draw[wf] (10.4,7.3) rectangle (13.7,7.8);
+  \node[wftext] at (10.5,7.55) {Model group: All};
+  \node[font=\tiny, anchor=east] at (13.6,7.55) {$\blacktriangledown$};
+  \foreach \x/\t/\v in {0.3/{Music score $S_{\mathrm{mus}}$}/{A0: xx.x\quad A$^{*}$: xx.x},
+                        4.85/{Retention score $S_{\mathrm{gen}}$}/{A0: xx.x\quad A$^{*}$: xx.x},
+                        9.4/{Best further pre-trained arm}/{A$^{*}$, chosen on validation}} {
+    \draw[wfpanel] (\x,5.65) rectangle (\x+4.3,6.7);
+    \node[font=\scriptsize, anchor=west, text=black!70] at (\x+0.15,6.4) {\t};
+    \node[font=\small\bfseries, anchor=west] at (\x+0.15,5.95) {\v};
+  }
+  \draw[wfpanel] (0.3,0.35) rectangle (6.7,5.35);
+  \node[wfhead] at (0.45,5.05) {Mean music score per model};
+  \draw[black!60] (0.9,0.95) -- (6.45,0.95);
+  \draw[black!60] (0.9,0.95) -- (0.9,4.65);
+  \node[font=\tiny, rotate=90] at (0.6,2.8) {score (\%)};
+  \foreach \i/\m/\h in {0/A0/2.4,1/A1/2.1,2/A2/2.6,3/A3/3.0,4/A4/3.2,5/A5/2.8,6/MERT/3.4} {
+    \fill[gray!45] (1.15+\i*0.75,0.95) rectangle (1.6+\i*0.75,0.95+\h);
+    \node[font=\tiny] at (1.375+\i*0.75,0.7) {\m};
+  }
+  \draw[wfpanel] (7.0,0.35) rectangle (13.7,5.35);
+  \node[wfhead] at (7.15,5.05) {Per-task scores (mean $\pm$ std over probe seeds)};
+  \node[font=\tiny, anchor=north] at (10.35,4.75) {\setlength{\tabcolsep}{2.5pt}\renewcommand{\arraystretch}{1.05}%
+  \begin{tabular}{lccccccc}
+    \toprule
+    Model & GTZAN & FMA-s & NS-I & NS-P & MTT & ESC & US8K\\
+    \midrule
+    A0 & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x\\
+    A1 & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x\\
+    A2 & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x\\
+    A3 & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x\\
+    A4 & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x\\
+    A5 & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x\\
+    S1--S3 & \multicolumn{7}{c}{\dots}\\
+    MERT & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x & xx.x\\
+    \bottomrule
+  \end{tabular}};
+\end{tikzpicture}
+\caption[Wireframe of the Results Overview]{Wireframe of the Results Overview, the landing page (UC-01). Below the top bar with the Results, Demo and About tabs, the page shows a model-group filter at the top right; three summary cards with the music score and the retention score of the original model A0 and of the best further pre-trained model A$^{*}$, and the identity of A$^{*}$; a bar chart of the mean music score per model on the left; and a table of per-task scores on the right. All numbers are placeholders.}
+\label{fig:srs-gui-results}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \srsframe{14}{8.8}{Results\qquad\underline{\textbf{Demo}}\qquad About}
+  \node[wfhead] at (0.3,7.8) {1. Choose a task};
+  \foreach \x/\t/\d in {0.3/Genre/{GTZAN, 10 genres},3.7/Tagging/{MagnaTagATune, 50 tags},
+                        7.1/Instrument/{NSynth, 11 families},10.5/Pitch/{NSynth, MIDI pitch}} {
+    \draw[wf] (\x,6.2) rectangle (\x+3.2,7.4);
+    \node[font=\scriptsize, align=center] at (\x+1.6,6.8) {\textbf{\t}\\\d};
+  }
+  \draw[draw=blue!60!black, very thick, fill=blue!8, rounded corners=1pt] (0.3,6.2) rectangle (3.5,7.4);
+  \node[font=\scriptsize, align=center] at (1.9,6.8) {\textbf{Genre} $\checkmark$\\GTZAN, 10 genres};
+  \node[wfhead] at (0.3,5.75) {2. Provide audio};
+  \draw[black!55, dashed, fill=gray!4] (0.3,2.9) rectangle (6.8,5.4);
+  \node[font=\scriptsize] at (3.55,4.85) {Drag and drop an audio file here};
+  \node[wfbtn] at (3.55,4.15) {Browse};
+  \node[font=\tiny, text=black!70] at (3.55,3.35) {WAV, MP3, FLAC or OGG; at most 10\,MB; only the first 30\,s are used};
+  \node[wftext] at (7.1,5.25) {or choose a sample clip:};
+  \draw[wf] (7.1,4.5) rectangle (13.7,4.95);
+  \node[wftext] at (7.2,4.72) {Sample 3: FMA clip (CC license), source label ``Rock''};
+  \node[font=\tiny, anchor=east] at (13.6,4.72) {$\blacktriangledown$};
+  \draw[wf] (7.1,3.95) rectangle (13.7,4.35);
+  \node[font=\scriptsize, anchor=west] at (7.2,4.15) {$\blacktriangleright$\ \ 0:00 / 0:30};
+  \draw[black!50] (9.0,4.15) -- (13.4,4.15);
+  \draw[wfpanel, fill=gray!15] (7.1,2.9) rectangle (13.7,3.8);
+  \node[font=\scriptsize, text=black!60] at (10.4,3.35) {log-mel spectrogram preview};
+  \node[wfhead] at (0.3,2.4) {3. Choose a model and run};
+  \draw[wf] (0.3,1.35) rectangle (5.4,1.85);
+  \node[wftext] at (0.4,1.6) {Model: A$^{*}$ (further pre-trained)};
+  \node[font=\tiny, anchor=east] at (5.3,1.6) {$\blacktriangledown$};
+  \draw[black!70] (5.8,1.45) rectangle (6.1,1.75);
+  \node[wftext] at (6.15,1.6) {Compare with:};
+  \draw[wf, fill=gray!10] (7.8,1.35) rectangle (11.2,1.85);
+  \node[wftext, text=black!50] at (7.9,1.6) {A0 (original M2D)};
+  \node[font=\tiny, anchor=east, text=black!50] at (11.1,1.6) {$\blacktriangledown$};
+  \node[wfbtn, minimum width=2cm, fill=blue!25] at (12.6,1.6) {\textbf{Run}};
+  \node[font=\tiny\itshape, anchor=west, text=black!70] at (0.3,0.6) {Demonstration only: predictions on single clips are not benchmark results. Uploaded audio is deleted after processing.};
+\end{tikzpicture}
+\caption[Wireframe of the Demo screen: task and input]{Wireframe of the Demo screen for task selection and audio input (UC-02, UC-03, and the start of UC-04 and UC-05). Step 1 shows four task cards (genre, tagging, instrument and pitch) with the genre card selected. Step 2 shows a dashed drag-and-drop upload area with a Browse button and the accepted formats, and on the right a sample-clip list, an audio player and a log-mel spectrogram preview. Step 3 shows a model list, a Compare with check box with a second model list, and a Run button. A disclaimer is shown at the bottom.}
+\label{fig:srs-gui-input}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \srsframe{14}{7.2}{Results\qquad\underline{\textbf{Demo}}\qquad About}
+  \node[font=\small\bfseries, anchor=west] at (0.3,6.15) {Result: genre classification (GTZAN labels)};
+  \draw[wfpanel] (0.3,1.4) rectangle (5.0,5.7);
+  \node[font=\scriptsize, anchor=north west, align=left, text width=4.4cm] at (0.4,5.55) {%
+    \textbf{Input:} sample clip (FMA)\\ Duration: 30.0\,s (5 windows)\\ Source label: Rock\\[4pt]
+    \textbf{Model:} A$^{*}$ (further pre-trained)\\ Device: GPU\\ Inference time: x.xx\,s};
+  \draw[wf] (0.45,1.65) rectangle (4.85,2.05);
+  \node[font=\scriptsize, anchor=west] at (0.5,1.85) {$\blacktriangleright$\ \ 0:00 / 0:30};
+  \draw[wfpanel] (5.3,1.4) rectangle (13.7,5.7);
+  \node[wfhead] at (5.45,5.4) {Top-5 genres};
+  \foreach \i/\g/\l in {0/rock/5.0,1/metal/1.6,2/blues/0.8,3/country/0.5,4/pop/0.3} {
+    \node[font=\scriptsize, anchor=east] at (7.0,4.7-\i*0.7) {\g};
+    \fill[gray!40] (7.15,4.5-\i*0.7) rectangle (7.15+\l,4.9-\i*0.7);
+    \node[font=\tiny, anchor=west] at (7.2+\l,4.7-\i*0.7) {xx\,\%};
+  }
+  \fill[blue!35] (7.15,4.5) rectangle (12.15,4.9);
+  \node[wfbtn] at (1.45,0.75) {Change input};
+  \node[wfbtn] at (3.6,0.75) {Change task};
+  \node[wfbtn] at (6.6,0.75) {Compare with another model};
+\end{tikzpicture}
+\caption[Wireframe of the Demo screen: output]{Wireframe of the Demo output screen for the genre task (UC-04). The left panel lists the input (a sample clip from FMA, its duration and source label), the model, the device and the inference time, with an audio player. The right panel shows horizontal bars for the five most probable genres, the top one highlighted. Buttons at the bottom change the input or task or open the comparison view. For tagging, the panel lists the tags above the threshold and the ten highest tag scores; for instrument, the three most probable instrument families; and for pitch, the three most probable pitches with MIDI number, note name and frequency. Values are placeholders.}
+\label{fig:srs-gui-output}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \srsframe{14}{7.6}{Results\qquad\underline{\textbf{Demo}}\qquad About}
+  \node[font=\small\bfseries, anchor=west] at (0.3,6.55) {Comparison: tagging (MagnaTagATune labels), same clip};
+  \foreach \x/\t in {0.3/{A0: original M2D},7.15/{A$^{*}$: further pre-trained}} {
+    \draw[wfpanel] (\x,1.0) rectangle (\x+6.55,6.1);
+    \node[wfhead] at (\x+0.15,5.8) {\t};
+    \draw[black!60, dashed] (\x+3.95,2.5) -- (\x+3.95,5.55);
+    \node[font=\tiny, text=black!70] at (\x+3.95,2.3) {threshold 0.5};
+  }
+  % left model: tag/score
+  \foreach \i/\g/\s in {0/rock/0.85,1/guitar/0.78,2/drums/0.60,3/loud/0.42,4/fast/0.35,5/male vocal/0.30} {
+    \node[font=\scriptsize, anchor=east] at (1.95,5.3-\i*0.5) {\g};
+    \pgfmathsetmacro{\len}{\s*4.4}
+    \ifdim\s pt>0.5pt \def\col{blue!35}\else\def\col{gray!35}\fi
+    \fill[\col] (2.05,5.12-\i*0.5) rectangle (2.05+\len,5.48-\i*0.5);
+  }
+  \foreach \i/\g/\s in {0/rock/0.88,1/guitar/0.80,2/drums/0.66,3/\textbf{male vocal}/0.55,4/loud/0.45,5/fast/0.32} {
+    \node[font=\scriptsize, anchor=east] at (8.8,5.3-\i*0.5) {\g};
+    \pgfmathsetmacro{\len}{\s*4.4}
+    \ifdim\s pt>0.5pt \def\col{blue!35}\else\def\col{gray!35}\fi
+    \fill[\col] (8.9,5.12-\i*0.5) rectangle (8.9+\len,5.48-\i*0.5);
+  }
+  \node[font=\scriptsize, anchor=west, text width=6.2cm] at (0.45,1.6) {Above threshold: rock, guitar, drums};
+  \node[font=\scriptsize, anchor=west, text width=6.2cm] at (7.3,1.6) {Above threshold: rock, guitar, drums, \textbf{male vocal}};
+  \node[font=\tiny\itshape, anchor=west, text=black!70] at (0.3,0.55) {Labels predicted by only one model are shown in bold.};
+\end{tikzpicture}
+\caption[Wireframe of the comparison view]{Wireframe of the comparison view (UC-05), here for the tagging task. Two panels side by side show the outputs of the original model A0 on the left and of the further pre-trained model A$^{*}$ on the right for the same clip. Each panel has horizontal bars for the highest tag scores, a dashed line at the decision threshold of 0.5, and the list of tags above the threshold; a tag predicted by only one model is shown in bold. The tags and scores are illustrative placeholders.}
+\label{fig:srs-gui-compare}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \srsframe{14}{6.4}{Results\qquad Demo\qquad\underline{\textbf{About}}}
+  \node[font=\small\bfseries, anchor=west] at (0.3,5.35) {About this dashboard};
+  \draw[wfpanel] (0.3,1.3) rectangle (6.85,4.95);
+  \node[font=\scriptsize, anchor=north west, align=left, text width=6.2cm] at (0.4,4.8) {%
+    \textbf{Project.} Can a general-audio model trained by masked latent prediction compete with music-specific models after further pre-training on a small music corpus?\\[4pt]
+    \textbf{Method.} M2D, pre-trained on AudioSet, is further pre-trained on 10,000 FMA tracks; its frozen features are evaluated with linear probes.};
+  \draw[wfpanel] (7.15,1.3) rectangle (13.7,4.95);
+  \node[font=\scriptsize, anchor=north west, align=left, text width=6.2cm] at (7.25,4.8) {%
+    \textbf{Models.} A0: original M2D; A1--A5 and S1--S3: further pre-trained arms; reference models such as MERT-v1-95M.\\[4pt]
+    \textbf{Datasets.} GTZAN, MagnaTagATune, NSynth, FMA-small, ESC-50, UrbanSound8K.\\[4pt]
+    \textbf{Sample clips.} Openly licensed clips from FMA and NSynth, with attribution.};
+  \draw[wfpanel, fill=yellow!10] (0.3,0.35) rectangle (13.7,1.0);
+  \node[font=\scriptsize, anchor=west] at (0.45,0.675) {\textbf{Demonstration only.} Single-clip predictions illustrate the models; benchmark scores are on the Results tab.};
+\end{tikzpicture}
+\caption[Wireframe of the About page]{Wireframe of the About page (FR-18). Two text panels describe the project question and method on the left, and the models, datasets and sample-clip licenses on the right. A highlighted box at the bottom states that single-clip predictions are a demonstration and that the benchmark scores are those on the Results tab.}
+\label{fig:srs-gui-about}
+\end{figure}
+
+\clearpage
+\section{Database Design}
+\label{sec:srs-db}
+The dashboard needs a small database for two kinds of data: the research data that it displays (models, tasks, labels, probes and evaluation results) and the operational data of the demonstration (sample clips and an anonymous inference log). It has no user data, because there are no accounts. SQLite is used: the dashboard runs on a single host, the data are small and mostly read, and a file-based database needs no separate server and can be copied together with the code. The tables are accessed through SQLAlchemy, so that a client--server database could replace SQLite later without changes to the application code. The retention tasks ESC-50~\cite{ref:Piczak:2015esc} and UrbanSound8K~\cite{ref:Salamon:2014urbansound} are stored as tasks for the Results tab but are marked as not available in the demonstration.
+
+\subsection{ER Diagram}
+Figure~\ref{fig:srs-er} shows the entities and their relationships. \texttt{Model} and \texttt{Task} are the central entities. A probe, an evaluation result and an inference-log record each belong to one model and one task, so each of the three entities is in a one-to-many relationship with both. A task has many labels and many sample clips. Audio files and probe weights are stored on disk, and the database keeps only their paths.
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[erent] (model) at (0,0) {\erbox{Model}{model\_id (PK)\\ code\\ display\_name\\ kind\\ checkpoint\_path\\ sample\_rate\\ is\_demo}};
+  \node[erent] (task) at (12,0) {\erbox{Task}{task\_id (PK)\\ code\\ name\\ dataset\\ label\_type\\ metric\\ is\_demo}};
+  \node[erent] (probe) at (6,4.9) {\erbox{Probe}{probe\_id (PK)\\ model\_id (FK)\\ task\_id (FK)\\ weights\_path\\ stats\_path\\ layer\\ threshold}};
+  \node[erent] (res) at (6,0) {\erbox{EvaluationResult}{result\_id (PK)\\ model\_id (FK)\\ task\_id (FK)\\ split\\ score\_mean\\ score\_std\\ n\_seeds\\ source\_file\\ imported\_at}};
+  \node[erent] (log) at (6,-5.1) {\erbox{InferenceLog}{log\_id (PK)\\ task\_id (FK)\\ model\_id (FK)\\ input\_source\\ duration\_s\\ device\\ latency\_ms\\ status\\ created\_at}};
+  \node[erent] (label) at (12,4.6) {\erbox{Label}{label\_id (PK)\\ task\_id (FK)\\ label\_index\\ name}};
+  \node[erent] (clip) at (12,-4.9) {\erbox{SampleClip}{clip\_id (PK)\\ task\_id (FK)\\ title\\ file\_path\\ source\_dataset\\ license\\ source\_label\\ duration\_s}};
+  \foreach \e/\ma/\ta in {probe/25/155,res/0/180,log/-25/205} {
+    \draw[erline] (model.\ma) -- node[pos=0.07, above, font=\scriptsize] {1} node[pos=0.92, above, font=\scriptsize] {N} (\e.west);
+    \draw[erline] (task.\ta) -- node[pos=0.07, above, font=\scriptsize] {1} node[pos=0.92, above, font=\scriptsize] {N} (\e.east);
+  }
+  \draw[erline] (task.north) -- node[pos=0.15, right, font=\scriptsize] {1} node[pos=0.8, right, font=\scriptsize] {N} (label.south);
+  \draw[erline] (task.south) -- node[pos=0.15, right, font=\scriptsize] {1} node[pos=0.8, right, font=\scriptsize] {N} (clip.north);
+\end{tikzpicture}
+\caption[ER diagram of the dashboard database]{ER diagram of the dashboard database. Seven entities are drawn as boxes listing their attributes, with primary keys (PK) and foreign keys (FK) marked. Model on the left and Task on the right are each connected by one-to-many lines to the three entities in the middle: Probe, EvaluationResult and InferenceLog. Task is also connected by one-to-many lines to Label above it and SampleClip below it. The numbers 1 and N mark the cardinality at each end.}
+\label{fig:srs-er}
+\end{figure}
+
+\clearpage
+\subsection{Data Dictionary}
+Table~\ref{tab:srs-dd} lists the attributes of every entity. SQLite has no separate Boolean and date types; Boolean values are stored as integers 0 and 1, and time stamps as ISO~8601 text.
+
+{\small\singlespacing
+\begin{longtable}{P{2.8cm}P{2.6cm}P{1.6cm}P{1.4cm}P{5.35cm}}
+\caption[Data dictionary of the dashboard database]{Data dictionary of the dashboard database. For each entity the table gives the attributes, their data types, whether they may be empty, and a description.}\label{tab:srs-dd}\\
+\toprule
+\textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Description}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Entity} & \textbf{Attribute} & \textbf{Data Type} & \textbf{Nullable} & \textbf{Description}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Model & model\_id & Integer & No & Primary key.\\
+ & code & Text & No & Unique short code, for example A0, A3, S2 or MERT-v1-95M.\\
+ & display\_name & Text & No & Name shown in the interface.\\
+ & kind & Text & No & One of \emph{original}, \emph{further-pretrained} or \emph{reference}.\\
+ & checkpoint\_path & Text & Yes & Path of the checkpoint on disk; empty for models that are shown only on the Results tab.\\
+ & sample\_rate & Integer & No & Input sampling rate in Hz (16,000 for M2D).\\
+ & is\_demo & Boolean & No & Whether the model can be selected on the Demo tab.\\
+\midrule
+Task & task\_id & Integer & No & Primary key.\\
+ & code & Text & No & Unique short code, for example \emph{genre}, \emph{tagging}, \emph{instrument}, \emph{pitch}, \emph{esc50}.\\
+ & name & Text & No & Name shown in the interface.\\
+ & dataset & Text & No & Evaluation dataset, for example GTZAN or NSynth.\\
+ & label\_type & Text & No & \emph{single} for single-label or \emph{multi} for multi-label tasks.\\
+ & metric & Text & No & \emph{accuracy} or \emph{mAP}.\\
+ & is\_demo & Boolean & No & Whether the task is offered on the Demo tab.\\
+\midrule
+Label & label\_id & Integer & No & Primary key.\\
+ & task\_id & Integer & No & Foreign key to Task.\\
+ & label\_index & Integer & No & Output index of the label in the probe.\\
+ & name & Text & No & Label name, for example \emph{rock}, \emph{guitar}, \emph{brass} or a MIDI pitch.\\
+\midrule
+Probe & probe\_id & Integer & No & Primary key.\\
+ & model\_id & Integer & No & Foreign key to Model.\\
+ & task\_id & Integer & No & Foreign key to Task; the pair (model\_id, task\_id) is unique.\\
+ & weights\_path & Text & No & Path of the linear-layer weights.\\
+ & stats\_path & Text & No & Path of the mean and standard deviation used to standardize embeddings.\\
+ & layer & Integer & Yes & Encoder layer used for reference models; empty for the final layer of M2D.\\
+ & threshold & Real & Yes & Decision threshold for multi-label tasks (0.5 by default); empty for single-label tasks.\\
+\midrule
+EvaluationResult & result\_id & Integer & No & Primary key.\\
+ & model\_id & Integer & No & Foreign key to Model.\\
+ & task\_id & Integer & No & Foreign key to Task.\\
+ & split & Text & No & \emph{validation} or \emph{test}; (model\_id, task\_id, split) is unique.\\
+ & score\_mean & Real & No & Mean score over probe seeds, in percent.\\
+ & score\_std & Real & Yes & Standard deviation over probe seeds.\\
+ & n\_seeds & Integer & No & Number of probe seeds.\\
+ & source\_file & Text & No & Result file from which the row was imported.\\
+ & imported\_at & Date-time & No & Time of import.\\
+\midrule
+SampleClip & clip\_id & Integer & No & Primary key.\\
+ & task\_id & Integer & No & Foreign key to Task for which the clip is offered.\\
+ & title & Text & No & Name shown in the sample list.\\
+ & file\_path & Text & No & Path of the audio file on disk.\\
+ & source\_dataset & Text & No & Dataset from which the clip comes, for example FMA or NSynth.\\
+ & license & Text & No & License of the clip and attribution text.\\
+ & source\_label & Text & Yes & Label given by the source dataset, shown for reference.\\
+ & duration\_s & Real & No & Duration in seconds.\\
+\midrule
+InferenceLog & log\_id & Integer & No & Primary key.\\
+ & task\_id & Integer & No & Foreign key to Task.\\
+ & model\_id & Integer & No & Foreign key to Model.\\
+ & input\_source & Text & No & \emph{upload} or \emph{sample}.\\
+ & duration\_s & Real & Yes & Duration of the analyzed audio; empty if decoding failed.\\
+ & device & Text & No & \emph{gpu} or \emph{cpu}.\\
+ & latency\_ms & Integer & Yes & Processing time in milliseconds; empty if the request failed.\\
+ & status & Text & No & \emph{ok} or an error code.\\
+ & created\_at & Date-time & No & Time of the request.\\
+\end{longtable}}
+
+\section{Risk Analysis}
+\label{sec:srs-risks}
+The dashboard is a small part of a research project with a fixed three-month schedule and a single GPU, so its risks are mostly about timing, faithfulness and licensing rather than scale. The main risks are described below and summarized with their mitigation in Table~\ref{tab:srs-risks}.
+
+\subsection{Technical Risks}
+The dashboard depends on the outputs of the research: if the further pre-trained checkpoints or their probes are late, there is nothing to demonstrate for A$^{*}$. The dashboard is therefore developed first with the unmodified model A0, whose probes are available early, and A$^{*}$ is added by import. A second risk is a silent mismatch between the preprocessing of the dashboard and that of the evaluation, which would make the demonstration show a model that behaves differently from the one evaluated; it is reduced by importing the evaluation code instead of copying it and by a check that the dashboard reproduces the cached embeddings of a few test clips. Finally, the GPU may be busy with training or unavailable at a presentation, in which case the CPU path is used, and some uploaded files may fail to decode, which is handled by the input checks.
+
+\subsection{Schedule Risks}
+The research has priority over the dashboard in the three-month schedule. The dashboard is kept minimal, with no accounts and a single page, and it is built in small steps (results view, then one task, then the other tasks, then comparison) so that a usable version exists at every stage.
+
+\subsection{Legal and Licensing Risks}
+Bundled sample clips are redistributed to visitors, so they must have suitable licenses. Sample clips are taken only from openly licensed sources such as FMA~\cite{ref:Defferrard:2017fma} and NSynth~\cite{ref:Engel:2017nsynth} and shown with their license and attribution; GTZAN clips, which are excerpts of commercial recordings, are not bundled. The reference checkpoints have their own licenses, for example the non-commercial license of MERT~\cite{ref:MERTCard}, which is compatible with an academic demonstration but is stated on the About page.
+
+\subsection{Misinterpretation Risks}
+Visitors may read a single prediction as evidence that one model is better than another. The dashboard states on the Demo and About pages that single-clip predictions are illustrations, and the Results tab shows only the scores of the full evaluation, identical to those of the report.
+
+\begin{table}[htbp]
+\centering
+\caption[Summary of risks of the dashboard]{Summary of risks of the dashboard with their likelihood, impact and mitigation.}
+\label{tab:srs-risks}
+\small\singlespacing
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{4.0cm}ccY}
+\toprule
+\textbf{Risk} & \textbf{Likelihood} & \textbf{Impact} & \textbf{Mitigation}\\
+\midrule
+Checkpoints or probes of A$^{*}$ are late & Medium & High & Develop with A0 first; add A$^{*}$ by import\\
+Preprocessing differs from evaluation & Medium & High & Import the evaluation code; check against cached embeddings\\
+GPU unavailable at a presentation & Low & Medium & CPU fallback; models loaded at start-up\\
+Uploaded files fail to decode & Medium & Low & Type, size and decoding checks with clear messages\\
+Dashboard work delays the research & Medium & Medium & Minimal scope; incremental development\\
+Unsuitable licenses of sample clips & Low & High & Only openly licensed clips with attribution; no GTZAN clips\\
+Single predictions taken as results & Medium & Medium & Disclaimers; Results tab shows only evaluation scores\\
+\bottomrule
+\end{tabularx}
 \end{table}
 
-This section lists use cases or scenarios from the use-case model if they represent some significant, central functionality of the final system, or if they have a large architectural coverage—they exercise many architectural elements or if they stress or illustrate a specific, delicate point of the architecture.\\
-\textbf{Summary:} The description briefly conveys the role and purpose of the use case. A single paragraph will suffice for this description.\\
-\textbf{Basic Flow:} This use case starts when the actor does something. An actor always initiates use cases. The use case describes what the actor does and what the system does in response. It is phrased in the form of a dialog between the actor and the system.\\
-The use case describes what happens inside the system, but not how or why. If information is exchanged, be specific about what is passed back and forth. For example, it is not very illuminating to say that the actor enters customer information. It is better to say the actor enters the customer’s name and address. A Glossary of Terms is often useful to keep the complexity of the use case manageable you may want to define things like customer information there to keep the use case from drowning in details.\\
-Simple alternatives may be presented within the text of the use case. If it only takes a few sentences to describe what happens when there is an alternative, do it directly within the \textbf{Flow of Events} section. If the alternative flow is more complex, use a separate section to describe it. For example, an Alternative Flow subsection explains how to describe more complex alternatives.\\
-A picture is sometimes worth a thousand words, though there is no substitute for clean, clear prose. If it improves clarity, feel free to paste graphical depictions of user interfaces, process flows or other figures into the use case. If a flow chart is useful to present a complex decision process, by all means use it!  Similarly for state-dependent behavior, a state-transition diagram often clarifies the behavior of a system better than pages upon pages of text. Use the right presentation medium for your problem, but be wary of using terminology, notations or figures that your audience may not understand. Remember that your purpose is to clarify, not obscure.\\
-\textbf{First Alternative Flow:} More complex alternatives are described in a separate section, referred to in the Basic Flow subsection of Flow of Events section. Think of the Alternative Flow subsections like alternative behavior each alternative flow represents alternative behavior usually due to exceptions that occur in the main flow. They may be as long as necessary to describe the events associated with the alternative behavior. When an alternative flow ends, the events of the main flow of events are resumed unless otherwise stated.\\
-\textbf{Second Alternative Flow:} There may be, and most likely will be, a number of alternative flows in a use case. Keep each alternative flow separate to improve clarity. Using alternative flows improves the readability of the use case, as well as preventing use cases from being decomposed into hierarchies of use cases. Keep in mind that use cases are just textual descriptions, and their main purpose is to document the behavior of a system in a clear, concise, and understandable way.\\
-\textbf{Special Requirements:} A special requirement is typically a nonfunctional requirement that is specific to a use case, but is not easily or naturally specified in the text of the use case’s event flow. Examples of special requirements include legal and regulatory requirements, application standards, and quality attributes of the system to be built including usability, reliability, performance or supportability requirements. Additionally, other requirements such as operating systems and environments, compatibility requirements, and design constraints should be captured in this section.\\
-\textbf{Pre-Conditions:} A pre-condition of a use case is the state of the system that must be present prior to a use case being performed.\\
-\textbf{Post-Conditions:} A post-condition of a use case is a list of possible states the system can be in immediately after a use case has finished.
-\section{Hardware and Software Requirements}
-List the hardware and software requirements that will be required to develop and deploy the project.
-\subsection{Hardware Requirements}
-\subsection{Software Requirements}
-\section{Graphical User Interface}
-This section should give the GUI dumps of each screen, with reference to the users. The navigation flow of each user is also required, and each GUI should mark the functionality/use case that it covers.
-\section{Database Design (if required; this means if you are using noSQL, you will not provide ER but the other design element and data dictonary should still be there. Explain and elaborate your DB design)}
-\subsection{ER Diagram}
-\subsection{Data Dictionary}
-\section{ Risk Analysis}
-List and explain the risks that may be encountered during the project. For e.g.: technical risks, business risks, etc.
+\section{Conclusion}
+\label{sec:srs-conclusion}
+This chapter specified the M2D Music Dashboard, the small web application that accompanies the study. It presents the results of the further pre-training experiments and demonstrates four MARBLE tasks, namely genre, tagging, instrument and pitch, on clips that a visitor uploads or selects, with a side-by-side comparison of the original and the further pre-trained model. The requirements favor simplicity and faithfulness: there are no accounts, a single page with three tabs, a FastAPI backend that reuses the evaluation code and probes, a plain HTML and JavaScript frontend, and a small SQLite database whose results are imported unchanged from the evaluation. The use cases, wireframes, database design and risk analysis provide the basis for the design in the next chapters, while the research method that produces the models and results is described in Chapter~\ref{ch:m5}.
+
 \chapter{Proposed Approach and Methodology}
 \label{ch:m5}
 This chapter describes the proposed approach at the level of algorithms and procedures. The study asks whether a general-purpose audio model trained by masked latent prediction can compete with music-specific foundation models after further pre-training on a small amount of music data. Figure~\ref{fig:m5-overview} gives an overview. The approach has four parts: a data pipeline that acquires a 10,000-track subset of the Free Music Archive (FMA) and converts it into the exact input format of the pre-trained model; a further pre-training framework, called M2D-X-Music in this report, that combines the denoising and regularization recipe of M2D-X with a MERT-style musical teacher; an experimental design that isolates the contribution of each component and of the amount of data under a single-GPU budget; and an evaluation protocol that measures gains on music tasks, retention of general-audio ability, and the remaining gap to music-specific reference models. Section~\ref{sec:m5-foundations} first summarizes the literature that motivates each design choice. No results are reported in this chapter: it specifies what will be run and how the outcome will be judged.

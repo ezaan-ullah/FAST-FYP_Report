@@ -3,14 +3,22 @@
 \contentsline {figure}{\numberline {2.1}{\ignorespaces This figure represents all the SDGs that can be targets of an FYP; Adding this sub-caption is mandatory; make sure you describe the picture in a way that if a visually impaired person is reading using a text reader, they can understand whats in this picture.}}{4}{figure.caption.1}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Use-case diagram of the dashboard}}{50}{figure.caption.2}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Navigation flow of the dashboard}}{56}{figure.caption.9}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Wireframe of the Results Overview}}{56}{figure.caption.10}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Wireframe of the Demo screen: task and input}}{57}{figure.caption.11}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Wireframe of the Demo screen: output}}{57}{figure.caption.12}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Wireframe of the comparison view}}{58}{figure.caption.13}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Wireframe of the About page}}{58}{figure.caption.14}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces ER diagram of the dashboard database}}{60}{figure.caption.15}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {5.1}{\ignorespaces Overview of the proposed methodology}}{14}{figure.caption.5}%
-\contentsline {figure}{\numberline {5.2}{\ignorespaces Data acquisition and preprocessing pipeline}}{22}{figure.caption.9}%
-\contentsline {figure}{\numberline {5.3}{\ignorespaces Architecture of the further pre-training framework}}{25}{figure.caption.11}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Overview of the proposed methodology}}{65}{figure.caption.17}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Data acquisition and preprocessing pipeline}}{73}{figure.caption.21}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Architecture of the further pre-training framework}}{76}{figure.caption.23}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {A.1}{\ignorespaces {\textbf {Fast Logo is the Caption.}}}}{53}{figure.caption.20}%
+\contentsline {figure}{\numberline {A.1}{\ignorespaces {\textbf {Fast Logo is the Caption.}}}}{105}{figure.caption.32}%

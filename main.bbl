@@ -1,68 +1,21 @@
 \begin{thebibliography}{10}
 
-\bibitem{ref:guyon:2007a}
-I.~Guyon, A.~Saffari, G.~Dror, and G.~Cawley, ``Analysis of the {IJCNN} 2007
-  agnostic learning vs. prior knowledge challenge,'' {\em Neural Networks},
-  vol.~21, pp.~544--550, December 2008.
-
-\bibitem{ref:Bishop:2006}
-C.~M. Bishop, {\em Pattern Recognition and Machine Learning}.
-\newblock Springer, 2006.
-
-\bibitem{ref:Duda:2000}
-R.~O. Duda, P.~E. Hart, and D.~G. Stork, {\em Pattern Classification}.
-\newblock John Wiley and Sons, 2000.
-
-\bibitem{ref:SVMGuide}
-C.-C. Chang and C.-J. Lin, {\em {LIBSVM}: A Library for Support Vector
-  Machines}, 2001.
-\newblock Available: \url{http://www.csie.ntu.edu.tw/~cjlin/libsvm}.
-
-\bibitem{ref:guyon:2007}
-I.~Guyon, A.~Saffari, G.~Dror, and G.~Cawley, ``Agnostic learning vs. prior
-  knowledge challenge,'' in {\em Proceedings of International Joint Conference
-  on Neural Networks}, August 2007.
-
-\bibitem{ref:IJCNNChallenge:2007}
-``{Agnostic Learning Vs. Prior Knowledge Challenge by {Internation Joint
-  Conference on Neural Networks (IJCNN)}}.'' Available:
-  \url{http://www.agnostic.inf.ethz.ch} [Accessed November 02, 2018].
-
-\bibitem{ref:He:2022mae}
-K.~He, X.~Chen, S.~Xie, Y.~Li, P.~Doll{\'a}r, and R.~Girshick, ``Masked
-  autoencoders are scalable vision learners,'' in {\em Proc. IEEE/CVF
-  Conference on Computer Vision and Pattern Recognition (CVPR)},
-  pp.~16000--16009, 2022.
-
 \bibitem{ref:Huang:2022audiomae}
 P.-Y. Huang, H.~Xu, J.~Li, A.~Baevski, M.~Auli, W.~Galuba, F.~Metze, and
   C.~Feichtenhofer, ``Masked autoencoders that listen,'' in {\em Advances in
   Neural Information Processing Systems (NeurIPS)}, vol.~35, 2022.
-
-\bibitem{ref:Grill:2020byol}
-J.-B. Grill, F.~Strub, F.~Altch{\'e}, C.~Tallec, P.~H. Richemond,
-  E.~Buchatskaya, C.~Doersch, B.~A. Pires, Z.~D. Guo, M.~G. Azar, B.~Piot,
-  K.~Kavukcuoglu, R.~Munos, and M.~Valko, ``Bootstrap your own latent: A new
-  approach to self-supervised learning,'' in {\em Advances in Neural
-  Information Processing Systems (NeurIPS)}, vol.~33, 2020.
-
-\bibitem{ref:Baevski:2022data2vec}
-A.~Baevski, W.-N. Hsu, Q.~Xu, A.~Babu, J.~Gu, and M.~Auli, ``data2vec: A
-  general framework for self-supervised learning in speech, vision and
-  language,'' in {\em Proc. International Conference on Machine Learning
-  (ICML), PMLR}, vol.~162, pp.~1298--1312, 2022.
-
-\bibitem{ref:Assran:2023ijepa}
-M.~Assran, Q.~Duval, I.~Misra, P.~Bojanowski, P.~Vincent, M.~Rabbat, Y.~LeCun,
-  and N.~Ballas, ``Self-supervised learning from images with a joint-embedding
-  predictive architecture,'' in {\em Proc. IEEE/CVF Conference on Computer
-  Vision and Pattern Recognition (CVPR)}, pp.~15619--15629, 2023.
 
 \bibitem{ref:Chen:2023beats}
 S.~Chen, Y.~Wu, C.~Wang, S.~Liu, D.~Tompkins, Z.~Chen, W.~Che, X.~Yu, and
   F.~Wei, ``{BEATs}: Audio pre-training with acoustic tokenizers,'' in {\em
   Proc. International Conference on Machine Learning (ICML), PMLR}, vol.~202,
   pp.~5178--5193, 2023.
+
+\bibitem{ref:Niizumi:2022msmmae}
+D.~Niizumi, D.~Takeuchi, Y.~Ohishi, N.~Harada, and K.~Kashino, ``Masked
+  spectrogram modeling using masked autoencoders for learning general-purpose
+  audio representation,'' in {\em HEAR: Holistic Evaluation of Audio
+  Representations (NeurIPS 2021 Competition), PMLR}, vol.~166, pp.~1--24, 2022.
 
 \bibitem{ref:Niizumi:2023m2d}
 D.~Niizumi, D.~Takeuchi, Y.~Ohishi, N.~Harada, and K.~Kashino, ``{Masked
@@ -76,36 +29,11 @@ D.~Niizumi, D.~Takeuchi, Y.~Ohishi, N.~Harada, and K.~Kashino, ``{Masked
   IEEE/ACM Transactions on Audio, Speech, and Language Processing}, vol.~32,
   pp.~2391--2406, 2024.
 
-\bibitem{ref:M2DGit}
-{NTT Communication Science Laboratories}, ``{M2D}: Masked modeling duo,
-  official implementation and pre-trained weights.''
-  \url{https://github.com/nttcslab/m2d}.
-\newblock Accessed: October 2026.
-
-\bibitem{ref:Dosovitskiy:2021vit}
-A.~Dosovitskiy, L.~Beyer, A.~Kolesnikov, D.~Weissenborn, X.~Zhai,
-  T.~Unterthiner, M.~Dehghani, M.~Minderer, G.~Heigold, S.~Gelly, J.~Uszkoreit,
-  and N.~Houlsby, ``An image is worth 16x16 words: Transformers for image
-  recognition at scale,'' in {\em Proc. International Conference on Learning
-  Representations (ICLR)}, 2021.
-
-\bibitem{ref:Gemmeke:2017audioset}
-J.~F. Gemmeke, D.~P.~W. Ellis, D.~Freedman, A.~Jansen, W.~Lawrence, R.~C.
-  Moore, M.~Plakal, and M.~Ritter, ``Audio {Set}: An ontology and human-labeled
-  dataset for audio events,'' in {\em Proc. IEEE International Conference on
-  Acoustics, Speech and Signal Processing (ICASSP)}, pp.~776--780, 2017.
-
-\bibitem{ref:Quelennec:2025matpac}
-A.~Quelennec, P.~Chouteau, G.~Peeters, and S.~Essid, ``Masked latent prediction
-  and classification for self-supervised audio representation learning,'' in
-  {\em Proc. IEEE International Conference on Acoustics, Speech and Signal
-  Processing (ICASSP)}, pp.~1--5, 2025.
-
-\bibitem{ref:Quelennec:2025matpacpp}
-A.~Quelennec, P.~Chouteau, G.~Peeters, and S.~Essid, ``{MATPAC++}: Enhanced
-  masked latent prediction for self-supervised audio representation learning.''
-  arXiv preprint arXiv:2508.12709, 2025.
-\newblock Preprint, under review.
+\bibitem{ref:Niizumi:2023m2ds}
+D.~Niizumi, D.~Takeuchi, Y.~Ohishi, N.~Harada, and K.~Kashino, ``{Masked
+  Modeling Duo} for speech: Specializing general-purpose audio representation
+  to speech using denoising distillation,'' in {\em Proc. Interspeech},
+  pp.~1294--1298, 2023.
 
 \bibitem{ref:Niizumi:2024m2dclap}
 D.~Niizumi, D.~Takeuchi, Y.~Ohishi, N.~Harada, M.~Yasuda, S.~Tsubaki, and
@@ -113,22 +41,58 @@ D.~Niizumi, D.~Takeuchi, Y.~Ohishi, N.~Harada, M.~Yasuda, S.~Tsubaki, and
   general-purpose audio-language representation,'' in {\em Proc. Interspeech},
   pp.~57--61, 2024.
 
-\bibitem{ref:Xie:2023datascaling}
-Z.~Xie, Z.~Zhang, Y.~Cao, Y.~Lin, Y.~Wei, Q.~Dai, and H.~Hu, ``On data scaling
-  in masked image modeling,'' in {\em Proc. IEEE/CVF Conference on Computer
-  Vision and Pattern Recognition (CVPR)}, pp.~10365--10374, 2023.
+\bibitem{ref:Niizumi:2025m2dclap}
+D.~Niizumi, D.~Takeuchi, M.~Yasuda, B.~T. Nguyen, Y.~Ohishi, and N.~Harada,
+  ``{M2D-CLAP}: Exploring general-purpose audio-language representations beyond
+  {CLAP}.'' arXiv preprint arXiv:2503.22104, 2025.
 
-\bibitem{ref:Niizumi:2023m2ds}
-D.~Niizumi, D.~Takeuchi, Y.~Ohishi, N.~Harada, and K.~Kashino, ``{Masked
-  Modeling Duo} for speech: Specializing general-purpose audio representation
-  to speech using denoising distillation,'' in {\em Proc. Interspeech},
-  pp.~1294--1298, 2023.
+\bibitem{ref:Assran:2023ijepa}
+M.~Assran, Q.~Duval, I.~Misra, P.~Bojanowski, P.~Vincent, M.~Rabbat, Y.~LeCun,
+  and N.~Ballas, ``Self-supervised learning from images with a joint-embedding
+  predictive architecture,'' in {\em Proc. IEEE/CVF Conference on Computer
+  Vision and Pattern Recognition (CVPR)}, pp.~15619--15629, 2023.
 
-\bibitem{ref:Hsu:2021hubert}
-W.-N. Hsu, B.~Bolte, Y.-H.~H. Tsai, K.~Lakhotia, R.~Salakhutdinov, and
-  A.~Mohamed, ``{HuBERT}: Self-supervised speech representation learning by
-  masked prediction of hidden units,'' {\em IEEE/ACM Transactions on Audio,
-  Speech, and Language Processing}, vol.~29, pp.~3451--3460, 2021.
+\bibitem{ref:Riou:2024jepa}
+A.~Riou, S.~Lattner, G.~Hadjeres, and G.~Peeters, ``Investigating design
+  choices in joint-embedding predictive architectures for general audio
+  representation learning,'' in {\em Proc. IEEE International Conference on
+  Acoustics, Speech and Signal Processing Workshops (ICASSPW)}, pp.~680--684,
+  2024.
+
+\bibitem{ref:Tuncay:2025audiojepa}
+L.~Tuncay, E.~Labb{\'e}, E.~Benetos, and T.~Pellegrini, ``{Audio-JEPA}:
+  Joint-embedding predictive architecture for audio representation learning.''
+  arXiv preprint arXiv:2507.02915, 2025.
+
+\bibitem{ref:Quelennec:2025matpac}
+A.~Quelennec, P.~Chouteau, G.~Peeters, and S.~Essid, ``Masked latent prediction
+  and classification for self-supervised audio representation learning,'' in
+  {\em Proc. IEEE International Conference on Acoustics, Speech and Signal
+  Processing (ICASSP)}, pp.~1--5, 2025.
+
+\bibitem{ref:Caron:2021dino}
+M.~Caron, H.~Touvron, I.~Misra, H.~J{\'e}gou, J.~Mairal, P.~Bojanowski, and
+  A.~Joulin, ``Emerging properties in self-supervised vision transformers,'' in
+  {\em Proc. IEEE/CVF International Conference on Computer Vision (ICCV)},
+  pp.~9630--9640, 2021.
+
+\bibitem{ref:Quelennec:2025matpacpp}
+A.~Quelennec, P.~Chouteau, G.~Peeters, and S.~Essid, ``{MATPAC++}: Enhanced
+  masked latent prediction for self-supervised audio representation learning.''
+  arXiv preprint arXiv:2508.12709, 2025.
+\newblock Preprint, under review.
+
+\bibitem{ref:Gu:2026pupum2d}
+Y.~Gu, J.~Zhang, J.~Li, Z.~Wu, and L.~Juvela, ``Frequency-aware self-supervised
+  music representation learning.'' arXiv preprint arXiv:2606.25713, 2026.
+\newblock Preprint; the model was first named PupuJEPA and renamed PupuM2D in
+  version 3.
+
+\bibitem{ref:Castellon:2021jukemir}
+R.~Castellon, C.~Donahue, and P.~Liang, ``Codified audio language modeling
+  learns useful representations for music information retrieval,'' in {\em
+  Proc. International Society for Music Information Retrieval Conference
+  (ISMIR)}, pp.~88--96, 2021.
 
 \bibitem{ref:Li:2024mert}
 Y.~Li, R.~Yuan, G.~Zhang, Y.~Ma, X.~Chen, H.~Yin, C.~Xiao, C.~Lin, A.~Ragni,
@@ -137,25 +101,16 @@ Y.~Li, R.~Yuan, G.~Zhang, Y.~Ma, X.~Chen, H.~Yin, C.~Xiao, C.~Lin, A.~Ragni,
   model with large-scale self-supervised training,'' in {\em Proc.
   International Conference on Learning Representations (ICLR)}, 2024.
 
-\bibitem{ref:Defossez:2023encodec}
-A.~D{\'e}fossez, J.~Copet, G.~Synnaeve, and Y.~Adi, ``High fidelity neural
-  audio compression,'' {\em Transactions on Machine Learning Research}, 2023.
+\bibitem{ref:Spijkervet:2021clmr}
+J.~Spijkervet and J.~A. Burgoyne, ``Contrastive learning of musical
+  representations,'' in {\em Proc. International Society for Music Information
+  Retrieval Conference (ISMIR)}, pp.~673--681, 2021.
 
-\bibitem{ref:Brown:1991cqt}
-J.~C. Brown, ``Calculation of a constant {Q} spectral transform,'' {\em The
-  Journal of the Acoustical Society of America}, vol.~89, no.~1, pp.~425--434,
-  1991.
-
-\bibitem{ref:Cheuk:2020nnaudio}
-K.~W. Cheuk, H.~Anderson, K.~Agres, and D.~Herremans, ``{nnAudio}: An
-  on-the-fly {GPU} audio to spectrogram conversion toolbox using {1D}
-  convolutional neural networks,'' {\em IEEE Access}, vol.~8,
-  pp.~161981--162003, 2020.
-
-\bibitem{ref:MERTGit}
-Y.~Li {\em et~al.}, ``{MERT}: official implementation (fairseq plug-in) and
-  training scripts.'' \url{https://github.com/yizhilll/MERT}.
-\newblock Accessed: October 2026.
+\bibitem{ref:McCallum:2022mule}
+M.~C. McCallum, F.~Korzeniowski, S.~Oramas, F.~Gouyon, and A.~F. Ehmann,
+  ``Supervised and unsupervised learning of audio representations for music
+  understanding,'' in {\em Proc. International Society for Music Information
+  Retrieval Conference (ISMIR)}, pp.~256--263, 2022.
 
 \bibitem{ref:MERTCard}
 {m-a-p}, ``{MERT}-v0-public and {MERT}-v1-95m model cards.''
@@ -178,18 +133,6 @@ C.-C. Chiu, J.~Qin, Y.~Zhang, J.~Yu, and Y.~Wu, ``Self-supervised learning with
 H.~Zhu, Y.~Zhou, H.~Chen, J.~Yu, Z.~Ma, R.~Gu, Y.~Luo, W.~Tan, and X.~Chen,
   ``{MuQ}: Self-supervised music representation learning with {Mel} residual
   vector quantization.'' arXiv preprint arXiv:2501.01108, 2025.
-
-\bibitem{ref:Caron:2021dino}
-M.~Caron, H.~Touvron, I.~Misra, H.~J{\'e}gou, J.~Mairal, P.~Bojanowski, and
-  A.~Joulin, ``Emerging properties in self-supervised vision transformers,'' in
-  {\em Proc. IEEE/CVF International Conference on Computer Vision (ICCV)},
-  pp.~9630--9640, 2021.
-
-\bibitem{ref:Perera:2024annealed}
-D.~Perera, V.~Letzelter, T.~Mariotte, A.~Cort{\'e}s, M.~Chen, S.~Essid, and
-  G.~Richard, ``Annealed multiple choice learning: Overcoming limitations of
-  winner-takes-all with annealing,'' in {\em Advances in Neural Information
-  Processing Systems (NeurIPS)}, pp.~10541--10574, 2024.
 
 \bibitem{ref:Gururangan:2020dsp}
 S.~Gururangan, A.~Marasovi{\'c}, S.~Swayamdipta, K.~Lo, I.~Beltagy, D.~Downey,
@@ -219,6 +162,188 @@ D.~Niizumi, D.~Takeuchi, M.~Yasuda, B.~T. Nguyen, Y.~Ohishi, and N.~Harada,
   {\em Proc. Interspeech}, 2025.
 \newblock arXiv:2505.15307.
 
+\bibitem{ref:Ding:2024petl}
+Y.~Ding and A.~Lerch, ``Parameter-efficient transfer learning for music
+  foundation models.'' arXiv preprint arXiv:2411.19371, 2024.
+
+\bibitem{ref:Gemmeke:2017audioset}
+J.~F. Gemmeke, D.~P.~W. Ellis, D.~Freedman, A.~Jansen, W.~Lawrence, R.~C.
+  Moore, M.~Plakal, and M.~Ritter, ``Audio {Set}: An ontology and human-labeled
+  dataset for audio events,'' in {\em Proc. IEEE International Conference on
+  Acoustics, Speech and Signal Processing (ICASSP)}, pp.~776--780, 2017.
+
+\bibitem{ref:Fonseca:2022fsd50k}
+E.~Fonseca, X.~Favory, J.~Pons, F.~Font, and X.~Serra, ``{FSD50K}: An open
+  dataset of human-labeled sound events,'' {\em IEEE/ACM Transactions on Audio,
+  Speech, and Language Processing}, vol.~30, pp.~829--852, 2022.
+
+\bibitem{ref:Defferrard:2017fma}
+M.~Defferrard, K.~Benzi, P.~Vandergheynst, and X.~Bresson, ``{FMA}: A dataset
+  for music analysis,'' in {\em Proc. International Society for Music
+  Information Retrieval Conference (ISMIR)}, 2017.
+
+\bibitem{ref:FMAGit}
+M.~Defferrard {\em et~al.}, ``{FMA}: A dataset for music analysis, repository
+  and download page.'' \url{https://github.com/mdeff/fma}.
+\newblock Accessed: October 2026.
+
+\bibitem{ref:BertinMahieux:2011msd}
+T.~Bertin-Mahieux, D.~P.~W. Ellis, B.~Whitman, and P.~Lamere, ``The {Million
+  Song Dataset},'' in {\em Proc. International Society for Music Information
+  Retrieval Conference (ISMIR)}, pp.~591--596, 2011.
+
+\bibitem{ref:Santana:2020music4all}
+I.~A.~P. Santana {\em et~al.}, ``{Music4All}: A new music database and its
+  applications,'' in {\em Proc. International Conference on Systems, Signals
+  and Image Processing (IWSSIP)}, 2020.
+
+\bibitem{ref:Bogdanov:2019jamendo}
+D.~Bogdanov, M.~Won, P.~Tovstogan, A.~Porter, and X.~Serra, ``The {MTG-Jamendo}
+  dataset for automatic music tagging,'' in {\em Machine Learning for Music
+  Discovery Workshop, International Conference on Machine Learning (ICML)},
+  2019.
+
+\bibitem{ref:Law:2009tagatune}
+E.~Law, K.~West, M.~Mandel, M.~Bay, and J.~S. Downie, ``Evaluation of
+  algorithms using games: The case of music tagging,'' in {\em Proc.
+  International Society for Music Information Retrieval Conference (ISMIR)},
+  pp.~387--392, 2009.
+
+\bibitem{ref:Tzanetakis:2002genre}
+G.~Tzanetakis and P.~Cook, ``Musical genre classification of audio signals,''
+  {\em IEEE Transactions on Speech and Audio Processing}, vol.~10, no.~5,
+  pp.~293--302, 2002.
+
+\bibitem{ref:Sturm:2013gtzan}
+B.~L. Sturm, ``The {GTZAN} dataset: Its contents, its faults, their effects on
+  evaluation, and its future use.'' arXiv preprint arXiv:1306.1461, 2013.
+
+\bibitem{ref:Kereliuk:2015adversaries}
+C.~Kereliuk, B.~L. Sturm, and J.~Larsen, ``Deep learning and music
+  adversaries,'' {\em IEEE Transactions on Multimedia}, vol.~17, no.~11,
+  pp.~2059--2071, 2015.
+
+\bibitem{ref:Engel:2017nsynth}
+J.~Engel, C.~Resnick, A.~Roberts, S.~Dieleman, M.~Norouzi, D.~Eck, and
+  K.~Simonyan, ``Neural audio synthesis of musical notes with {WaveNet}
+  autoencoders,'' in {\em Proc. International Conference on Machine Learning
+  (ICML), PMLR}, vol.~70, pp.~1068--1077, 2017.
+
+\bibitem{ref:Humphrey:2018openmic}
+E.~J. Humphrey, S.~Durand, and B.~McFee, ``{OpenMIC-2018}: An open dataset for
+  multiple instrument recognition,'' in {\em Proc. International Society for
+  Music Information Retrieval Conference (ISMIR)}, pp.~438--444, 2018.
+
+\bibitem{ref:Yuan:2023marble}
+R.~Yuan, Y.~Ma, Y.~Li, G.~Zhang, X.~Chen, H.~Yin, {\em et~al.}, ``{MARBLE}:
+  Music audio representation benchmark for universal evaluation,'' in {\em
+  Advances in Neural Information Processing Systems (NeurIPS), Datasets and
+  Benchmarks Track}, vol.~36, 2023.
+
+\bibitem{ref:Turian:2022hear}
+J.~Turian, J.~Shier, H.~R. Khan, B.~Raj, B.~W. Schuller, {\em et~al.},
+  ``{HEAR}: Holistic evaluation of audio representations,'' in {\em Proc.
+  NeurIPS 2021 Competitions and Demonstrations Track, PMLR}, vol.~176,
+  pp.~125--145, 2022.
+
+\bibitem{ref:EVARGit}
+{NTT Communication Science Laboratories}, ``{EVAR}: Evaluation of audio
+  representations.'' \url{https://github.com/nttcslab/eval-audio-repr}.
+\newblock Accessed: October 2026.
+
+\bibitem{ref:M2DGit}
+{NTT Communication Science Laboratories}, ``{M2D}: Masked modeling duo,
+  official implementation and pre-trained weights.''
+  \url{https://github.com/nttcslab/m2d}.
+\newblock Accessed: October 2026.
+
+\bibitem{ref:Cheuk:2020nnaudio}
+K.~W. Cheuk, H.~Anderson, K.~Agres, and D.~Herremans, ``{nnAudio}: An
+  on-the-fly {GPU} audio to spectrogram conversion toolbox using {1D}
+  convolutional neural networks,'' {\em IEEE Access}, vol.~8,
+  pp.~161981--162003, 2020.
+
+\bibitem{ref:XARESGit}
+{X-ARES developers}, ``{X-ARES}: Extensive audio representation and evaluation
+  suite.'' \url{https://github.com/jimbozhang/xares}.
+\newblock Accessed: October 2026.
+
+\bibitem{ref:MATPACGit}
+A.~Quelennec, ``{MATPAC}: Masked latent prediction and classification, code and
+  checkpoints.'' \url{https://github.com/aurianworld/matpac}.
+\newblock Accessed: October 2026.
+
+\bibitem{ref:MusicFMGit}
+M.~Won, ``{MusicFM}: code and pre-trained checkpoints.''
+  \url{https://github.com/minzwon/musicfm}.
+\newblock Accessed: October 2026.
+
+\bibitem{ref:Piczak:2015esc}
+K.~J. Piczak, ``{ESC}: Dataset for environmental sound classification,'' in
+  {\em Proc. ACM International Conference on Multimedia}, pp.~1015--1018, 2015.
+
+\bibitem{ref:Salamon:2014urbansound}
+J.~Salamon, C.~Jacoby, and J.~P. Bello, ``A dataset and taxonomy for urban
+  sound research,'' in {\em Proc. ACM International Conference on Multimedia},
+  pp.~1041--1044, 2014.
+
+\bibitem{ref:He:2022mae}
+K.~He, X.~Chen, S.~Xie, Y.~Li, P.~Doll{\'a}r, and R.~Girshick, ``Masked
+  autoencoders are scalable vision learners,'' in {\em Proc. IEEE/CVF
+  Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pp.~16000--16009, 2022.
+
+\bibitem{ref:Grill:2020byol}
+J.-B. Grill, F.~Strub, F.~Altch{\'e}, C.~Tallec, P.~H. Richemond,
+  E.~Buchatskaya, C.~Doersch, B.~A. Pires, Z.~D. Guo, M.~G. Azar, B.~Piot,
+  K.~Kavukcuoglu, R.~Munos, and M.~Valko, ``Bootstrap your own latent: A new
+  approach to self-supervised learning,'' in {\em Advances in Neural
+  Information Processing Systems (NeurIPS)}, vol.~33, 2020.
+
+\bibitem{ref:Baevski:2022data2vec}
+A.~Baevski, W.-N. Hsu, Q.~Xu, A.~Babu, J.~Gu, and M.~Auli, ``data2vec: A
+  general framework for self-supervised learning in speech, vision and
+  language,'' in {\em Proc. International Conference on Machine Learning
+  (ICML), PMLR}, vol.~162, pp.~1298--1312, 2022.
+
+\bibitem{ref:Dosovitskiy:2021vit}
+A.~Dosovitskiy, L.~Beyer, A.~Kolesnikov, D.~Weissenborn, X.~Zhai,
+  T.~Unterthiner, M.~Dehghani, M.~Minderer, G.~Heigold, S.~Gelly, J.~Uszkoreit,
+  and N.~Houlsby, ``An image is worth 16x16 words: Transformers for image
+  recognition at scale,'' in {\em Proc. International Conference on Learning
+  Representations (ICLR)}, 2021.
+
+\bibitem{ref:Xie:2023datascaling}
+Z.~Xie, Z.~Zhang, Y.~Cao, Y.~Lin, Y.~Wei, Q.~Dai, and H.~Hu, ``On data scaling
+  in masked image modeling,'' in {\em Proc. IEEE/CVF Conference on Computer
+  Vision and Pattern Recognition (CVPR)}, pp.~10365--10374, 2023.
+
+\bibitem{ref:Hsu:2021hubert}
+W.-N. Hsu, B.~Bolte, Y.-H.~H. Tsai, K.~Lakhotia, R.~Salakhutdinov, and
+  A.~Mohamed, ``{HuBERT}: Self-supervised speech representation learning by
+  masked prediction of hidden units,'' {\em IEEE/ACM Transactions on Audio,
+  Speech, and Language Processing}, vol.~29, pp.~3451--3460, 2021.
+
+\bibitem{ref:Defossez:2023encodec}
+A.~D{\'e}fossez, J.~Copet, G.~Synnaeve, and Y.~Adi, ``High fidelity neural
+  audio compression,'' {\em Transactions on Machine Learning Research}, 2023.
+
+\bibitem{ref:Brown:1991cqt}
+J.~C. Brown, ``Calculation of a constant {Q} spectral transform,'' {\em The
+  Journal of the Acoustical Society of America}, vol.~89, no.~1, pp.~425--434,
+  1991.
+
+\bibitem{ref:MERTGit}
+Y.~Li {\em et~al.}, ``{MERT}: official implementation (fairseq plug-in) and
+  training scripts.'' \url{https://github.com/yizhilll/MERT}.
+\newblock Accessed: October 2026.
+
+\bibitem{ref:Perera:2024annealed}
+D.~Perera, V.~Letzelter, T.~Mariotte, A.~Cort{\'e}s, M.~Chen, S.~Essid, and
+  G.~Richard, ``Annealed multiple choice learning: Overcoming limitations of
+  winner-takes-all with annealing,'' in {\em Advances in Neural Information
+  Processing Systems (NeurIPS)}, pp.~10541--10574, 2024.
+
 \bibitem{ref:Li:2018lwf}
 Z.~Li and D.~Hoiem, ``Learning without forgetting,'' {\em IEEE Transactions on
   Pattern Analysis and Machine Intelligence}, vol.~40, no.~12, pp.~2935--2947,
@@ -235,89 +360,40 @@ J.~Kirkpatrick, R.~Pascanu, N.~Rabinowitz, J.~Veness, G.~Desjardins, A.~A.
   in neural networks,'' {\em Proceedings of the National Academy of Sciences},
   vol.~114, no.~13, pp.~3521--3526, 2017.
 
-\bibitem{ref:Defferrard:2017fma}
-M.~Defferrard, K.~Benzi, P.~Vandergheynst, and X.~Bresson, ``{FMA}: A dataset
-  for music analysis,'' in {\em Proc. International Society for Music
-  Information Retrieval Conference (ISMIR)}, 2017.
-
-\bibitem{ref:EVARGit}
-{NTT Communication Science Laboratories}, ``{EVAR}: Evaluation of audio
-  representations.'' \url{https://github.com/nttcslab/eval-audio-repr}.
-\newblock Accessed: October 2026.
-
-\bibitem{ref:Yuan:2023marble}
-R.~Yuan, Y.~Ma, Y.~Li, G.~Zhang, X.~Chen, H.~Yin, {\em et~al.}, ``{MARBLE}:
-  Music audio representation benchmark for universal evaluation,'' in {\em
-  Advances in Neural Information Processing Systems (NeurIPS), Datasets and
-  Benchmarks Track}, vol.~36, 2023.
-
-\bibitem{ref:Turian:2022hear}
-J.~Turian, J.~Shier, H.~R. Khan, B.~Raj, B.~W. Schuller, {\em et~al.},
-  ``{HEAR}: Holistic evaluation of audio representations,'' in {\em Proc.
-  NeurIPS 2021 Competitions and Demonstrations Track, PMLR}, vol.~176,
-  pp.~125--145, 2022.
-
-\bibitem{ref:Sturm:2013gtzan}
-B.~L. Sturm, ``The {GTZAN} dataset: Its contents, its faults, their effects on
-  evaluation, and its future use.'' arXiv preprint arXiv:1306.1461, 2013.
-
-\bibitem{ref:FMAGit}
-M.~Defferrard {\em et~al.}, ``{FMA}: A dataset for music analysis, repository
-  and download page.'' \url{https://github.com/mdeff/fma}.
-\newblock Accessed: October 2026.
-
-\bibitem{ref:Fonseca:2022fsd50k}
-E.~Fonseca, X.~Favory, J.~Pons, F.~Font, and X.~Serra, ``{FSD50K}: An open
-  dataset of human-labeled sound events,'' {\em IEEE/ACM Transactions on Audio,
-  Speech, and Language Processing}, vol.~30, pp.~829--852, 2022.
-
 \bibitem{ref:Loshchilov:2019adamw}
 I.~Loshchilov and F.~Hutter, ``Decoupled weight decay regularization,'' in {\em
   Proc. International Conference on Learning Representations (ICLR)}, 2019.
 
-\bibitem{ref:MusicFMGit}
-M.~Won, ``{MusicFM}: code and pre-trained checkpoints.''
-  \url{https://github.com/minzwon/musicfm}.
-\newblock Accessed: October 2026.
-
-\bibitem{ref:MATPACGit}
-A.~Quelennec, ``{MATPAC}: Masked latent prediction and classification, code and
-  checkpoints.'' \url{https://github.com/aurianworld/matpac}.
-\newblock Accessed: October 2026.
-
-\bibitem{ref:Kereliuk:2015adversaries}
-C.~Kereliuk, B.~L. Sturm, and J.~Larsen, ``Deep learning and music
-  adversaries,'' {\em IEEE Transactions on Multimedia}, vol.~17, no.~11,
-  pp.~2059--2071, 2015.
-
-\bibitem{ref:Tzanetakis:2002genre}
-G.~Tzanetakis and P.~Cook, ``Musical genre classification of audio signals,''
-  {\em IEEE Transactions on Speech and Audio Processing}, vol.~10, no.~5,
-  pp.~293--302, 2002.
-
-\bibitem{ref:Engel:2017nsynth}
-J.~Engel, C.~Resnick, A.~Roberts, S.~Dieleman, M.~Norouzi, D.~Eck, and
-  K.~Simonyan, ``Neural audio synthesis of musical notes with {WaveNet}
-  autoencoders,'' in {\em Proc. International Conference on Machine Learning
-  (ICML), PMLR}, vol.~70, pp.~1068--1077, 2017.
-
-\bibitem{ref:Law:2009tagatune}
-E.~Law, K.~West, M.~Mandel, M.~Bay, and J.~S. Downie, ``Evaluation of
-  algorithms using games: The case of music tagging,'' in {\em Proc.
-  International Society for Music Information Retrieval Conference (ISMIR)},
-  pp.~387--392, 2009.
-
-\bibitem{ref:Piczak:2015esc}
-K.~J. Piczak, ``{ESC}: Dataset for environmental sound classification,'' in
-  {\em Proc. ACM International Conference on Multimedia}, pp.~1015--1018, 2015.
-
-\bibitem{ref:Salamon:2014urbansound}
-J.~Salamon, C.~Jacoby, and J.~P. Bello, ``A dataset and taxonomy for urban
-  sound research,'' in {\em Proc. ACM International Conference on Multimedia},
-  pp.~1041--1044, 2014.
-
 \bibitem{ref:Efron:1993bootstrap}
 B.~Efron and R.~J. Tibshirani, {\em An Introduction to the Bootstrap}.
 \newblock Chapman and Hall/CRC, 1993.
+
+\bibitem{ref:Duda:2000}
+R.~O. Duda, P.~E. Hart, and D.~G. Stork, {\em Pattern Classification}.
+\newblock John Wiley and Sons, 2000.
+
+\bibitem{ref:Bishop:2006}
+C.~M. Bishop, {\em Pattern Recognition and Machine Learning}.
+\newblock Springer, 2006.
+
+\bibitem{ref:SVMGuide}
+C.-C. Chang and C.-J. Lin, {\em {LIBSVM}: A Library for Support Vector
+  Machines}, 2001.
+\newblock Available: \url{http://www.csie.ntu.edu.tw/~cjlin/libsvm}.
+
+\bibitem{ref:guyon:2007}
+I.~Guyon, A.~Saffari, G.~Dror, and G.~Cawley, ``Agnostic learning vs. prior
+  knowledge challenge,'' in {\em Proceedings of International Joint Conference
+  on Neural Networks}, August 2007.
+
+\bibitem{ref:IJCNNChallenge:2007}
+``{Agnostic Learning Vs. Prior Knowledge Challenge by {Internation Joint
+  Conference on Neural Networks (IJCNN)}}.'' Available:
+  \url{http://www.agnostic.inf.ethz.ch} [Accessed November 02, 2018].
+
+\bibitem{ref:guyon:2007a}
+I.~Guyon, A.~Saffari, G.~Dror, and G.~Cawley, ``Analysis of the {IJCNN} 2007
+  agnostic learning vs. prior knowledge challenge,'' {\em Neural Networks},
+  vol.~21, pp.~544--550, December 2008.
 
 \end{thebibliography}
