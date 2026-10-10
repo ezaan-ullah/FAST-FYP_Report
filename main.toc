@@ -1,0 +1,194 @@
+\contentsline {chapter}{List of Figures}{x}{Doc-Start}%
+\contentsline {chapter}{List of Tables}{xi}{Doc-Start}%
+\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Purpose of this Document}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Intended Audience}{2}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Definitions, Acronyms, and Abbreviations}{2}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Conclusion}{2}{section.1.4}%
+\contentsline {chapter}{\numberline {2}Project Vision}{3}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Problem Domain Overview}{3}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Problem Statement}{3}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Problem Elaboration}{3}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Goals and Objectives}{3}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Project Scope}{3}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Sustainable Development Goal (SDG)}{4}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Constraints}{5}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Business Opportunity}{5}{section.2.8}%
+\contentsline {section}{\numberline {2.9}Stakeholders Description/ User Characteristics}{5}{section.2.9}%
+\contentsline {subsection}{\numberline {2.9.1}Stakeholders Summary}{5}{subsection.2.9.1}%
+\contentsline {subsection}{\numberline {2.9.2}Key High-Level Goals and Problems of Stakeholders}{5}{subsection.2.9.2}%
+\contentsline {chapter}{\numberline {3}Literature Review / Related Work}{6}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Definitions, Acronyms, and Abbreviations}{6}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Detailed Literature Review}{7}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}General-Purpose Audio Self-Supervised Learning by Masked Prediction}{8}{subsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.1.1}Masked Autoencoders that Listen}{8}{subsubsection.3.2.1.1}%
+\contentsline {subsubsection}{\numberline {3.2.1.2}BEATs: Audio Pre-Training with Acoustic Tokenizers}{9}{subsubsection.3.2.1.2}%
+\contentsline {subsection}{\numberline {3.2.2}The Masked Modeling Duo Family}{9}{subsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.2.1}Masked Modeling Duo: Learning Representations by Encouraging Both Networks to Model the Input}{10}{subsubsection.3.2.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2.2}Masked Modeling Duo for Speech: Specializing General-Purpose Audio Representation to Speech Using Denoising Distillation}{11}{subsubsection.3.2.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.2.3}Masked Modeling Duo: Towards a Universal Audio Pre-training Framework (M2D-X)}{12}{subsubsection.3.2.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.2.4}M2D-CLAP: Masked Modeling Duo Meets CLAP for Learning General-Purpose Audio-Language Representation}{13}{subsubsection.3.2.2.4}%
+\contentsline {subsection}{\numberline {3.2.3}Other Latent-Prediction Models: JEPA and Classification-Based Variants}{14}{subsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.3.1}Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture (I-JEPA)}{14}{subsubsection.3.2.3.1}%
+\contentsline {subsubsection}{\numberline {3.2.3.2}Investigating Design Choices in Joint-Embedding Predictive Architectures for General Audio Representation Learning}{15}{subsubsection.3.2.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.3.3}Audio-JEPA: Joint-Embedding Predictive Architecture for Audio Representation Learning}{16}{subsubsection.3.2.3.3}%
+\contentsline {subsubsection}{\numberline {3.2.3.4}Masked Latent Prediction and Classification for Self-Supervised Audio Representation Learning (MATPAC)}{17}{subsubsection.3.2.3.4}%
+\contentsline {subsubsection}{\numberline {3.2.3.5}MATPAC++: Enhanced Masked Latent Prediction for Self-Supervised Audio Representation Learning}{18}{subsubsection.3.2.3.5}%
+\contentsline {subsubsection}{\numberline {3.2.3.6}PupuJEPA / PupuM2D: Frequency-Aware Self-Supervised Music Representation Learning}{19}{subsubsection.3.2.3.6}%
+\contentsline {subsection}{\numberline {3.2.4}Music-Specific Self-Supervised Models}{20}{subsection.3.2.4}%
+\contentsline {subsubsection}{\numberline {3.2.4.1}Codified Audio Language Modeling Learns Useful Representations for Music Information Retrieval (JukeMIR)}{20}{subsubsection.3.2.4.1}%
+\contentsline {subsubsection}{\numberline {3.2.4.2}Contrastive Learning of Musical Representations (CLMR)}{21}{subsubsection.3.2.4.2}%
+\contentsline {subsubsection}{\numberline {3.2.4.3}Supervised and Unsupervised Learning of Audio Representations for Music Understanding (MULE)}{22}{subsubsection.3.2.4.3}%
+\contentsline {subsubsection}{\numberline {3.2.4.4}MERT: Acoustic Music Understanding Model with Large-Scale Self-Supervised Training}{23}{subsubsection.3.2.4.4}%
+\contentsline {subsubsection}{\numberline {3.2.4.5}A Foundation Model for Music Informatics (MusicFM)}{24}{subsubsection.3.2.4.5}%
+\contentsline {subsubsection}{\numberline {3.2.4.6}MuQ: Self-Supervised Music Representation Learning with Mel Residual Vector Quantization}{25}{subsubsection.3.2.4.6}%
+\contentsline {subsection}{\numberline {3.2.5}Further Pre-training, Forgetting and Adaptation}{25}{subsection.3.2.5}%
+\contentsline {subsubsection}{\numberline {3.2.5.1}Don't Stop Pretraining: Adapt Language Models to Domains and Tasks}{26}{subsubsection.3.2.5.1}%
+\contentsline {subsubsection}{\numberline {3.2.5.2}Robust wav2vec 2.0: Analyzing Domain Shift in Self-Supervised Pre-Training}{27}{subsubsection.3.2.5.2}%
+\contentsline {subsubsection}{\numberline {3.2.5.3}Self-Distillation for Further Pre-training of Transformers}{27}{subsubsection.3.2.5.3}%
+\contentsline {subsubsection}{\numberline {3.2.5.4}SONAR: Self-Distilled Continual Pre-training for Domain Adaptive Audio Representation}{28}{subsubsection.3.2.5.4}%
+\contentsline {subsubsection}{\numberline {3.2.5.5}Towards Pre-training an Effective Respiratory Audio Foundation Model}{29}{subsubsection.3.2.5.5}%
+\contentsline {subsubsection}{\numberline {3.2.5.6}Parameter-Efficient Transfer Learning for Music Foundation Models}{30}{subsubsection.3.2.5.6}%
+\contentsline {subsection}{\numberline {3.2.6}Public Datasets}{31}{subsection.3.2.6}%
+\contentsline {subsubsection}{\numberline {3.2.6.1}AudioSet}{31}{subsubsection.3.2.6.1}%
+\contentsline {subsubsection}{\numberline {3.2.6.2}FSD50K: An Open Dataset of Human-Labeled Sound Events}{32}{subsubsection.3.2.6.2}%
+\contentsline {subsubsection}{\numberline {3.2.6.3}FMA: A Dataset for Music Analysis}{32}{subsubsection.3.2.6.3}%
+\contentsline {subsubsection}{\numberline {3.2.6.4}The Million Song Dataset}{33}{subsubsection.3.2.6.4}%
+\contentsline {subsubsection}{\numberline {3.2.6.5}Music4All: A New Music Database and Its Applications}{34}{subsubsection.3.2.6.5}%
+\contentsline {subsubsection}{\numberline {3.2.6.6}The MTG-Jamendo Dataset for Automatic Music Tagging}{34}{subsubsection.3.2.6.6}%
+\contentsline {subsubsection}{\numberline {3.2.6.7}Evaluation of Algorithms Using Games: The Case of Music Tagging (MagnaTagATune)}{35}{subsubsection.3.2.6.7}%
+\contentsline {subsubsection}{\numberline {3.2.6.8}GTZAN and Its Faults}{36}{subsubsection.3.2.6.8}%
+\contentsline {subsubsection}{\numberline {3.2.6.9}Neural Audio Synthesis of Musical Notes with WaveNet Autoencoders (NSynth)}{36}{subsubsection.3.2.6.9}%
+\contentsline {subsubsection}{\numberline {3.2.6.10}OpenMIC-2018: An Open Dataset for Multiple Instrument Recognition}{37}{subsubsection.3.2.6.10}%
+\contentsline {subsection}{\numberline {3.2.7}Evaluation Benchmarks and Protocols}{37}{subsection.3.2.7}%
+\contentsline {subsubsection}{\numberline {3.2.7.1}MARBLE: Music Audio Representation Benchmark for Universal Evaluation}{38}{subsubsection.3.2.7.1}%
+\contentsline {subsubsection}{\numberline {3.2.7.2}HEAR: Holistic Evaluation of Audio Representations}{38}{subsubsection.3.2.7.2}%
+\contentsline {subsection}{\numberline {3.2.8}Related Applications and Frameworks}{39}{subsection.3.2.8}%
+\contentsline {subsubsection}{\numberline {3.2.8.1}EVAR: Evaluation of Audio Representations}{39}{subsubsection.3.2.8.1}%
+\contentsline {subsubsection}{\numberline {3.2.8.2}M2D Official Repository and Checkpoints}{39}{subsubsection.3.2.8.2}%
+\contentsline {subsubsection}{\numberline {3.2.8.3}nnAudio}{40}{subsubsection.3.2.8.3}%
+\contentsline {subsubsection}{\numberline {3.2.8.4}X-ARES}{40}{subsubsection.3.2.8.4}%
+\contentsline {subsubsection}{\numberline {3.2.8.5}Public Checkpoints of Music and Latent-Prediction Models}{40}{subsubsection.3.2.8.5}%
+\contentsline {section}{\numberline {3.3}Literature Review Summary Table}{40}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Conclusion}{43}{section.3.4}%
+\contentsline {chapter}{\numberline {4}Software Requirement Specifications}{45}{chapter.4}%
+\contentsline {section}{\numberline {4.1}List of Features}{45}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Functional Requirements}{46}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Quality Attributes}{47}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Usability}{47}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Correctness and Consistency}{47}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Reliability}{47}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.3.4}Maintainability and Extensibility}{48}{subsection.4.3.4}%
+\contentsline {subsection}{\numberline {4.3.5}Portability}{48}{subsection.4.3.5}%
+\contentsline {section}{\numberline {4.4}Non-Functional Requirements}{48}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Performance}{48}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Capacity and Concurrency}{48}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Availability}{48}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}Security and Privacy}{49}{subsection.4.4.4}%
+\contentsline {subsection}{\numberline {4.4.5}Reusability}{49}{subsection.4.4.5}%
+\contentsline {subsection}{\numberline {4.4.6}Compatibility}{49}{subsection.4.4.6}%
+\contentsline {section}{\numberline {4.5}Assumptions}{49}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Use Cases}{50}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Hardware and Software Requirements}{55}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Hardware Requirements}{55}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {4.7.2}Software Requirements}{55}{subsection.4.7.2}%
+\contentsline {section}{\numberline {4.8}Graphical User Interface}{56}{section.4.8}%
+\contentsline {section}{\numberline {4.9}Database Design}{59}{section.4.9}%
+\contentsline {subsection}{\numberline {4.9.1}ER Diagram}{59}{subsection.4.9.1}%
+\contentsline {subsection}{\numberline {4.9.2}Data Dictionary}{61}{subsection.4.9.2}%
+\contentsline {section}{\numberline {4.10}Risk Analysis}{62}{section.4.10}%
+\contentsline {subsection}{\numberline {4.10.1}Technical Risks}{62}{subsection.4.10.1}%
+\contentsline {subsection}{\numberline {4.10.2}Schedule Risks}{63}{subsection.4.10.2}%
+\contentsline {subsection}{\numberline {4.10.3}Legal and Licensing Risks}{63}{subsection.4.10.3}%
+\contentsline {subsection}{\numberline {4.10.4}Misinterpretation Risks}{63}{subsection.4.10.4}%
+\contentsline {section}{\numberline {4.11}Conclusion}{64}{section.4.11}%
+\contentsline {chapter}{\numberline {5}Proposed Approach and Methodology}{65}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Methodological Foundations}{65}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Masked Latent Prediction and M2D}{65}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Specializing a General Model: M2D-X}{66}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.1.3}Music-Specific Self-Supervised Models}{67}{subsection.5.1.3}%
+\contentsline {paragraph}{MERT.}{67}{subsection.5.1.3}%
+\contentsline {paragraph}{MusicFM and MuQ.}{67}{subsection.5.1.3}%
+\contentsline {paragraph}{MATPAC and MATPAC++.}{68}{subsection.5.1.3}%
+\contentsline {subsection}{\numberline {5.1.4}Further Pre-training, Forgetting and Regularization}{68}{subsection.5.1.4}%
+\contentsline {subsection}{\numberline {5.1.5}Design Decisions Derived from the Literature}{69}{subsection.5.1.5}%
+\contentsline {section}{\numberline {5.2}Research Questions and Hypotheses}{69}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Dataset Acquisition}{70}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}Choice of Corpus}{70}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Archives and Metadata}{71}{subsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.3.3}Eligibility Rules and Subset Selection}{71}{subsection.5.3.3}%
+\contentsline {subsection}{\numberline {5.3.4}Background-Noise Corpus}{72}{subsection.5.3.4}%
+\contentsline {subsection}{\numberline {5.3.5}Licensing and Ethics}{72}{subsection.5.3.5}%
+\contentsline {section}{\numberline {5.4}Data Preprocessing Pipeline}{73}{section.5.4}%
+\contentsline {subsection}{\numberline {5.4.1}Audit and Decoding}{73}{subsection.5.4.1}%
+\contentsline {subsection}{\numberline {5.4.2}Front-End}{74}{subsection.5.4.2}%
+\contentsline {subsection}{\numberline {5.4.3}Cropping and Normalization}{74}{subsection.5.4.3}%
+\contentsline {subsection}{\numberline {5.4.4}Musical-Teacher Targets}{75}{subsection.5.4.4}%
+\contentsline {subsection}{\numberline {5.4.5}Storage, Manifest and Integrity Checks}{75}{subsection.5.4.5}%
+\contentsline {section}{\numberline {5.5}Further Pre-training Framework}{76}{section.5.5}%
+\contentsline {subsection}{\numberline {5.5.1}Overview, Initialization and Alternatives Considered}{76}{subsection.5.5.1}%
+\contentsline {subsection}{\numberline {5.5.2}Masked Latent Prediction on Noisy Music}{77}{subsection.5.5.2}%
+\contentsline {subsection}{\numberline {5.5.3}Background Noise and Denoising}{77}{subsection.5.5.3}%
+\contentsline {subsection}{\numberline {5.5.4}Frozen-Teacher Regularization}{78}{subsection.5.5.4}%
+\contentsline {subsection}{\numberline {5.5.5}Musical Teacher}{78}{subsection.5.5.5}%
+\contentsline {subsection}{\numberline {5.5.6}Joint Objective and Optimization}{79}{subsection.5.5.6}%
+\contentsline {subsection}{\numberline {5.5.7}Compute and Memory Budget}{79}{subsection.5.5.7}%
+\contentsline {section}{\numberline {5.6}Experimental Design}{80}{section.5.6}%
+\contentsline {subsection}{\numberline {5.6.1}Reference Models}{81}{subsection.5.6.1}%
+\contentsline {subsection}{\numberline {5.6.2}Pre-training Arms}{81}{subsection.5.6.2}%
+\contentsline {subsection}{\numberline {5.6.3}Controls and Reproducibility}{82}{subsection.5.6.3}%
+\contentsline {section}{\numberline {5.7}Evaluation Protocol}{83}{section.5.7}%
+\contentsline {subsection}{\numberline {5.7.1}Downstream Tasks}{83}{subsection.5.7.1}%
+\contentsline {subsection}{\numberline {5.7.2}Frozen-Feature Linear Evaluation}{83}{subsection.5.7.2}%
+\contentsline {subsection}{\numberline {5.7.3}Metrics, Aggregates and Statistics}{84}{subsection.5.7.3}%
+\contentsline {subsection}{\numberline {5.7.4}Threats to Validity}{85}{subsection.5.7.4}%
+\contentsline {section}{\numberline {5.8}Conclusion}{85}{section.5.8}%
+\contentsline {chapter}{\numberline {6}High-Level and Low-Level Design}{87}{chapter.6}%
+\contentsline {section}{\numberline {6.1}System Overview}{87}{section.6.1}%
+\contentsline {subsection}{\numberline {6.1.1}Data Preparation Pipeline}{87}{subsection.6.1.1}%
+\contentsline {subsection}{\numberline {6.1.2}Further Pre-training Framework}{87}{subsection.6.1.2}%
+\contentsline {subsection}{\numberline {6.1.3}Evaluation and Analysis}{88}{subsection.6.1.3}%
+\contentsline {subsection}{\numberline {6.1.4}Demonstration Dashboard}{88}{subsection.6.1.4}%
+\contentsline {section}{\numberline {6.2}Design Considerations}{88}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Assumptions and Dependencies}{88}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}General Constraints}{89}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {6.2.3}Goals and Guidelines}{89}{subsection.6.2.3}%
+\contentsline {subsection}{\numberline {6.2.4}Development Methods}{90}{subsection.6.2.4}%
+\contentsline {section}{\numberline {6.3}System Architecture}{90}{section.6.3}%
+\contentsline {subsection}{\numberline {6.3.1}Subsystem Architecture}{91}{subsection.6.3.1}%
+\contentsline {subsection}{\numberline {6.3.2}Sequence Diagrams}{93}{subsection.6.3.2}%
+\contentsline {section}{\numberline {6.4}Architectural Strategies}{93}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Extending the M2D Code Base}{93}{subsection.6.4.1}%
+\contentsline {subsection}{\numberline {6.4.2}Offline Precomputation of Inputs and Targets}{94}{subsection.6.4.2}%
+\contentsline {subsection}{\numberline {6.4.3}Experiments as Command Lines and Run Folders}{95}{subsection.6.4.3}%
+\contentsline {subsection}{\numberline {6.4.4}One Evaluation Interface for All Models}{95}{subsection.6.4.4}%
+\contentsline {subsection}{\numberline {6.4.5}Files as Interfaces and Single-Worker Serving}{95}{subsection.6.4.5}%
+\contentsline {section}{\numberline {6.5}Domain Model/Class Diagram}{96}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Policies and Tactics}{96}{section.6.6}%
+\contentsline {subsection}{\numberline {6.6.1}Choice of Tools}{96}{subsection.6.6.1}%
+\contentsline {subsection}{\numberline {6.6.2}Coding Guidelines and Conventions}{96}{subsection.6.6.2}%
+\contentsline {subsection}{\numberline {6.6.3}Testing}{97}{subsection.6.6.3}%
+\contentsline {subsection}{\numberline {6.6.4}Requirements Traceability}{98}{subsection.6.6.4}%
+\contentsline {subsection}{\numberline {6.6.5}Source Organization and Build}{98}{subsection.6.6.5}%
+\contentsline {subsection}{\numberline {6.6.6}Maintenance}{98}{subsection.6.6.6}%
+\contentsline {section}{\numberline {6.7}Conclusion}{99}{section.6.7}%
+\contentsline {chapter}{\numberline {7}Implementation and Test Cases}{100}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Implementation}{100}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}Implementation of First Component/Algorithm}{100}{subsection.7.1.1}%
+\contentsline {section}{\numberline {7.2}Test case Design and description}{100}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Test Metrics}{101}{section.7.3}%
+\contentsline {subsection}{\numberline {7.3.1}Sample Test case Metric.No.2}{101}{subsection.7.3.1}%
+\contentsline {chapter}{\numberline {8}User Manual}{102}{chapter.8}%
+\contentsline {chapter}{\numberline {9}Experimental Results and Discussion}{103}{chapter.9}%
+\contentsline {chapter}{\numberline {10}Conclusions}{104}{chapter.10}%
+\contentsline {section}{\numberline {10.1}aa}{104}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}dfs}{104}{subsection.10.1.1}%
+\contentsline {subsubsection}{\numberline {10.1.1.1}dsd}{104}{subsubsection.10.1.1.1}%
+\contentsline {chapter}{\numberline {A}First Appendix if Required}{112}{appendix.A}%
+\contentsline {section}{\numberline {A.1}References}{112}{appendix.A.1}%
+\contentsline {section}{\numberline {A.2}Equations}{112}{appendix.A.2}%
+\contentsline {section}{\numberline {A.3}Figures}{112}{appendix.A.3}%
+\contentsline {section}{\numberline {A.4}Tables}{113}{appendix.A.4}%
+\contentsline {section}{\numberline {A.5}Pseudo Code}{113}{appendix.A.5}%
+\contentsline {section}{\numberline {A.6}Code of Programming Languages}{113}{appendix.A.6}%
+\contentsline {section}{\numberline {A.7}Recommendations for \LaTeX }{114}{appendix.A.7}%

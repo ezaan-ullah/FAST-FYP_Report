@@ -1,0 +1,33 @@
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Summary of the reviewed research studies}}{40}{table.3.1}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Summary of the reviewed public datasets}}{42}{table.3.2}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Summary of related applications and frameworks}}{43}{table.3.3}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Functional requirements of the dashboard}}{46}{table.4.1}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces UC-01 View Research Results}}{51}{table.caption.3}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces UC-02 Select a Downstream Task}}{51}{table.caption.4}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces UC-03 Provide Audio Input}}{52}{table.caption.5}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces UC-04 Run Inference and View Output}}{53}{table.caption.6}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces UC-05 Compare Two Models on a Clip}}{53}{table.caption.7}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces UC-06 Import Evaluation Results}}{54}{table.caption.8}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Data dictionary of the dashboard database}}{61}{table.4.8}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Summary of risks of the dashboard}}{63}{table.caption.16}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Literature findings and the design decisions they lead to}}{69}{table.caption.18}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces FMA audio archives and their use in this study}}{71}{table.caption.19}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Front-end and target parameters}}{74}{table.caption.22}%
+\contentsline {table}{\numberline {5.4}{\ignorespaces Fixed settings of the further pre-training runs}}{79}{table.caption.24}%
+\contentsline {table}{\numberline {5.5}{\ignorespaces Reference models}}{81}{table.caption.26}%
+\contentsline {table}{\numberline {5.6}{\ignorespaces Pre-training arms}}{82}{table.caption.27}%
+\contentsline {table}{\numberline {5.7}{\ignorespaces Downstream tasks}}{83}{table.caption.28}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {7.1}{\ignorespaces Sample Test case No.1}}{100}{table.caption.34}%
+\contentsline {table}{\numberline {7.2}{\ignorespaces Sample Test case Matric.No.1}}{101}{table.caption.35}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {A.1}{\ignorespaces \textbf {Give a Caption to the Table.}}}{113}{table.caption.38}%
