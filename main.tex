@@ -188,926 +188,486 @@ Notice how a section’s heading is changed to “heading 1”.  It will show up
 
 \chapter{Literature Review / Related Work}
 \label{ch:lr}
-\newcommand{\lrhead}[1]{\par\needspace{5\baselineskip}\noindent\textbf{#1}\par\nopagebreak}
-\newcommand{\lrsum}[1]{\par\noindent\textbf{#1}\par\nopagebreak}
-\newcommand{\lrlist}[1]{\par\needspace{4\baselineskip}\noindent #1\par\nopagebreak}
-This chapter reviews the work on which the project builds. It is organized into eight categories: general-purpose audio self-supervised learning by masked prediction; the Masked Modeling Duo (M2D) family; other latent-prediction models; music-specific self-supervised models; further pre-training, forgetting and adaptation; public datasets; evaluation benchmarks; and related applications and frameworks. Each research item is summarized, analyzed critically and related to the proposed work. The chapter ends with summary tables and the research gap that this project addresses.
+\newcommand{\lritem}[3]{\needspace{8\baselineskip}\begingroup\titleformat{\subsection}{\normalfont\large\bfseries\raggedright}{\thesubsection}{1em}{}\subsection[#1]{#1~\cite{#2}}\label{#3}\endgroup}
+\newcommand{\lrsummary}{\subsubsection{Summary of the research item}}
+\newcommand{\lrcritical}{\subsubsection{Critical analysis of the research item}}
+\newcommand{\lrrelation}{\subsubsection{Relationship to the proposed research work}}
+\newcommand{\lrstrengths}{\par\needspace{4\baselineskip}\noindent\textbf{Strengths}:\par\nopagebreak}
+\newcommand{\lrweaknesses}{\par\needspace{4\baselineskip}\noindent\textbf{Weaknesses}:\par\nopagebreak}
+This chapter reviews the work on which the project builds. It covers general-purpose audio models trained by masked prediction, including the Masked Modeling Duo (M2D) family; music-specific self-supervised models; studies of further pre-training and forgetting; and the datasets and benchmarks that make a study of this kind possible. Each research item is summarized, analyzed critically and related to the proposed work. The chapter ends with a summary table and the research gap that this project addresses.
 
 \section{Definitions, Acronyms, and Abbreviations}
 \label{sec:lr-defs}
-\textbf{Audio foundation model}: A large model pre-trained with self-supervised learning on broad audio data and reused for many downstream tasks.\\
-\textbf{Catastrophic forgetting}: The loss of previously learned ability when a model is trained further on new data.\\
-\textbf{CLAP}: Contrastive language-audio pre-training, which aligns audio and text embeddings.\\
 \textbf{CQT}: Constant-Q transform, a spectral transform with logarithmically spaced frequency bins, so that every octave has the same number of bins.\\
-\textbf{DAPT}: Domain-adaptive pre-training, that is, continuing self-supervised pre-training on unlabeled data from the target domain.\\
-\textbf{Denoising distillation}: Training a student on noisy input to match the features that a teacher computes from the clean input.\\
 \textbf{EMA}: Exponential moving average, used to update the target network from the online network.\\
-\textbf{Encodec / RVQ}: A neural audio codec whose residual vector quantization (RVQ) turns audio into discrete codes.\\
-\textbf{Further pre-training}: Resuming self-supervised pre-training of an already pre-trained model on a new, usually smaller, dataset; also called continued or continual pre-training.\\
+\textbf{Further pre-training}: Resuming self-supervised pre-training of an already pre-trained model on a new, usually smaller, dataset.\\
+\textbf{Forgetting}: The loss of previously learned ability when a model is trained further on new data.\\
 \textbf{JEPA}: Joint-embedding predictive architecture, which predicts the latent representation of hidden regions from a visible context.\\
 \textbf{Linear probing}: Evaluating a frozen encoder by training only a linear layer on its features.\\
 \textbf{Log-mel spectrogram}: A time-frequency representation with mel-spaced frequency bands and logarithmic magnitude.\\
-\textbf{MaLaP}: Masked latent prediction, that is, predicting the latent representation of masked patches instead of their raw values.\\
-\textbf{Masking ratio}: The fraction of input patches that are hidden from the online network.\\
-\textbf{MCL}: Multiple choice learning, where several prediction hypotheses are produced and the best one is trained.\\
-\textbf{mAP / ROC-AUC}: Mean average precision and area under the receiver operating characteristic curve, used for multi-label tagging.\\
-\textbf{Mel-RVQ}: The residual vector quantizer applied to mel spectra that provides the targets of MuQ.\\
-\textbf{MIR}: Music information retrieval.\\
-\textbf{MLM}: Masked language modeling, the BERT-style objective of predicting hidden tokens.\\
-\textbf{Offline network}: In M2D-X, the additional network that receives clean input and provides an extra training signal.\\
-\textbf{Patch}: A small rectangle of a spectrogram (for example $16\times16$ bins) that forms one token of a vision transformer.\\
-\textbf{PETL}: Parameter-efficient transfer learning, which trains only a small number of added or selected parameters.\\
+\textbf{mAP}: Mean average precision, the usual metric for multi-label tagging.\\
+\textbf{Masked latent prediction}: Predicting the latent representations of masked input patches instead of their raw values.\\
+\textbf{Masking ratio}: The fraction of input patches hidden from the online network.\\
+\textbf{Online and target networks}: The network being trained and its slowly updated copy, whose outputs are the prediction targets.\\
+\textbf{Offline network}: In M2D-X, an additional network that sees the clean input and provides an extra training signal.\\
+\textbf{RVQ}: Residual vector quantization, which turns audio features into discrete codes.\\
 \textbf{SSL}: Self-supervised learning, learning from unlabeled data through a pretext task.\\
-\textbf{Target network}: The slowly updated network whose outputs are the prediction targets in M2D and related methods.\\
-\textbf{ViT}: Vision transformer, the transformer encoder applied to patch tokens.\\
-\textbf{AudioSet, FSD50K}: General sound-event datasets; AudioSet is the pre-training corpus of M2D.\\
-\textbf{FMA, MSD}: Free Music Archive and Million Song Dataset, two large music collections.\\
-\textbf{GTZAN, MTT, NSynth, OpenMIC-2018, MTG-Jamendo, Music4All}: Music datasets for genre, tagging, instrument and pitch tasks (MTT is MagnaTagATune).\\
-\textbf{Benchmarks and tools}: \textbf{MARBLE} and \textbf{HEAR} (evaluation benchmarks), \textbf{EVAR} and \textbf{X-ARES} (evaluation toolkits), \textbf{nnAudio} (GPU spectrogram library).\\
-\textbf{Model names}: \textbf{M2D} (Masked Modeling Duo), \textbf{M2D-X} (M2D for application $X$), \textbf{M2D-S} (M2D for Speech), \textbf{MATPAC} (masked latent prediction and classification), \textbf{MERT} (acoustic music understanding model with large-scale self-supervised training), \textbf{PupuJEPA / PupuM2D} (a 2-D spectrogram music model, renamed from the first to the second name).
+\textbf{ViT}: Vision transformer, a transformer encoder applied to patch tokens of an image or spectrogram.
 
 \section{Detailed Literature Review}
 \label{sec:lr-detailed}
-The review covers 36 research studies, datasets and benchmarks in full and five related applications and frameworks. Items were selected for their relevance to at least one of four questions: how masked-latent-prediction models such as M2D learn general audio representations and how well these transfer to music; what music-specific foundation models do differently in terms of targets, data and scale, and what they gain; what is known about further pre-training a pre-trained model on a small domain dataset, including forgetting and regularization; and which public datasets and evaluation protocols allow such a study to be run and compared on a single GPU. Preprints that have not been peer reviewed are marked as such in the analysis.
+The review covers seventeen research studies, four datasets and two benchmarks. They were selected because they answer at least one of four questions: how masked-latent-prediction models such as M2D learn general audio representations and how well these transfer to music; what music-specific models do differently and what they gain; what is known about further pre-training a model on a small domain dataset, including forgetting; and which datasets and protocols allow such a study to be run and compared. The items are ordered by theme: general-audio models (Sections~\ref{sec:lr-audiomae} to~\ref{sec:lr-matpacpp}), music-specific models (Sections~\ref{sec:lr-jukemir} to~\ref{sec:lr-pupu}), further pre-training (Sections~\ref{sec:lr-w2v} to~\ref{sec:lr-sonar}), datasets (Sections~\ref{sec:lr-audioset} to~\ref{sec:lr-music4all}) and benchmarks (Sections~\ref{sec:lr-marble} and~\ref{sec:lr-hear}). Preprints that have not been peer reviewed are marked as such.
 
-\subsection{General-Purpose Audio Self-Supervised Learning by Masked Prediction}
-Before latent prediction, general-purpose audio self-supervision was dominated by reconstruction of masked spectrogram patches and by prediction of discrete labels. The two studies below define what M2D improves on.
+\lritem{Masked Autoencoders that Listen}{ref:Huang:2022audiomae}{sec:lr-audiomae}
+\lrsummary
+Huang et al.~\cite{ref:Huang:2022audiomae} extended masked autoencoders to audio spectrograms. About 80\,\% of the patches are masked, a ViT-Base encoder processes only the visible patches, and a decoder with local-window attention reconstructs the whole spectrogram. After pre-training on AudioSet-2M and fine-tuning the encoder, the model reached an AudioSet-2M mAP of 47.3, 94.1\,\% accuracy on ESC-50 and 98.3\,\% on Speech Commands V2.
 
-\needspace{9\baselineskip}
-\subsubsection{Masked Autoencoders that Listen}
-\lrsum{Summary}
-
-Huang et al.~\cite{ref:Huang:2022audiomae} extended masked autoencoders to audio spectrograms. About 80\,\% of the patches are masked, a ViT-Base encoder processes only the visible patches, and a decoder with local-window attention reconstructs the whole spectrogram. The model was pre-trained on AudioSet-2M for 32 epochs with a batch size of 512 on 64 V100 GPUs, which took about 36 hours. After fine-tuning the encoder, it reached an AudioSet-2M mAP of 47.3, 94.1\,\% accuracy on ESC-50 and 98.3\,\% on Speech Commands V2.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item Simple design that scales well and reached state-of-the-art fine-tuning results without external supervised pre-training.
   \item The local attention in the decoder exploits the strong correlation of neighboring time-frequency bins.
-  \item Code and weights are public, so the model is widely used as a baseline.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item The target is the spectrogram itself, so the learning signal depends partly on low-level detail; BEATs was proposed precisely because reconstruction loss is a weak driver of semantic abstraction~\cite{ref:Chen:2023beats}.
   \item The headline results are obtained by fine-tuning the whole encoder on each target dataset, which says little about the quality of frozen features.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+Audio-MAE is the reconstruction baseline that M2D replaces by latent prediction, and the masked spectrogram model MSM-MAE~\cite{ref:Niizumi:2022msmmae} from which M2D grew belongs to the same family. The code base of M2D is derived from the MAE implementation, which makes the M2D checkpoint a direct descendant of this design.
 
-Audio-MAE is the reconstruction baseline that M2D replaces by latent prediction, and the MAE-style masked spectrogram model MSM-MAE~\cite{ref:Niizumi:2022msmmae} from which M2D grew belongs to the same family. The code base of M2D is itself derived from the MAE implementation, and the AudioSet-based pre-training recipe is shared, which makes the M2D checkpoint a direct descendant of this design.
-
-\needspace{9\baselineskip}
-\subsubsection{BEATs: Audio Pre-Training with Acoustic Tokenizers}
-\lrsum{Summary}
-
+\lritem{BEATs: Audio Pre-Training with Acoustic Tokenizers}{ref:Chen:2023beats}{sec:lr-beats}
+\lrsummary
 Chen et al.~\cite{ref:Chen:2023beats} train an audio encoder to predict discrete labels of masked patches, where the labels come from an acoustic tokenizer. In the first iteration the tokenizer is a random projection; in later iterations a tokenizer is distilled from the previously trained (or fine-tuned) audio model, and the two are improved alternately. About 75\,\% of the input is masked. The authors report an AudioSet-2M mAP of 48.6 for a single model and 50.6 for an ensemble without external data, and 98.1\,\% accuracy on ESC-50.
 
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item Discrete, semantically rich targets give strong results with fewer parameters and less data than earlier models.
-  \item Public checkpoints and a clear iterative recipe.
+  \item A clear iterative recipe in which the tokenizer and the encoder improve each other.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Training is multi-stage: a tokenizer must be trained, and the strongest variants distill the tokenizer from a model that was fine-tuned on AudioSet labels, so they are not purely self-supervised.
   \item Tokenizer training and several pre-training rounds are far beyond a single-GPU budget.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+BEATs is the base model that SONAR continues to pre-train on FMA data (Section~\ref{sec:lr-sonar}), and its discrete-target principle is shared by MERT, MusicFM and MuQ. This project keeps the continuous latent targets of M2D and therefore avoids training or distilling a tokenizer.
 
-BEATs is the base model that SONAR continues to pre-train on FMA data (Section~\ref{sec:lr-further}), and its discrete-target principle is shared by MERT, MusicFM and MuQ. This project keeps the continuous latent targets of M2D and therefore avoids training or distilling a tokenizer.
+\lritem{Masked Modeling Duo: Learning Representations by Encouraging Both Networks to Model the Input}{ref:Niizumi:2023m2d}{sec:lr-m2d}
+\lrsummary
+Niizumi et al.~\cite{ref:Niizumi:2023m2d} proposed Masked Modeling Duo (M2D). An online network encodes the visible patches and a predictor, given shared mask tokens, estimates the representations of the masked patches. The target network, an EMA of the online encoder, encodes \emph{only the masked patches}, so that the target carries no information about the visible patches and both networks are pushed to model the input. The loss is the mean squared error between $\ell_2$-normalized prediction and standardized target. The released model uses a ViT-Base encoder on 80$\times$608 log-mel inputs (6~s at 16~kHz) with $16\times16$ patches and a masking ratio of 0.7, pre-trained for 300 epochs on AudioSet (2,005,132 clips, 5,569~h). The conference paper reports state-of-the-art linear-evaluation results on four of nine tasks (UrbanSound8K, VoxCeleb1, CREMA-D and GTZAN); in the journal extension~\cite{ref:Niizumi:2024m2dx}, the model with masking ratio 0.7 reached an average of 80.2 over nine linear-evaluation tasks, against 79.1 for the MAE-based predecessor MSM-MAE, with 84.1\,\% on GTZAN.
 
-\subsection{The Masked Modeling Duo Family}
-The M2D family is the direct basis of the project. The four studies below cover the base method, its specialization to speech by denoising distillation, its generalization into an application-agnostic framework, and its combination with text.
-
-\needspace{9\baselineskip}
-\subsubsection{Masked Modeling Duo: Learning Representations by Encouraging Both Networks to Model the Input}
-\lrsum{Summary}
-
-Niizumi et al.~\cite{ref:Niizumi:2023m2d} proposed Masked Modeling Duo (M2D). An online network encodes the visible patches and a predictor, given shared mask tokens, estimates the representations of the masked patches. The target network, an EMA of the online encoder, encodes \emph{only the masked patches}, so that the target carries no information about the visible patches and both networks are pushed to model the input. The loss is the mean squared error between $\ell_2$-normalized prediction and standardized target. The released model uses a ViT-Base encoder on 80$\times$608 log-mel inputs (6~s at 16~kHz) with $16\times16$ patches and a masking ratio of 0.7. It was pre-trained for 300 epochs on AudioSet (2,005,132 clips, 5,569~h) with an effective batch size of 2,048. The conference paper reports state-of-the-art linear-evaluation results on four of nine tasks (UrbanSound8K, VoxCeleb1, CREMA-D and GTZAN), and its comparison with the MAE-based predecessor MSM-MAE shows that predicting latents helps most tasks; in the journal extension~\cite{ref:Niizumi:2024m2dx}, the model with masking ratio 0.7 reached an average of 80.2 over nine linear-evaluation tasks, against 79.1 for MSM-MAE, with 84.1\,\% on GTZAN. 
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
-  \item Simple method with ablations of the masking ratio, target input and patch size; public code and weights.
+  \item Simple method with ablations of the masking ratio, the target input and the patch size.
   \item Encoding only the masked patches in the target network prevents shortcuts that make prediction too easy.
-  \item The ViT-Base encoder (about 86~M parameters) is small enough for a single 16~GB GPU.
+  \item The ViT-Base encoder (about 86~M parameters) is small enough to be further pre-trained on a single GPU.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Pre-training from scratch needs a large dataset and a multi-GPU budget, so the recipe cannot be repeated on a new domain by a small group.
   \item The learned features are abstract: compared with the MAE, the authors observe worse results on pitch classification (Surge) in linear evaluation and on VoxCeleb1 in fine-tuning, and conclude that M2D representations are less sensitive to pitch.
   \item Fixed 6-s input and random masking only.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 M2D is the pre-trained model of this study. The checkpoint M2D/0.7, its front-end, its loss and its random-masking setting are reused unchanged as the starting point and the base objective of the further pre-training (Chapter~\ref{ch:m5}). The reported insensitivity to pitch is one reason for adding a pitch-oriented musical teacher.
 
-\needspace{9\baselineskip}
-\subsubsection{Masked Modeling Duo for Speech: Specializing General-Purpose Audio Representation to Speech Using Denoising Distillation}
-\lrsum{Summary}
+\lritem{Masked Modeling Duo: Towards a Universal Audio Pre-training Framework (M2D-X)}{ref:Niizumi:2024m2dx}{sec:lr-m2dx}
+\lrsummary
+In the journal extension, Niizumi et al.~\cite{ref:Niizumi:2024m2dx} redefine M2D as a framework for learning representations specialized to an application $X$, including cases with little data. M2D-X adds background noise to the input of the online and target networks, which acts as augmentation, and an offline network that receives the clean input and provides a configurable additional task: supervised learning of labels, distillation of a domain model, or regularization with the original pre-trained model. Because the offline target comes from the clean signal, the noise turns the task into denoising distillation, an idea first used to specialize M2D to speech~\cite{ref:Niizumi:2023m2ds}. The total loss is the weighted sum $\lambda_{\mathrm{m2d}}\mathcal{L}_{\mathrm{m2d}}+\lambda_{\mathrm{off}}\mathcal{L}_{\mathrm{off}}$. The framework was validated on AudioSet with supervised labels (M2D-AS, average 80.6 in linear evaluation), on speech, and on respiratory sounds. In the last case, the AudioSet model was further pre-trained on 539 ICBHI 2017 recordings, with the training list replicated to 10,000 samples per epoch for 600 epochs: continuing with the M2D loss alone and no noise lowered the score from 61.93 to 61.17, background noise at a ratio of 0.3 raised it to 62.73, and the full M2D-X with the frozen original model as offline teacher reached 63.29.
 
-Niizumi et al.~\cite{ref:Niizumi:2023m2ds} asked whether a general-purpose model can be specialized to a demanding domain, using speech as the example. They added an offline network to M2D and proposed the task of \emph{denoising distillation}: the M2D networks receive speech mixed with AudioSet background noise, while the offline network, distilled from a HuBERT-style speech model that predicts clustered features, receives the clean speech. M2D-S learns this task jointly with the M2D masked prediction task. On the SUPERB benchmark it performed comparably to state-of-the-art speech models (HuBERT, WavLM) and outperformed them on keyword spotting and emotion recognition. Ablations showed that distillation alone is better than M2D alone, that adding denoising helps further, and that learning all tasks together works best. The study also showed a trade-off: speech tasks improved with more speech data and fewer general sounds, while the non-speech tasks degraded.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
-  \item First demonstration that a general-audio model can be specialized to a competitive domain by adding a domain teacher and a denoising task.
-  \item Reports the trade-off between specialization and generality, which is the question that matters for retention.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Requires a strong domain model trained with clustering (HuBERT) as teacher, and changes the patch size and input duration to speech settings.
-  \item Remains behind WavLM on speaker identification (80.69\,\% against 84.51\,\% in the SUPERB comparison) and behind HuBERT and WavLM on phoneme recognition and intent classification.
-  \item Pre-training uses a large speech corpus (960~h of LibriSpeech), not a small one.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-This is where denoising distillation originates. The proposed framework applies the same pattern to music: noisy input to the online and target networks, clean input to the offline branch. The domain teacher is the frozen original M2D for regularization and the CQT, a deterministic music-specific teacher, for the musical task; distilling a frozen music model such as MERT is left as an optional extension.
-
-\needspace{9\baselineskip}
-\subsubsection{Masked Modeling Duo: Towards a Universal Audio Pre-training Framework (M2D-X)}
-\lrsum{Summary}
-
-In the journal extension, Niizumi et al.~\cite{ref:Niizumi:2024m2dx} redefine M2D as a framework for learning representations specialized to an application $X$, including cases with little data. M2D-X adds background noise to the input, which acts as augmentation and creates a denoising task, and an offline network with a configurable additional task, namely supervised learning of labels, distillation of a domain model, or regularization with the original pre-trained model. The total loss is the weighted sum $\lambda_{\mathrm{m2d}}\mathcal{L}_{\mathrm{m2d}}+\lambda_{\mathrm{off}}\mathcal{L}_{\mathrm{off}}$. The framework was validated on AudioSet with supervised labels (M2D-AS, average 80.6 in linear evaluation), on speech, and on respiratory sounds. In the last case, the AudioSet model was further pre-trained on 539 ICBHI 2017 recordings: continuing with the M2D loss alone and no noise lowered the score from 61.93 to 61.17, background noise at a ratio of 0.3 raised it to 62.73, and the full M2D-X with the frozen original model as offline teacher reached 63.29. The base model for this experiment was the variant with $16\times4$ patches and 2-s inputs. The run used 600 epochs of 10,000 virtual samples with an effective batch size of 128 on a single 24~GB GPU (an RTX 3090 Ti), with the stated aim of completing pre-training within a day. For the AudioSet setting, the authors state that M2D-X can be pre-trained within 2.5 days on four A100 GPUs.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item The main published recipe for further pre-training of a masked-latent-prediction audio model on a very small dataset, with code, weights and a practical guide.
+  \item The main published recipe for further pre-training of a masked-latent-prediction audio model on a very small dataset.
   \item Careful ablations that separate the effect of noise from that of the offline regularizer.
-  \item Runs on a single consumer GPU.
+  \item The further pre-training is designed to run on a single GPU, which matches the budget of this project.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item The further pre-training result rests on one small medical dataset (with a similar trend on a second respiratory dataset, SPRSound), and its gains of one to two points are of the size of the variation between runs.
   \item No music data and no measurement of what happens to general-audio ability after further pre-training.
   \item The noise ratio and loss weights are chosen per application and not studied systematically.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 M2D-X is the methodological foundation of Chapter~\ref{ch:m5}. The proposed framework keeps its noise injection, offline network and frozen-teacher regularization, adds a music-specific teacher, and tests whether the recipe carries over from a respiratory database of 5.5~h to about 83~h of music while measuring retention explicitly.
 
-\needspace{9\baselineskip}
-\subsubsection{M2D-CLAP: Masked Modeling Duo Meets CLAP for Learning General-Purpose Audio-Language Representation}
-\lrsum{Summary}
-
-Niizumi et al.~\cite{ref:Niizumi:2024m2dclap} combine M2D with contrastive language-audio pre-training so that one representation serves both transfer learning and zero-shot classification. The 2024 version reached a zero-shot GTZAN accuracy of 75.17\,\%. The extended version~\cite{ref:Niizumi:2025m2dclap} uses LLM-based sentence embeddings and a multi-stage procedure in which the first stage learns M2D and CLAP objectives jointly and later stages refine the CLAP features; it reports an AudioSet mAP of 49.0 and state-of-the-art results on music tasks. The official repository recommends the 2025 M2D-CLAP checkpoint (80$\times$1001 input, i.e., 10~s).
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Retains the strong transfer quality of M2D while adding language alignment.
-  \item Strong music results from a general-audio model.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Needs audio-caption pairs and an LLM-based text encoder in addition to audio.
-  \item Longer 10-s input and a more complex training pipeline; the extended 2025 version is an arXiv preprint.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-M2D-CLAP shows that general-audio models of the M2D family are already state of the art on music tasks, which supports the premise of this study. It is a candidate alternative starting checkpoint, but it was not chosen because the M2D-X recipe is defined for the plain M2D loss, and the CLAP head would be discarded.
-
-\subsection{Other Latent-Prediction Models: JEPA and Classification-Based Variants}
-Other models also predict latent representations of masked audio, but differ from M2D in which network sees which patches, in the masking strategy, and in whether a classification objective is added. They show which design choices are shared and which are open.
-
-\needspace{9\baselineskip}
-\subsubsection{Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture (I-JEPA)}
-\lrsum{Summary}
-
-Assran et al.~\cite{ref:Assran:2023ijepa} proposed I-JEPA for images: from a single context block, the network predicts the representations of several target blocks of the same image, with a slowly updated target encoder providing the targets. The authors find that the masking strategy is decisive, namely sampling target blocks of sufficiently large scale and using an informative, spatially distributed context block. No hand-crafted view augmentations are used. A ViT-Huge/14 was trained on ImageNet with 16 A100 GPUs in under 72 hours and transferred to classification, counting and depth prediction.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Predicting in latent space avoids pixel-level detail without needing image-specific augmentations.
-  \item Scalable and computationally cheaper than earlier invariance-based methods.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Vision only; the block masking and the target encoder that sees the full image do not transfer directly to spectrograms, as the audio studies below show.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-I-JEPA is the conceptual root of M2D, MATPAC, Audio-JEPA and PupuM2D. The project uses the M2D variant of the idea, in which the target encoder sees only the masked patches, because the audio studies below find that exposing the target encoder to the full input leads to shortcuts or collapse.
-
-\needspace{9\baselineskip}
-\subsubsection{Investigating Design Choices in Joint-Embedding Predictive Architectures for General Audio Representation Learning}
-\lrsum{Summary}
-
+\lritem{Investigating Design Choices in Joint-Embedding Predictive Architectures for General Audio Representation Learning}{ref:Riou:2024jepa}{sec:lr-riou}
+\lrsummary
 Riou et al.~\cite{ref:Riou:2024jepa} studied JEPA-style pre-training of a ViT-Base on AudioSet spectrograms and evaluated on environmental, speech and music tasks. They compared unstructured, multi-block and time masking, and compared masking the target in the audio domain with masking it only in the latent domain. Unstructured random masking outperformed the alternatives on nearly all tasks, in contrast to images, and masking the target spectrogram before the target encoder was, in most tasks, better than feeding it the whole input. The duration of the training audio mattered: with 2.1~s, 3.2~s and 6.4~s inputs, GTZAN accuracy rose from 82.1 to 84.3 and 86.9 while NSynth accuracy fell from 76.8 to 75.6 and 74.9.
 
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item Systematic ablation of the design choices that matter for audio, evaluated with a common toolkit on eight tasks.
-  \item Open code and pre-trained models.
+  \item Covers music tasks (GTZAN and NSynth) and shows that they react differently to the input duration.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Only AudioSet pre-training and one backbone size; no music-specific data or objective.
   \item Exploration limited to a few masking strategies and three durations.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 The findings justify keeping random masking and masked-only target encoding in the framework, and they show that a longer input favors genre-like (global) tasks while shorter inputs favor note-level tasks such as instrument and pitch. The 6.08-s window of M2D therefore suits genre tasks, and its effect on pitch tasks is one of the questions that the NSynth pitch evaluation will probe.
 
-\needspace{9\baselineskip}
-\subsubsection{Audio-JEPA: Joint-Embedding Predictive Architecture for Audio Representation Learning}
-\lrsum{Summary}
+\lritem{Audio-JEPA: Joint-Embedding Predictive Architecture for Audio Representation Learning}{ref:Tuncay:2025audiojepa}{sec:lr-audiojepa}
+\lrsummary
+Tuncay et al.~\cite{ref:Tuncay:2025audiojepa} translated the image JEPA to audio with a ViT-Base ($16\times16$ patches) and random patch masking of 40--60\,\%. They pre-trained on 1,921,982 AudioSet clips at 32~kHz (5,338~h) for about 13 epochs and evaluated with the 21-dataset X-ARES suite~\cite{ref:XARESGit}. With an MLP probe the model was first or second on some tasks and last on about half, with particular weakness on speech commands; with a k-nearest-neighbor probe it ranked first on ESC-50, FMA-small and GTZAN among three models, ahead of wav2vec 2.0 and data2vec despite using under a fifth of their training data.
 
-Tuncay et al.~\cite{ref:Tuncay:2025audiojepa} translated I-JEPA to audio with a ViT-Base (16$\times$16 patches) and random patch masking of 40--60\,\%. They pre-trained on 1,921,982 AudioSet clips at 32~kHz (5,338~h) for 100,000 steps, about 13 epochs, which took 14 hours on four V100 GPUs, and evaluated with the 21-dataset X-ARES suite. With an MLP probe the model was first or second on some tasks and last on about half, with particular weakness on speech commands; with a k-nearest-neighbor probe it ranked first on ESC-50, FMA-small and GTZAN among three models, ahead of wav2vec 2.0 and data2vec despite using under a fifth of their training data.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
-  \item Very small training cost and open code and checkpoints.
-  \item Includes FMA-small and GTZAN in a standardized suite.
+  \item Very small training cost for a competitive general-audio encoder.
+  \item Includes FMA-small and GTZAN in a standardized evaluation suite.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
-  \item Short training (13 epochs), no hyper-parameter tuning, and only two baselines (wav2vec 2.0 and data2vec); it is an arXiv preprint written for a challenge.
+  \item Short training, no hyper-parameter tuning, and only two baselines (wav2vec 2.0 and data2vec); it is an arXiv preprint written for a challenge.
   \item The target encoder sees the whole spectrogram, and the authors note that the embedding space is not guaranteed to be linearly separable, which hurts linear probing.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+The study illustrates the cost of not following the M2D rule of masking the target input and of weak linear separability of JEPA features. It also shows FMA-small used as a standard evaluation task, which this project uses as its in-domain genre task.
 
-The study illustrates the cost of not following the M2D rule of masking the target input and of weak linear separability of JEPA features. It is also an example of the X-ARES protocol that includes FMA-small, which this project uses as its in-domain genre task.
+\lritem{Masked Latent Prediction and Classification for Self-Supervised Audio Representation Learning (MATPAC)}{ref:Quelennec:2025matpac}{sec:lr-matpac}
+\lrsummary
+Quelennec et al.~\cite{ref:Quelennec:2025matpac} combine masked latent prediction with an unsupervised classification task. The predicted and the target latents of the masked patches are each projected by a DINO-style head~\cite{ref:Caron:2021dino} into probability distributions over 2,048 prototypes that are matched by cross-entropy, with centering and sharpening to prevent collapse. The total loss is $(1-\alpha)\mathcal{L}_{\mathrm{cls}}+\alpha\mathcal{L}_{\mathrm{pred}}$ with $\alpha=0.5$, and pre-training follows M2D (ViT-Base, 6-s inputs of AudioSet). In linear probing over seven tasks the average was 74.9, against 74.0 without the classification task and 73.7 for M2D, and the model reached 41.1 mAP on MagnaTagATune, above the supervised and self-supervised methods compared.
 
-\needspace{9\baselineskip}
-\subsubsection{Masked Latent Prediction and Classification for Self-Supervised Audio Representation Learning (MATPAC)}
-\lrsum{Summary}
-
-Quelennec et al.~\cite{ref:Quelennec:2025matpac} combine masked latent prediction with an unsupervised classification task. The predicted and the target latents of the masked patches are each projected by a DINO-style head~\cite{ref:Caron:2021dino} (three fully connected layers with a 256-dimensional bottleneck and a weight-normalized layer to $K=2048$ prototypes) into probability distributions that are matched by cross-entropy, with centering and sharpening to prevent collapse. The total loss is $(1-\alpha)\mathcal{L}_{\mathrm{cls}}+\alpha\mathcal{L}_{\mathrm{pred}}$ with $\alpha=0.5$. Pre-training follows M2D (ViT-Base, 6-s inputs of AudioSet, 300 epochs, batch size 2,048). In linear probing over seven tasks the average was 74.9, against 74.0 without the classification task and 73.7 for M2D, and the model reached 41.1 mAP on MagnaTagATune, above the supervised and self-supervised methods compared.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item Improves the latent space at no inference cost, with an ablation of the loss weight and the number of prototypes.
-  \item Public code and checkpoints.
+  \item Strong music-tagging result from a model trained only on general audio.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item The authors conclude that the classification task mainly acts as a regularizer, and without the prediction task the model collapses.
   \item Differences from M2D are small and depend on the AudioSet version available to the authors, because part of AudioSet is no longer downloadable.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 MATPAC is the closest competitor to M2D within masked latent prediction. Its design shows that an extra objective on top of the prediction loss can improve the representation, which parallels the extra offline objectives of this project, but the classification head and prototypes are not adopted because of their added hyper-parameters.
 
-\needspace{9\baselineskip}
-\subsubsection{MATPAC++: Enhanced Masked Latent Prediction for Self-Supervised Audio Representation Learning}
-\lrsum{Summary}
+\lritem{MATPAC++: Enhanced Masked Latent Prediction for Self-Supervised Audio Representation Learning}{ref:Quelennec:2025matpacpp}{sec:lr-matpacpp}
+\lrsummary
+Quelennec et al.~\cite{ref:Quelennec:2025matpacpp} address the ambiguity of predicting masked content with multiple choice learning: the predictor produces several hypotheses for each masked patch, and the best one, selected with an annealed temperature~\cite{ref:Perera:2024annealed}, is trained and passed to the classification task of MATPAC. With a unified, statistically controlled protocol (same data splits, 95\,\% confidence intervals, Wilcoxon tests), MATPAC++ obtained an average linear-probing score of 75.7 over seven tasks, against 75.2 for MATPAC and 74.3 for M2D. When trained only on music (about 0.9~M Million Song Dataset samples and 0.18~M private web-radio samples), its average over eight music tasks rose from 47.2 to 47.9, a gain of only 0.7 points over the AudioSet-trained model. In the same table the AudioSet-trained M2D averaged 46.3 against 44.2 for MERT, whose scores were taken from its paper.
 
-Quelennec et al.~\cite{ref:Quelennec:2025matpacpp} address the ambiguity of predicting masked content with multiple choice learning: the predictor produces $r$ hypotheses for each masked patch and the best one, selected with an annealed temperature, is trained and passed to the classification task. With a unified, statistically controlled protocol (same data splits, 95\,\% confidence intervals, Wilcoxon tests), MATPAC++ obtained an average linear-probing score of 75.7 over seven tasks, against 75.2 for MATPAC and 74.3 for M2D. When trained only on music (about 0.9~M Million Song Dataset samples and 0.18~M private web-radio samples), its average over eight music tasks rose from 47.2 to 47.9, a gain of only 0.7 points over the AudioSet-trained model. In the same table the AudioSet-trained M2D averaged 46.3 against 44.2 for MERT, whose scores were taken from its paper. Pre-training on 6-s segments took about 30 hours on four H100 GPUs, and the encoder has 86~M parameters.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item The most careful comparison available of general-audio against music-only pre-training under one protocol.
-  \item Checkpoints for both a general and a music-trained encoder are public.
+  \item Reports confidence intervals and significance tests rather than single scores.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item An arXiv preprint under review; the web-radio data are private.
   \item Additional hypotheses increase the predictor size, and the benefit is smaller on structured music than on diverse audio; the MERT numbers come from a different protocol.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+This is the key motivating observation of the project: general-audio models are already strong on music, and large-scale music-only training adds little. The question this project asks is whether a small, cheap, music-specific step can recover a comparable increment. The general and music MATPAC++ models serve as reference models in the experimental design.
 
-This is the key motivating observation of the project: general-audio models are already strong on music, and large-scale music-only training adds little. The question this project asks is whether a small, cheap, music-specific step can recover a comparable increment. The MATPAC++ checkpoints, general and music, serve as reference models in the experimental design.
-
-\needspace{9\baselineskip}
-\subsubsection{PupuJEPA / PupuM2D: Frequency-Aware Self-Supervised Music Representation Learning}
-\lrsum{Summary}
-
-Gu et al.~\cite{ref:Gu:2026pupum2d} propose a masked-latent-prediction model trained directly on 2-D music spectrograms. It was first called PupuJEPA and renamed PupuM2D in the third version of the preprint, because the target encoder, as in M2D, receives only the masked patches. Domain-specific changes include $4\times16$ patches that give a 25~Hz frame rate, rotary position embeddings, SwiGLU feed-forward layers, QK-normalization, a smoothed-L1 loss, a mixture of random, blockwise and time-frequency masking (overall ratio 0.8) whose proportions follow a curriculum, and the removal of DropPath, LayerScale and batch normalization, which caused collapse. It was trained on about 100,000 hours of in-house music (24~kHz, 128 mel bands, 10.24-s crops) for 500,000 steps with a batch size of 2,048 on 32 B200 GPUs, in five sizes from 5~M to 632~M parameters. On the MARBLEv2 benchmark with linear probing, PupuM2D-Large reached 66.1 on GiantSteps key detection, 86.9 on GTZAN genre and 40.8 AP on MagnaTagATune. In the same tables, AudioSet-trained checkpoints evaluated by the authors were at or above the music-specific MERT, MuQ and MusicFM on tagging and instrument classification: for example, MagnaTagATune AP was 40.9 for M2D, 40.9 for an M2D-X checkpoint and 41.7 for MATPAC++, against 37.5 to 38.5 for MERT, MuQ and MusicFM, and the MTG-Jamendo instrument AP was 21.1 for M2D and MATPAC++ against 18.5 to 19.7 for the music models. MATPAC++ also matched or exceeded PupuM2D-Large on genre and tagging.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Evaluates M2D, M2D-X and MATPAC++ checkpoints next to music-specific models in one environment, and re-trains three audio baselines on the authors' music data under identical settings.
-  \item Thorough ablations of architecture, masking and inference paradigm, and attention maps that the authors present as showing musically meaningful patterns.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item A preprint, not yet peer reviewed, trained on a private corpus of 100,000 hours with a 32-GPU budget, so it cannot be reproduced or compared at equal cost.
-  \item The scores of the 2-D models are the best over several swept inference paradigms, and MARBLEv2 scores are not strictly comparable with those of MARBLE v1.
-  \item The advantage over strong general-audio models is clear mainly for valence in emotion recognition; for tagging, genre and instrument classification it is small or absent, and key detection and beat tracking could not be compared because the frame rate of the general models is too low.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-This is the most recent evidence for the central question. It shows that the M2D design also works for music-specific pre-training, and it quantifies how little a 100,000-hour in-domain model adds over AudioSet-trained models on tagging, genre and instrument tasks, while frame-level tasks such as key detection and beat tracking, where the general models could not be compared, are where a music-specific model is most useful. These are the tasks that the musical teacher of MERT targets. The study also warns about the cost of fine temporal resolution: the proposed work keeps $16\times16$ patches (160 ms per step) and therefore excludes frame-level tasks from its evaluation.
-
-\subsection{Music-Specific Self-Supervised Models}
-Music-specific models differ from general-audio models in the data they use, in their targets and, usually, in scale. The first three studies below represent the early generative, contrastive and mixed approaches; the last three are the masked-prediction foundation models used as references.
-
-\needspace{9\baselineskip}
-\subsubsection{Codified Audio Language Modeling Learns Useful Representations for Music Information Retrieval (JukeMIR)}
-\lrsum{Summary}
-
+\lritem{Codified Audio Language Modeling Learns Useful Representations for Music Information Retrieval (JukeMIR)}{ref:Castellon:2021jukemir}{sec:lr-jukemir}
+\lrsummary
 Castellon et al.~\cite{ref:Castellon:2021jukemir} used the hidden states of Jukebox, a language model trained on codified (discretely encoded) audio from about one million songs, as input features for shallow probes. Averaged over four tasks (tagging, genre classification, key detection and emotion recognition), the representations were 30\,\% stronger than those of models pre-trained on tag prediction, with a particularly large advantage for key detection, and competitive with purpose-built systems on several tasks.
 
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item First clear demonstration that self-supervised pre-training on music audio gives better representations than tag-based supervised pre-training.
   \item Shows that tag-pretrained models have blind spots, for example for key.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
-  \item Extracting features is expensive because Jukebox has billions of parameters; the MERT authors report that inference on a large dataset takes weeks on a consumer GPU~\cite{ref:Li:2024mert}.
+  \item Feature extraction is very expensive because Jukebox has billions of parameters~\cite{ref:Li:2024mert}.
   \item Only four tasks and a generative model that was not designed as an encoder.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+The result that key detection benefits from modeling music audio, not tags, is one reason for adding a pitch-oriented teacher in this project. The cost of very large models is also the reason for starting from an 86~M-parameter encoder.
 
-The result that key detection benefits from modeling music audio, not tags, is the reason for adding a pitch-oriented teacher in this project. The cost of huge models is also the reason for starting from an 86~M-parameter encoder.
+\lritem{Supervised and Unsupervised Learning of Audio Representations for Music Understanding (MULE)}{ref:McCallum:2022mule}{sec:lr-mule}
+\lrsummary
+McCallum et al.~\cite{ref:McCallum:2022mule} compared pre-training on music with pre-training on general audio (a version of AudioSet), and supervised with unsupervised (SimCLR-style) training, on tasks such as genre, era, mood, instrumentation, key and tempo. Supervised models on a large expert-annotated music catalog (about 1.8~M pieces, 117,497 hours) reached state-of-the-art results with under 100~M parameters but specialized to their labels. Among the unsupervised models, restricting the pre-training data to music allowed training with smaller batch sizes while achieving the best unsupervised results.
 
-\needspace{9\baselineskip}
-\subsubsection{Contrastive Learning of Musical Representations (CLMR)}
-\lrsum{Summary}
-
-Spijkervet and Burgoyne~\cite{ref:Spijkervet:2021clmr} applied SimCLR to raw-waveform music with a chain of audio augmentations. A linear classifier on the learned representations reached a higher average precision than supervised models on MagnaTagATune and comparable performance on the Million Song Dataset, transferred across datasets, and, with only 259 labeled songs (1\,\% of MagnaTagATune), still obtained an average precision of 33.1\,\%.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Label-efficient and based on small models, with released code.
-  \item An ablation of music-specific augmentations.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Contrastive learning depends on a chain of augmentations, which the authors of PupuM2D consider less natural for complete songs~\cite{ref:Gu:2026pupum2d}.
-  \item Evaluated on music tagging only.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-CLMR is an early example of data-efficient music self-supervision. The proposed work avoids augmentation design altogether: its only data augmentation is background noise, which the M2D-X recipe already provides.
-
-\needspace{9\baselineskip}
-\subsubsection{Supervised and Unsupervised Learning of Audio Representations for Music Understanding (MULE)}
-\lrsum{Summary}
-
-McCallum et al.~\cite{ref:McCallum:2022mule} compared pre-training on music with pre-training on general audio (a version of AudioSet), and supervised with unsupervised (SimCLR-style) training, on tasks such as genre, era, mood, instrumentation, key and tempo. Supervised models on a large expert-annotated music catalog (about 1.8~M pieces, 117,497 hours) reached state-of-the-art results with under 100~M parameters but specialized to their labels. Among the unsupervised models, restricting the domain of the pre-training data to music allowed training with smaller batch sizes while achieving the best unsupervised results; the unsupervised models were trained on 16 A100 GPUs in about 80 hours.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item A controlled comparison of the effect of the pre-training domain under one method.
-  \item Pays attention to compute: models of fewer than 100~M parameters that need no fine-tuning.
+  \item Pays attention to model size: models of fewer than 100~M parameters that need no fine-tuning.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item The large music dataset is not publicly available, so the central result cannot be reproduced.
   \item Contrastive training with large batches; no masked latent prediction.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 MULE gives direct evidence that the domain of the pre-training data matters, which the present study tests for a masked-latent-prediction model by adding a small amount of in-domain data rather than by replacing the data.
 
-\needspace{9\baselineskip}
-\subsubsection{MERT: Acoustic Music Understanding Model with Large-Scale Self-Supervised Training}
-\lrsum{Summary}
+\lritem{MERT: Acoustic Music Understanding Model with Large-Scale Self-Supervised Training}{ref:Li:2024mert}{sec:lr-mert}
+\lrsummary
+Li et al.~\cite{ref:Li:2024mert} train a transformer with HuBERT-style masked prediction on raw audio and two kinds of targets. The \emph{acoustic teacher} gives discrete labels, either from K-means on log-mel and chroma features or from the residual quantization codes of EnCodec~\cite{ref:Defossez:2023encodec}. The \emph{musical teacher} is the constant-Q transform: a linear head regresses the CQT (84 bins, 12 per octave, from 32.7~Hz) of the audio with a mean-squared-error loss, and the total loss is $\alpha\mathcal{L}_{H}+\mathcal{L}_{\mathrm{CQT}}$. Short excerpts from the same batch are mixed into each clip (in-batch noise mixup). Models of 95~M parameters were trained on about 1,000 hours, and a 330~M-parameter model on 160,000 hours, with 5-s contexts. On 14 tasks evaluated by probing, MERT achieved the best overall score. Adding the CQT loss raised key-detection accuracy from 55.1 to 65.0 and GTZAN genre accuracy from 75.2 to 78.6 for the K-means variant, and from 60.5 to 63.2 and from 72.8 to 77.2 for the RVQ variant.
 
-Li et al.~\cite{ref:Li:2024mert} train a transformer with HuBERT-style masked prediction on raw audio and two kinds of targets. The \emph{acoustic teacher} gives discrete labels, either from K-means on log-mel and chroma features or from the residual quantization codes of EnCodec. The \emph{musical teacher} is the constant-Q transform: a linear head regresses the CQT (84 bins, 12 per octave, from 32.7~Hz) of the audio with a mean-squared-error loss, and the total loss is $\alpha\mathcal{L}_{H}+\mathcal{L}_{\mathrm{CQT}}$. Short excerpts from the same batch are mixed into each clip (in-batch noise mixup, probability 0.5). Models of 95~M parameters were trained on about 1,000 hours, and a 330~M-parameter model on 160,000 hours, with 5-s contexts. On 14 tasks evaluated by probing, MERT achieved the best overall score. Adding the CQT loss raised key-detection accuracy from 55.1 to 65.0 and GTZAN genre accuracy from 75.2 to 78.6 for the K-means variant, and from 60.5 to 63.2 and from 72.8 to 77.2 for the RVQ variant.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item A clear mechanism, the CQT musical teacher, that injects pitch and harmonic bias and is validated by ablation.
-  \item Competitive models of only 95~M parameters, and public checkpoints; the version trained on open data (MERT-v0-public, about 900 hours) shows that the recipe works with limited data.
+  \item Competitive models of only 95~M parameters; the version trained on open data (MERT-v0-public, about 900 hours) shows that the recipe works with limited data.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Training at 330~M parameters was unstable and needed special normalization and attention relaxation, and the contexts are limited to 5~s.
   \item The strongest models rely on a very large collection of music, and the released weights are licensed for non-commercial use only~\cite{ref:MERTCard}.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 MERT supplies the musical teacher: the framework adds a CQT-regression task with the same bin layout and a unit weight. MERT-v1-95M and MERT-v0-public are reference models, one with 20,000 hours and one with about 900 hours of training data. Its in-batch noise mixup corresponds to the background-noise mixing of M2D-X.
 
-\needspace{9\baselineskip}
-\subsubsection{A Foundation Model for Music Informatics (MusicFM)}
-\lrsum{Summary}
+\lritem{A Foundation Model for Music Informatics (MusicFM)}{ref:Won:2024musicfm}{sec:lr-musicfm}
+\lrsummary
+Won et al.~\cite{ref:Won:2024musicfm} adapt BEST-RQ~\cite{ref:Chiu:2022bestrq} to music: a frozen random projection and a random codebook turn the normalized log-mel features into discrete tokens, and a 12-layer Conformer is trained to predict the tokens of masked segments. They compared model sizes, token rates, input durations and data, and evaluated on token-level and sequence-level tasks such as beat tracking, chord and structure analysis, key detection and tagging. Longer (30-s) inputs improved tasks that need long-term context. A model trained on the whole Free Music Archive (about 8,000 hours) scored below the model trained on 160,000 hours of in-house data on most tasks, which the authors attribute to scale and to the crowd-sourced nature of FMA.
 
-Won et al.~\cite{ref:Won:2024musicfm} adapt BEST-RQ~\cite{ref:Chiu:2022bestrq} to music: a frozen random projection and a random codebook turn the normalized log-mel features into discrete tokens, and a 12-layer Conformer is trained to predict the tokens of masked segments (400-ms windows with probability 0.6). They compared model sizes, token rates, input durations and data, and evaluated on token-level and sequence-level tasks such as beat tracking, chord and structure analysis, key detection and tagging. Longer (30-s) inputs improved tasks that need long-term context. A model trained on the whole Free Music Archive (about 8,000 hours) scored below the model trained on 160,000 hours of in-house data on most tasks, which the authors attribute to scale and to the crowd-sourced nature of FMA.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
-  \item No external tokenizer is needed, and both an MSD and an FMA checkpoint are public.
+  \item No external tokenizer is needed, and the design choices (model size, token rate, input length, data) are compared systematically.
   \item Evaluation covers local (token-level) as well as global tasks.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
-  \item Random targets carry no musical prior, and the model has about 330~M parameters and needed about two weeks of GPU training.
+  \item Random targets carry no musical prior, and the model is large (about 330~M parameters).
   \item Training on FMA alone gave clearly weaker results than training on a larger, curated corpus.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+MusicFM shows what training from scratch on the whole FMA achieves, and thereby sets a ceiling for the data source used here. Its FMA model is a reference model, and the observation that FMA is a weaker pre-training source than a larger private corpus is a caution that applies to this project.
 
-MusicFM shows what training from scratch on the whole FMA achieves, and thereby sets a ceiling for the data source used here. Its FMA checkpoint is a reference model, and the observation that FMA is a weaker pre-training source than a larger private corpus is a caution that applies to this project.
+\lritem{MuQ: Self-Supervised Music Representation Learning with Mel Residual Vector Quantization}{ref:Zhu:2025muq}{sec:lr-muq}
+\lrsummary
+Zhu et al.~\cite{ref:Zhu:2025muq} train a 12-layer Conformer to predict tokens from a Mel residual vector quantizer (Mel-RVQ). The quantizer has a single linear layer as encoder and decoder and a residual codebook structure, is trained on the mel spectrum, and replaces both the random projection of BEST-RQ and the large codec of MERT. Pre-trained on only 0.9K hours of the open Music4All dataset, MuQ already outperformed MERT and MusicFM on the MARBLE benchmark (average 75.8 against 74.4 and 75.4); with 160K hours of in-house data it reached 76.7, and with iterative refinement 77.0. A music-text variant, MuQ-MuLan, achieved a state-of-the-art zero-shot tagging score on MagnaTagATune.
 
-\needspace{9\baselineskip}
-\subsubsection{MuQ: Self-Supervised Music Representation Learning with Mel Residual Vector Quantization}
-\lrsum{Summary}
-
-Zhu et al.~\cite{ref:Zhu:2025muq} train a 12-layer Conformer to predict tokens from a Mel residual vector quantizer. The quantizer, called Mel-RVQ, has a single linear layer as encoder and decoder and a residual codebook structure, is trained on the mel spectrum, and replaces both the random projection of BEST-RQ and the large codec of MERT. Pre-trained on only 0.9K hours of the open Music4All dataset, MuQ already outperformed MERT and MusicFM on the MARBLE benchmark (average 75.8 against 74.4 and 75.4); with 160K hours of in-house data it reached 76.7, and with iterative refinement 77.0. A music-text variant, MuQ-MuLan, achieved a state-of-the-art zero-shot tagging score on MagnaTagATune.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item Shows that a good target definition matters more than data volume: 900 hours were enough to beat larger models.
-  \item The quantizer is tiny and trainable on one GPU, and the code and checkpoints are open.
+  \item The quantizer is tiny and simple to train.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
-  \item The best models still use 160,000 hours of private data and 32 A100 GPUs.
+  \item The best models still use 160,000 hours of private data and a large multi-GPU budget.
   \item Evaluation is by linear probing on a limited set of tasks, and the tokenizer needs a separate training stage.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+MuQ provides further evidence that a small amount of music can suffice if the learning signal is well chosen, which is the premise of the musical teacher. It is an alternative to CQT targets, but it would require training a quantizer and pre-training from scratch.
 
-MuQ provides further evidence that a small amount of music can suffice if the learning signal is well chosen, which is the premise of the musical teacher. It is cited as an alternative to CQT targets, and its checkpoint is a candidate reference model.
+\lritem{PupuJEPA / PupuM2D: Frequency-Aware Self-Supervised Music Representation Learning}{ref:Gu:2026pupum2d}{sec:lr-pupu}
+\lrsummary
+Gu et al.~\cite{ref:Gu:2026pupum2d} propose a masked-latent-prediction model trained directly on 2-D music spectrograms. It was first called PupuJEPA and renamed PupuM2D in the third version of the preprint, because the target encoder, as in M2D, receives only the masked patches. Domain-specific changes include $4\times16$ patches that give a 25~Hz frame rate, rotary position embeddings, SwiGLU feed-forward layers, QK-normalization, a smoothed-L1 loss, a mixture of random, blockwise and time-frequency masking (overall ratio 0.8) whose proportions follow a curriculum, and the removal of DropPath, LayerScale and batch normalization, which caused collapse. It was trained on about 100,000 hours of in-house music in five sizes from 5~M to 632~M parameters. On the MARBLEv2 benchmark with linear probing, PupuM2D-Large reached 66.1 on GiantSteps key detection, 86.9 on GTZAN genre and 40.8 AP on MagnaTagATune. In the same tables, AudioSet-trained checkpoints evaluated by the authors were at or above the music-specific MERT, MuQ and MusicFM on tagging and instrument classification: for example, MagnaTagATune AP was 40.9 for M2D, 40.9 for an M2D-X checkpoint and 41.7 for MATPAC++, against 37.5 to 38.5 for MERT, MuQ and MusicFM, and the MTG-Jamendo instrument AP was 21.1 for M2D and MATPAC++ against 18.5 to 19.7 for the music models. MATPAC++ also matched or exceeded PupuM2D-Large on genre and tagging.
 
-\subsection{Further Pre-training, Forgetting and Adaptation}
-\label{sec:lr-further}
-These studies examine what happens when a model that is already pre-trained sees more data from a domain, how this can fail, and which cheaper alternatives exist. They come from language, speech, general audio, respiratory sound and music, because no study applies further pre-training of a masked-latent-prediction model to music.
-
-\needspace{9\baselineskip}
-\subsubsection{Don't Stop Pretraining: Adapt Language Models to Domains and Tasks}
-\lrsum{Summary}
-
-Gururangan et al.~\cite{ref:Gururangan:2020dsp} asked whether it is still useful to tailor a broadly pre-trained language model (RoBERTa-base) to the domain of a target task. Across four domains (biomedical and computer science publications, news and reviews) and eight classification tasks, a second phase of in-domain pre-training (domain-adaptive pre-training) improved results in both high- and low-resource settings, and a further phase on the task's own unlabeled data (task-adaptive pre-training) added a gain even after the domain phase. Each domain phase was a single pass of 12.5K steps on one TPU, and adapting to a task corpus augmented by simple data selection was an effective alternative.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
-  \item Broad evidence that continuing self-supervised training is cheap and effective when the new data are relevant.
-  \item Shows that adaptation to an irrelevant domain does not help and can lower performance, which establishes relevance as the condition for success.
+  \item Evaluates M2D, M2D-X and MATPAC++ next to music-specific models in one environment, and re-trains three audio baselines on the authors' music data under identical settings.
+  \item Thorough ablations of architecture, masking and inference paradigm, and attention maps that the authors present as showing musically meaningful patterns.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
-  \item Text only, with a masked-language-model objective and fine-tuning for evaluation.
-  \item Focuses on gains on the target tasks; the effect on the broad abilities of the original model is not systematically measured.
+  \item A preprint, not yet peer reviewed, trained on a private corpus of 100,000 hours with a very large compute budget, so it cannot be reproduced or compared at equal cost.
+  \item The scores of the 2-D models are the best over several swept inference paradigms, and MARBLEv2 scores are not strictly comparable with those of MARBLE v1.
+  \item The advantage over strong general-audio models is clear mainly for valence in emotion recognition; for tagging, genre and instrument classification it is small or absent, and key detection and beat tracking could not be compared because the frame rate of the general models is too low.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+This is the most recent evidence for the central question. It shows that the M2D design also works for music-specific pre-training, and it quantifies how little a 100,000-hour in-domain model adds over AudioSet-trained models on tagging, genre and instrument tasks, while frame-level tasks such as key detection and beat tracking are where a music-specific model is most useful. These are the tasks that the musical teacher of MERT targets. The study also warns about the cost of fine temporal resolution: the proposed work keeps $16\times16$ patches (160~ms per step) and therefore excludes frame-level tasks from its evaluation.
 
-This study is the conceptual precedent for further pre-training on music. The finding that relevance of the extra data decides success is why a music corpus is used for a general-audio model, and the missing measurement of lost general ability is why this project adds retention tasks.
-
-\needspace{9\baselineskip}
-\subsubsection{Robust wav2vec 2.0: Analyzing Domain Shift in Self-Supervised Pre-Training}
-\lrsum{Summary}
-
+\lritem{Robust wav2vec 2.0: Analyzing Domain Shift in Self-Supervised Pre-Training}{ref:Hsu:2021robustw2v2}{sec:lr-w2v}
+\lrsummary
 Hsu et al.~\cite{ref:Hsu:2021robustw2v2} studied what happens when the unlabeled pre-training data, the labeled fine-tuning data and the test data come from different domains. Using target-domain data during pre-training led to large improvements, and in a large-scale setup pre-training on unlabeled in-domain data reduced the gap between models trained on in-domain and on out-of-domain labeled data by 66\,\% to 73\,\%. Pre-training on several domains also improved generalization to domains that were not seen, and continual pre-training (first one domain, then another) performed similarly to joint training on the combined data when more in-domain data were added.
 
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item Large-scale, systematic analysis of data-domain mismatch in self-supervised speech models.
   \item Practical message: unlabeled target-domain data are much easier to obtain than labeled ones.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Speech recognition with a contrastive objective and corpora of hundreds to thousands of hours, far from the 83 hours used here.
   \item Measures accuracy on the target and unseen domains but not the loss of ability on the original domain.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 It supports the premise that a small amount of unlabeled in-domain audio can close part of a domain gap, and the benefit of multi-domain pre-training agrees with the choice to keep general-audio data (the background noise) in the training mix.
 
-\needspace{9\baselineskip}
-\subsubsection{Self-Distillation for Further Pre-training of Transformers}
-\lrsum{Summary}
-
+\lritem{Self-Distillation for Further Pre-training of Transformers}{ref:Lee:2023selfdistill}{sec:lr-selfdistill}
+\lrsummary
 Lee et al.~\cite{ref:Lee:2023selfdistill} observed that further pre-training of vision transformers on small target data overfits. Their remedy first further pre-trains the initial model on the target unlabeled data to obtain a teacher, then takes the same initial model as a student and trains it with the masked-autoencoding objective while pulling its hidden representations towards those of the teacher. The method outperformed the baselines on several image and text classification benchmarks.
 
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item Directly targets overfitting during further pre-training by regularizing in representation space.
   \item Applies to both vision and language transformers.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Requires two rounds of further pre-training (teacher, then student), which doubles the cost.
   \item Image and text benchmarks only; the teacher is itself a further pre-trained model and may therefore carry the overfitting that the method is meant to remove.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 M2D-X takes the opposite choice of teacher: the frozen \emph{original} model, which costs no extra training round and cannot overfit the new data. The two approaches share the idea that representation-level regularization is the right remedy.
 
-\needspace{9\baselineskip}
-\subsubsection{SONAR: Self-Distilled Continual Pre-training for Domain Adaptive Audio Representation}
-\lrsum{Summary}
-
+\lritem{SONAR: Self-Distilled Continual Pre-training for Domain Adaptive Audio Representation}{ref:Zhang:2025sonar}{sec:lr-sonar}
+\lrsummary
 Zhang et al.~\cite{ref:Zhang:2025sonar} continue pre-training BEATs on unlabeled data from four domains (speech emotion, music from FMA-Large, bioacoustics and environmental sound), with 30,000 to 50,000 audio segments per domain. The framework combines task-relevant stratified sampling from a general pool and the domain data, dual-source self-distillation that constrains both the tokenizer and the encoder to stay close to the frozen original, and an online-clustered codebook that adapts the tokenizer to new acoustic patterns. For music, direct continual pre-training that resumes the original objective lowered the frozen-feature GTZAN F1 score from 86.0 to 76.0 and the AudioSet tagging mAP from 34.8 to 14.7, a forgetting rate of 57.8\,\%; SONAR raised GTZAN to 88.0 and kept the mAP at 34.7.
 
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item The first audio study to quantify forgetting after domain adaptation, with a music (FMA) case and a regularized method.
   \item Distillation towards the frozen original model gives near-zero forgetting.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item An arXiv preprint; built on the discrete-token model BEATs, with tokenizer-specific components that do not apply to M2D.
   \item The regularization weight is very large ($10^{6}$) and tuned once; one downstream task per domain, so music is judged by GTZAN alone.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 SONAR is the closest prior study: it uses FMA, unlabeled data, a small adaptation set and a frozen-original regularizer. This project differs in the base model (M2D, continuous targets), in adding a musical teacher, in the single-GPU budget, and in a larger and more varied set of music and retention tasks. Its forgetting numbers also confirm that naive continuation must be treated as a control that may fail.
 
-\needspace{9\baselineskip}
-\subsubsection{Towards Pre-training an Effective Respiratory Audio Foundation Model}
-\lrsum{Summary}
-
-Niizumi et al.~\cite{ref:Niizumi:2025resp} compared 21 audio foundation models on seven tasks of the OPERA respiratory benchmark with linear evaluation. Models pre-trained on AudioSet, a general and diverse corpus, were more effective than models pre-trained only on respiratory sounds: eight of 19 general models outperformed the respiratory model OPERA-CT. Further pre-training M2D on a combination of AudioSet and respiratory data (14,127 respiratory samples) improved the average AUROC from 0.782 for plain M2D to 0.814, above the 0.733 of OPERA-CT. The authors also found that preserving frequency-wise information when aggregating features is important.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Uses M2D itself and the same linear-evaluation toolkit as this project.
-  \item Shows that diverse general data and narrow domain data complement each other.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item The best configuration mixes AudioSet with the domain data, and the domain (coughs and breath sounds) is narrow and monotonous.
-  \item Seven small tasks (six binary and one five-class) with wide variability; no music.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-The study supports the central premise, that a general-audio model is a strong starting point that often beats domain-only training, and suggests that keeping some general data in the mix helps. Because AudioSet cannot be re-downloaded reliably, this project keeps general sounds in the mix through the FSD50K background noise and preserves frequency-wise information by using the 3,840-dimensional frame feature layout of M2D.
-
-\needspace{9\baselineskip}
-\subsubsection{Parameter-Efficient Transfer Learning for Music Foundation Models}
-\lrsum{Summary}
-
-Ding and Lerch~\cite{ref:Ding:2024petl} study how music foundation models are adapted to downstream tasks. Probing leaves the weights frozen and may be suboptimal, whereas full fine-tuning is expensive and prone to overfitting on small data. They compare adapter-based, prompt-based and reparameterization-based parameter-efficient methods, which train only a small number of parameters. These methods outperformed both probing and fine-tuning on music auto-tagging and matched fine-tuning on key detection and tempo estimation at a much lower cost. The authors also note that a small model trained from scratch achieves similar key and tempo results, which questions the usefulness of the current foundation models for these tasks.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Evaluates several adaptation methods on music foundation models with attention to training cost.
-  \item Honest negative finding about key and tempo.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item An arXiv preprint; adaptation is supervised, so it needs labels for each task.
-  \item It adapts models to tasks, not to a data domain, and does not measure forgetting.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-This is the main alternative to further pre-training: instead of updating the whole encoder with unlabeled music, add a few trainable parameters per task. The proposed work keeps the features frozen at evaluation time and updates them once, with unlabeled data, which makes the result reusable for every downstream task. Parameter-efficient adaptation of the further pre-trained encoder is a natural extension.
-
-\subsection{Public Datasets}
-\label{sec:lr-datasets}
-The datasets below determine what can be pre-trained and evaluated without proprietary data. The first two are general-audio corpora, the next seven are music corpora used for pre-training or evaluation, and the last is a music dataset derived from FMA.
-
-\needspace{9\baselineskip}
-\subsubsection{AudioSet}
-\lrsum{Summary}
-
+\lritem{Audio Set: An Ontology and Human-Labeled Dataset for Audio Events}{ref:Gemmeke:2017audioset}{sec:lr-audioset}
+\lrsummary
 AudioSet~\cite{ref:Gemmeke:2017audioset} is an ontology of audio events and a collection of human-labeled 10-s segments from YouTube videos. Its project page lists 2,084,320 labeled clips, about 5.8 thousand hours, and an ontology of 632 event classes, of which 527 are annotated with clips. M2D was pre-trained on the 2,005,132 clips that were still downloadable, which amount to 5,569 hours~\cite{ref:Niizumi:2024m2dx}.
 
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item The largest labeled general-audio collection and the standard pre-training corpus for audio self-supervision.
   \item Contains a substantial amount of music.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Only links to online videos are distributed, so clips disappear and every group trains on a different subset, which makes published numbers hard to compare~\cite{ref:Quelennec:2025matpacpp}.
   \item Audio quality and labels are web-video quality, and the music portion is not curated.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 AudioSet is the source of the general-audio knowledge in the M2D checkpoint. It is not downloaded in this project, which relies on the released weights.
 
-\needspace{9\baselineskip}
-\subsubsection{FSD50K: An Open Dataset of Human-Labeled Sound Events}
-\lrsum{Summary}
+\lritem{FMA: A Dataset for Music Analysis}{ref:Defferrard:2017fma}{sec:lr-fma}
+\lrsummary
+Defferrard et al.~\cite{ref:Defferrard:2017fma} released the Free Music Archive dataset: 106,574 tracks by 16,341 artists in a hierarchy of 161 genres, with full-length audio of the order of 900~GiB under Creative Commons licenses, plus metadata and pre-computed features. Subsets are provided as 30-s clips cut from the middle of the tracks: small (8,000 clips, 8 balanced genres), medium (25,000 clips, 16 genres, selected for metadata completeness and popularity) and large (all tracks). An 80/10/10 split into training, validation and test sets is stratified by genre and filtered by artist so that no artist appears in two splits.
 
-Fonseca et al.~\cite{ref:Fonseca:2022fsd50k} released FSD50K, 51,197 Freesound clips (108.3 hours) labeled with 200 classes of the AudioSet ontology. The clips are divided into a development and an evaluation split without common uploaders, the evaluation set is exhaustively labeled, and all clips are under Creative Commons licenses so that the waveforms can be freely redistributed.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Openly licensed audio with ontology-based labels.
-  \item Already used as the background-noise corpus in the M2D-X recipe.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Moderate size and short, variable-length clips.
-  \item Contains musical-instrument classes, so it is not purely non-musical noise.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-The development portion is the noise corpus of the denoising task. An optional ablation removes music-related classes to test whether purely non-musical noise is a better distractor.
-
-\needspace{9\baselineskip}
-\subsubsection{FMA: A Dataset for Music Analysis}
-\lrsum{Summary}
-
-Defferrard et al.~\cite{ref:Defferrard:2017fma} released the Free Music Archive dataset: 106,574 tracks by 16,341 artists in a hierarchy of 161 genres, with full-length audio of the order of 900~GiB (343 days) under Creative Commons licenses, plus metadata and pre-computed features. Subsets are provided as 30-s clips cut from the middle of the tracks: small (8,000 clips, 8 balanced genres), medium (25,000 clips, 16 genres, selected for metadata completeness and popularity) and large (all tracks). An 80/10/10 split into training, validation and test sets is stratified by genre and filtered by artist so that no artist appears in two splits. The tracks are MP3 files, mostly stereo at 44.1~kHz and 320~kbit/s.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item Redistributable full-quality audio with artist-level metadata and leakage-controlled splits, which is rare among music datasets.
   \item Several sizes, from a GTZAN-like subset to the whole archive.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Genre labels are provided by the artists and are noisy; some genres, such as experimental music, are under-represented in the medium subset.
   \item Documented issues include corrupted or truncated tracks, tracks shorter than 30~s and duplicates~\cite{ref:FMAGit}, and models trained only on FMA trail models trained on a larger curated corpus~\cite{ref:Won:2024musicfm}.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 FMA is the further pre-training corpus: 10,000 tracks of the medium subset, taken from the training split only. Its FMA-small test split is the in-domain genre evaluation. The sampling, audit and conversion are specified in Chapter~\ref{ch:m5}.
 
-\needspace{9\baselineskip}
-\subsubsection{The Million Song Dataset}
-\lrsum{Summary}
+\lritem{FSD50K: An Open Dataset of Human-Labeled Sound Events}{ref:Fonseca:2022fsd50k}{sec:lr-fsd50k}
+\lrsummary
+Fonseca et al.~\cite{ref:Fonseca:2022fsd50k} released FSD50K, 51,197 Freesound clips (108.3 hours) labeled with 200 classes of the AudioSet ontology. The clips are divided into a development and an evaluation split without common uploaders, the evaluation set is exhaustively labeled, and all clips are under Creative Commons licenses so that the waveforms can be freely redistributed.
 
-Bertin-Mahieux et al.~\cite{ref:BertinMahieux:2011msd} released the Million Song Dataset (MSD), a collection of one million contemporary popular music tracks by 44,745 artists, described by metadata and pre-computed audio features~\cite{ref:Defferrard:2017fma}. It does not distribute audio.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
-  \item Scale and a long record of use, with rich metadata and tag annotations.
+  \item Openly licensed audio with ontology-based labels.
+  \item Already used as the background-noise corpus in the M2D-X recipe.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
-  \item No audio, so models that train on MSD audio must obtain 30-s excerpts from third parties~\cite{ref:Quelennec:2025matpacpp,ref:Won:2024musicfm}, and the source and quality of those excerpts vary.
-  \item Mostly contemporary popular music.
+  \item Moderate size and short, variable-length clips.
+  \item Contains musical-instrument classes, so it is not purely non-musical noise.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+The development portion is the noise corpus of the denoising task. An optional run removes music-related classes to test whether purely non-musical noise is a better distractor.
 
-MSD is the pre-training source of the MusicFM checkpoint and of part of the MATPAC++ music model, which are used as references. It is not used for pre-training here because it does not provide audio.
+\lritem{Music4All: A New Music Database and Its Applications}{ref:Santana:2020music4all}{sec:lr-music4all}
+\lrsummary
+Santana et al.~\cite{ref:Santana:2020music4all} built Music4All, a database of 109,269 pieces with 30-s audio excerpts, about 910 hours in total, together with song metadata. An extension (Music4All-Onion) adds audio, video and metadata features and listening records of about 119,000 users. Music4All is the corpus on which MERT-v0-public (together with part of FMA) and the small-data version of MuQ were trained.
 
-\needspace{9\baselineskip}
-\subsubsection{Music4All: A New Music Database and Its Applications}
-\lrsum{Summary}
-
-Santana et al.~\cite{ref:Santana:2020music4all} built Music4All, a database of 109,269 pieces with 30-s audio excerpts, about 910 hours in total, together with song metadata. An extension (Music4All-Onion) adds 26 audio, video and metadata features and listening records of 119,140 users. Music4All is the corpus on which MERT-v0-public (together with part of FMA) and the small-data version of MuQ were trained.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item A moderately sized, quality-controlled corpus of music excerpts, which is the main open alternative to FMA.
   \item Rich side information.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Mostly popular music with limited stylistic diversity, as noted by the MERT authors.
   \item Limited to 30-s excerpts, so the structure of complete tracks cannot be learned.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 Music4All is the data behind the small-data music-specific references. Its scale of about 910 hours is the natural comparison for the 83 hours used here. It is not used for pre-training because FMA offers artist-filtered splits and open licenses.
 
-\needspace{9\baselineskip}
-\subsubsection{The MTG-Jamendo Dataset for Automatic Music Tagging}
-\lrsum{Summary}
+\lritem{MARBLE: Music Audio Representation Benchmark for Universal Evaluation}{ref:Yuan:2023marble}{sec:lr-marble}
+\lrsummary
+Yuan et al.~\cite{ref:Yuan:2023marble} proposed MARBLE, a benchmark of music representations built on a taxonomy of four levels (acoustic, performance, score and high-level description). It defines a unified protocol of 18 tasks on 12 public datasets, with frozen pre-trained models and simple downstream heads, and provides baselines for the open-source models pre-trained on music recordings; large-scale pre-trained musical language models performed best on most tasks, with room for improvement. Its tasks include key detection, emotion regression, instrument and mood tagging on MTG-Jamendo and beat tracking, and three of its datasets are used in this project. GTZAN~\cite{ref:Tzanetakis:2002genre} consists of 1,000 excerpts of 30~s in ten genres; Sturm~\cite{ref:Sturm:2013gtzan} catalogued its faults (exact, recording and version repetitions, repeated artists, mislabeled and distorted excerpts), and Kereliuk et al.~\cite{ref:Kereliuk:2015adversaries} proposed a fault-filtered split with 443 training, 197 validation and 290 test clips. MagnaTagATune~\cite{ref:Law:2009tagatune} consists of 25,863 clips cut from over 5,000 songs, with tags collected through the TagATune game, distributed as 16~kHz mono MP3 files; the standard task is tagging with the 50 most frequent tags. NSynth~\cite{ref:Engel:2017nsynth} contains 305,979 monophonic notes of 4~s from 1,006 instruments, annotated with pitch, velocity and one of 11 instrument families.
 
-Bogdanov et al.~\cite{ref:Bogdanov:2019jamendo} released MTG-Jamendo, over 55,000 full-length audio tracks from the Jamendo platform with 195 tags: 87 genre, 40 instrument and 56 mood and theme tags. Audio is available as 320~kbit/s MP3 (508~GB) or as a lower-bitrate mono version (156~GB), the audio is under Creative Commons licenses and the annotations under CC BY-NC-SA 4.0, for non-commercial research. Official training, validation and test splits are provided.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
-  \item Large, multi-label and well-defined tasks (genre, instrument, mood, top-50) that are part of MARBLE and of recent music benchmarks.
+  \item Broad coverage of tagging, key, genre, emotion, instrument, pitch, beat and structure tasks under one protocol, with a common leaderboard.
+  \item Its datasets are widely used, so results can be compared with MERT, MuQ, MATPAC and earlier work, and NSynth gives exact pitch labels.
 \end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item A very large download (508~GB at full quality) and a license restricted to non-commercial research.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-MTG-Jamendo is used by MATPAC++ and PupuM2D for evaluation. The download and probing cost exceed the budget of this project, so it is listed as an optional extension to broaden the evaluation.
-
-\needspace{9\baselineskip}
-\subsubsection{Evaluation of Algorithms Using Games: The Case of Music Tagging (MagnaTagATune)}
-\lrsum{Summary}
-
-Law et al.~\cite{ref:Law:2009tagatune} introduced the MagnaTagATune data, in which tags were collected from players of the TagATune game. The data consist of 25,863 clips cut from over 5,000 songs, distributed as 16~kHz, 32~kbit/s mono MP3 files~\cite{ref:Defferrard:2017fma}, and the standard task is tagging with the 50 most frequent tags.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Widely used, so results can be compared with MERT, MuQ and MATPAC.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Low audio quality (16~kHz mono), and several clips per song (about five on average), so a split must keep songs together to avoid leakage.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-MagnaTagATune is the tagging task of the evaluation suite. A fixed published split is used and recorded before any evaluation.
-
-\needspace{9\baselineskip}
-\subsubsection{GTZAN and Its Faults}
-\lrsum{Summary}
-
-GTZAN~\cite{ref:Tzanetakis:2002genre} consists of 1,000 excerpts of 30~s in ten genres. Sturm~\cite{ref:Sturm:2013gtzan} catalogued its faults, namely 50 exact repetitions, 21 recording repetitions and 13 version repetitions, repeated artists (for example, more than one third of the reggae excerpts are by one artist), mislabeled excerpts and distortions, and showed that these faults affect the evaluation of genre systems. Kereliuk et al.~\cite{ref:Kereliuk:2015adversaries} proposed a fault-filtered split, used in the M2D evaluation with 443 training, 197 validation and 290 test clips.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item The most widely used genre benchmark, which allows comparison with almost all earlier work.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Faults and artist repetition make results optimistic, and the test split is very small, so confidence intervals are several points wide.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-GTZAN is an evaluation task with the fault-filtered split. Because of its size, the project does not draw conclusions from it alone and reports bootstrap intervals.
-
-\needspace{9\baselineskip}
-\subsubsection{Neural Audio Synthesis of Musical Notes with WaveNet Autoencoders (NSynth)}
-\lrsum{Summary}
-
-Engel et al.~\cite{ref:Engel:2017nsynth} introduced the NSynth dataset of 305,979 monophonic musical notes of 4~s at 16~kHz from 1,006 instruments, annotated with pitch, velocity and instrument family and under a Creative Commons Attribution 4.0 license. The 11 instrument families are the usual classification target, and pitch classification is a second task.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Large, clean and controlled, with exact pitch labels.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Isolated single notes from sample libraries, far from polyphonic music.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-The instrument and pitch tasks probe timbre and pitch information, the content that the CQT musical teacher targets. They are part of the evaluation suite.
-
-\needspace{9\baselineskip}
-\subsubsection{OpenMIC-2018: An Open Dataset for Multiple Instrument Recognition}
-\lrsum{Summary}
-
-Humphrey et al.~\cite{ref:Humphrey:2018openmic} released OpenMIC-2018, a collection of 20,000 10-s audio excerpts drawn from the Free Music Archive with crowd-sourced labels for the presence of 20 instrument classes. It is distributed on Zenodo with the audio, pre-computed VGGish features, individual and aggregated labels and train and test partitions.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Real polyphonic music with instrument labels and an open license.
-\end{itemize}
-\lrlist{Weaknesses:}
-\begin{itemize}
-  \item Labels are weak and incomplete (crowd-sourced presence judgments), and ten source files are affected by an issue of the source FMA data.
-\end{itemize}
-
-\lrhead{Relationship to the proposed work}
-
-OpenMIC is used by MATPAC and MATPAC++ for evaluation. Because its audio comes from FMA, it could overlap with the pre-training pool, and it is therefore kept as an optional task.
-
-\subsection{Evaluation Benchmarks and Protocols}
-\label{sec:lr-bench}
-Comparisons between audio and music representations are only meaningful under a shared protocol. The two benchmarks below define the frozen-feature protocols that most of the reviewed models were evaluated with.
-
-\needspace{9\baselineskip}
-\subsubsection{MARBLE: Music Audio Representation Benchmark for Universal Evaluation}
-\lrsum{Summary}
-
-Yuan et al.~\cite{ref:Yuan:2023marble} proposed MARBLE, a benchmark of music representations built on a taxonomy of four levels (acoustic, performance, score and high-level description). It defines a unified protocol based on 18 tasks on 12 public datasets, with frozen pre-trained models and simple downstream heads, and it provides baselines for all open-source pre-trained models trained on music recordings. The results suggested that recently proposed large-scale pre-trained musical language models performed best on most tasks, with room for improvement.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
-\begin{itemize}
-  \item Broad coverage of tagging, key, genre, emotion, instrument, pitch, beat and structure tasks, with an open toolkit and a leaderboard.
-  \item Clear copyright statement, which makes the benchmark reusable.
-\end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Many tasks need large downloads and several downstream heads, which is costly for a single-GPU project.
   \item The implementation has been revised, and later papers state that scores of the revised version are not strictly comparable with those of the original~\cite{ref:Gu:2026pupum2d}.
+  \item Individual datasets have known problems: GTZAN faults make results optimistic and its fault-filtered test split is very small; MagnaTagATune is low-quality audio with several clips per song, so a split must keep songs together; NSynth consists of isolated notes, far from polyphonic music.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
+\lrrelation
+MARBLE guided the choice of music tasks. GTZAN genre (with the fault-filtered split), MagnaTagATune tagging, and NSynth instrument and pitch classification are part of the evaluation of Chapter~\ref{ch:m5}, and they are also the four tasks demonstrated by the dashboard of Chapter~\ref{ch:srs}. The project evaluates them with the linear-probe toolkit of the M2D authors~\cite{ref:EVARGit} for budget reasons and does not mix its numbers with MARBLE scores; because of the small GTZAN test split, no conclusion rests on GTZAN alone.
 
-MARBLE guided the choice of music tasks (genre, tagging, instrument, pitch and key). The project evaluates a smaller subset with the toolkit of the M2D authors for budget reasons and does not mix its numbers with MARBLE scores.
+\lritem{HEAR: Holistic Evaluation of Audio Representations}{ref:Turian:2022hear}{sec:lr-hear}
+\lrsummary
+Turian et al.~\cite{ref:Turian:2022hear} report the HEAR 2021 challenge, which asked which audio embedding approach generalizes best to a wide range of downstream tasks across everyday domains without fine-tuning. Twenty-nine models submitted by thirteen external teams were evaluated through a common application programming interface on nineteen tasks derived from sixteen datasets covering speech, environmental sound and music.
 
-\needspace{9\baselineskip}
-\subsubsection{HEAR: Holistic Evaluation of Audio Representations}
-\lrsum{Summary}
-
-Turian et al.~\cite{ref:Turian:2022hear} report the HEAR 2021 challenge, which asked which audio embedding approach generalizes best to a wide range of downstream tasks across everyday domains without fine-tuning. Twenty-nine models submitted by thirteen external teams were evaluated through a common application programming interface on nineteen tasks derived from sixteen datasets covering speech, environmental sound and music. The code, the submitted models and the datasets were released.
-
-\lrhead{Critical analysis}
-
-\lrlist{Strengths:}
+\lrcritical
+\lrstrengths
 \begin{itemize}
   \item The first large, open comparison of general-purpose audio embeddings under one protocol.
   \item The M2D line of work began as a submission to this challenge~\cite{ref:Niizumi:2022msmmae}.
 \end{itemize}
-\lrlist{Weaknesses:}
+\lrweaknesses
 \begin{itemize}
   \item Models date from 2021 and do not include current masked-latent-prediction models, and only some tasks involve music.
 \end{itemize}
 
-\lrhead{Relationship to the proposed work}
-
+\lrrelation
 HEAR establishes the principle of judging representations by frozen features on many tasks, which this project applies to a music-focused task set and to retention tasks.
-
-\subsection{Related Applications and Frameworks}
-\label{sec:lr-tools}
-Several open-source tools and released models determine how a study of this kind can be carried out on one machine. They are summarized below.
-
-\needspace{9\baselineskip}
-\subsubsection{EVAR: Evaluation of Audio Representations}
-EVAR~\cite{ref:EVARGit} is the evaluation toolkit of the M2D authors. It supports linear evaluation, fine-tuning and zero-shot evaluation on more than twelve tasks, among them GTZAN, NSynth (instrument, pitch and velocity), ESC-50, UrbanSound8K and FSD50K, and on more than ten models, and it has a plugin folder for extending to the MARBLE and OPERA benchmarks. It is the protocol of the M2D papers and is therefore the main evaluation tool of this project, but FMA-small and MagnaTagATune are not included and require task metadata to be written.
-
-\needspace{9\baselineskip}
-\subsubsection{M2D Official Repository and Checkpoints}
-The official repository~\cite{ref:M2DGit} provides the PyTorch code, the pre-trained weights (AudioSet models with several input sizes, speech models, M2D-CLAP models and an M2D-X model for respiratory sounds), the pre-training and further pre-training scripts with options for the background-noise list, the noise ratio, the offline teacher and the offline loss weight, and a guide for further pre-training. It is built by patching the MAE code and relies on pre-converted log-mel spectrograms. It is the code base of this project, but it has no support for a CQT teacher, which has to be added.
-
-\needspace{9\baselineskip}
-\subsubsection{nnAudio}
-nnAudio~\cite{ref:Cheuk:2020nnaudio} converts audio to spectrograms on the GPU with one-dimensional convolutional layers and provides mel and constant-Q transforms. It computes the log-mel front-end of M2D and the CQT of the official MERT implementation, so the same library produces both the inputs and the musical-teacher targets in this project.
-
-\needspace{9\baselineskip}
-\subsubsection{X-ARES}
-X-ARES~\cite{ref:XARESGit} is the evaluation suite of the ICME 2025 Audio Encoder Capability Challenge. It covers 21 public datasets across speech, music and environmental sound, with linear and k-nearest-neighbor probing, and it was used by Audio-JEPA, including the FMA-small and GTZAN tasks. It is not used in this project, but it shows how FMA-small is used as a standard evaluation task.
-
-\needspace{9\baselineskip}
-\subsubsection{Public Checkpoints of Music and Latent-Prediction Models}
-Pre-trained models are available on public hubs: MERT in several versions (for example MERT-v0-public and MERT-v1-95M, released under a non-commercial CC-BY-NC license)~\cite{ref:MERTCard}, the general-audio and the music MATPAC++ encoders~\cite{ref:MATPACGit}, and MusicFM models trained on the Million Song Dataset and on FMA~\cite{ref:MusicFMGit}. They differ in sampling rate, context length and size, which limits comparability, but they make the reference experiments of this project possible without any pre-training.
 
 \section{Literature Review Summary Table}
 \label{sec:lr-tables}
-Table~\ref{tab:lr-studies} summarizes the research studies in the research-project format, Table~\ref{tab:lr-datasets} the public datasets, and Table~\ref{tab:lr-tools} the related applications and frameworks.
+Table~\ref{tab:lr-studies} summarizes the reviewed research studies, datasets and benchmarks: the author and reference, the method or content, the main reported result, and the main limitation with respect to this project.
 
 {\small\singlespacing
 \renewcommand{\arraystretch}{1.1}
 \begin{longtable}{|P{2.5cm}|P{4.1cm}|P{4.2cm}|P{3.3cm}|}
-\caption[Summary of the reviewed research studies]{Summary of the reviewed research studies: the author and reference, the method and data, the main reported result, and the main limitation with respect to this project.}\label{tab:lr-studies}\\
+\caption[Summary of the reviewed literature]{Summary of the reviewed literature: the author and reference, the method or content, the main reported result, and the main limitation with respect to this project.}\label{tab:lr-studies}\\
 \hline
 \textbf{Author} & \textbf{Method} & \textbf{Results} & \textbf{Limitations}\\
 \hline
@@ -1116,88 +676,37 @@ Table~\ref{tab:lr-studies} summarizes the research studies in the research-proje
 \textbf{Author} & \textbf{Method} & \textbf{Results} & \textbf{Limitations}\\
 \hline
 \endhead
-\hline
 \endfoot
-Huang et al.~\cite{ref:Huang:2022audiomae} & Masked autoencoder on spectrograms; 80\% masking; local-window decoder; AudioSet-2M & AudioSet-2M mAP 47.3; ESC-50 94.1\% (fine-tuned) & Reconstruction target; needs fine-tuning\\
-Chen et al.~\cite{ref:Chen:2023beats} & Iterative acoustic tokenizer and discrete-label prediction & AudioSet-2M mAP 48.6 (single), 50.6 (ensemble); ESC-50 98.1\% & Multi-stage; best variants use a supervised teacher\\
-Niizumi et al.~\cite{ref:Niizumi:2023m2d} & Online and target networks; target sees only masked patches; ViT-Base on AudioSet & Linear-evaluation average 80.2 on nine tasks; best on four & Costly pre-training; weaker on speaker identification\\
-Niizumi et al.~\cite{ref:Niizumi:2023m2ds} & Denoising distillation of speech-model features; noisy input to M2D & Comparable to HuBERT and WavLM on SUPERB; better on keyword spotting and emotion & Speech only; needs a domain teacher\\
-Niizumi et al.~\cite{ref:Niizumi:2024m2dx} & Background noise and an offline network (labels, distillation or regularization) & ICBHI score 61.93, 61.17 (naive), 62.73 (noise), 63.29 (M2D-X); one 24-GB GPU & One small medical task; no music; forgetting not measured\\
-Niizumi et al.~\cite{ref:Niizumi:2024m2dclap} & M2D combined with CLAP, LLM sentence embeddings in the extension & Zero-shot GTZAN 75.17\%; AudioSet mAP 49.0 (extension) & Needs captions; 10-s input; extension is a preprint\\
-Assran et al.~\cite{ref:Assran:2023ijepa} & Predict target-block latents from a context block (images) & ViT-Huge/14 trained in under 72 h on 16 A100 GPUs & Vision only\\
-Riou et al.~\cite{ref:Riou:2024jepa} & Study of masking and duration for audio JEPA & Random masking best; GTZAN 82.1 to 86.9 as duration grows from 2.1 to 6.4 s & AudioSet only; few designs tested\\
-Tuncay et al.~\cite{ref:Tuncay:2025audiojepa} & Audio JEPA, ViT-Base, AudioSet, 13 epochs & kNN: first on ESC-50, FMA-small and GTZAN among three models & Under-trained; weak linear probing; preprint\\
-Quelennec et al.~\cite{ref:Quelennec:2025matpac} & Latent prediction plus DINO-style classification & Average 74.9 against 74.0 without classification; MTT 41.1 mAP & Classification acts as regularizer; AudioSet version drift\\
-Quelennec et al.~\cite{ref:Quelennec:2025matpacpp} & Multiple-hypothesis predictor with annealed MCL & Average 75.7; music-only 47.9 against 47.2 for AudioSet training & Preprint; private data\\
-Gu et al.~\cite{ref:Gu:2026pupum2d} & 2-D music model, 100,000 h, mixed masking, SwiGLU, RoPE & Key 66.1; GTZAN 86.9; MTT AP 40.8; general models match on tagging and instruments & Preprint; private data; 32 GPUs\\
-Castellon et al.~\cite{ref:Castellon:2021jukemir} & Probes on Jukebox language-model features & 30\% better than tag-pretrained on four tasks; strong key detection & Billions of parameters; four tasks\\
-Spijkervet and Burgoyne~\cite{ref:Spijkervet:2021clmr} & SimCLR on raw-waveform music & AP 33.1 with 1\% of labels; above supervised on MTT & Tagging only; augmentation design\\
-McCallum et al.~\cite{ref:McCallum:2022mule} & Music against generic data; supervised against contrastive & Music-only pre-training best unsupervised with smaller batches & Private 117,497-h dataset\\
-Li et al.~\cite{ref:Li:2024mert} & Masked prediction with acoustic and CQT teachers; 95M and 330M & Best overall on 14 tasks; key 55.1 to 65.0 with CQT & 5-s context; instability; large data\\
-Won et al.~\cite{ref:Won:2024musicfm} & Random-projection targets; Conformer, 330M & FMA-only (8,000 h) below the 160,000-h model & Random targets; large model\\
-Zhu et al.~\cite{ref:Zhu:2025muq} & Mel-RVQ tokens; Conformer & 0.9K h beats MERT and MusicFM; average 75.8, 76.7, 77.0 & 160K-h data private; separate tokenizer stage\\
-Gururangan et al.~\cite{ref:Gururangan:2020dsp} & Domain- and task-adaptive pre-training of RoBERTa & Gains in four domains and eight tasks, also in low-resource settings & Text only; forgetting not measured\\
-Hsu et al.~\cite{ref:Hsu:2021robustw2v2} & Pre-training on in-domain unlabeled speech & Closes 66--73\% of the domain gap & Speech; large corpora\\
-Lee et al.~\cite{ref:Lee:2023selfdistill} & Self-distillation for further pre-training of transformers & Beats baselines on image and text benchmarks & Two rounds; teacher may overfit\\
-Zhang et al.~\cite{ref:Zhang:2025sonar} & Continual pre-training of BEATs with distillation and sampling & GTZAN F1 86.0 (original), 76.0 (naive), 88.0 (SONAR); AudioSet mAP 34.7 against 14.7 & Preprint; tokenizer-specific\\
-Niizumi et al.~\cite{ref:Niizumi:2025resp} & Compare 21 models on OPERA; further pre-train M2D on AudioSet and respiratory data & AUROC 0.814 for M2D with respiratory data, 0.782 for M2D, 0.733 for OPERA-CT & Narrow domain; no music\\
-Ding and Lerch~\cite{ref:Ding:2024petl} & Adapters, prompts and reparameterization on music foundation models & Beat probing and fine-tuning on tagging; match fine-tuning on key and tempo & Preprint; supervised, per task\\
-Yuan et al.~\cite{ref:Yuan:2023marble} & Benchmark: 18 tasks on 12 datasets & Large musical language models best on most tasks & Heavy; versions not comparable\\
-Turian et al.~\cite{ref:Turian:2022hear} & Benchmark: 29 models, 19 tasks, 16 datasets & First broad frozen-embedding comparison & 2021 models; few music tasks\\
-\end{longtable}}
-
-{\small\singlespacing
-\renewcommand{\arraystretch}{1.1}
-\begin{longtable}{|P{3.3cm}|P{3.8cm}|P{3.6cm}|P{3.4cm}|}
-\caption[Summary of the reviewed public datasets]{Summary of the reviewed public datasets: the name and reference, the content and size, the license and access, and the main limitation with respect to this project.}\label{tab:lr-datasets}\\
-\hline
-\textbf{Dataset} & \textbf{Content and size} & \textbf{License and access} & \textbf{Limitations}\\
-\hline
-\endfirsthead
-\hline
-\textbf{Dataset} & \textbf{Content and size} & \textbf{License and access} & \textbf{Limitations}\\
-\hline
-\endhead
-\hline
-\endfoot
-AudioSet~\cite{ref:Gemmeke:2017audioset} & 2,084,320 labeled 10-s clips; 632-class ontology & Links to YouTube videos; audio not hosted & Clips disappear; versions differ\\
-FSD50K~\cite{ref:Fonseca:2022fsd50k} & 51,197 clips; 108.3 h; 200 classes & Creative Commons; waveforms redistributable & Short clips; includes instrument classes\\
-FMA~\cite{ref:Defferrard:2017fma} & 106,574 tracks; 161 genres; subsets of 8,000 and 25,000 clips & Creative Commons audio; open download & Noisy genre labels; some corrupted files\\
-MSD~\cite{ref:BertinMahieux:2011msd} & 1,000,000 tracks; 44,745 artists & Metadata and features; no audio & Audio must be obtained elsewhere\\
-Music4All~\cite{ref:Santana:2020music4all} & 109,269 excerpts of 30 s; about 910 h & Released by the authors for research & Mostly pop; 30-s excerpts\\
-MTG-Jamendo~\cite{ref:Bogdanov:2019jamendo} & Over 55,000 full tracks; 195 tags & Creative Commons audio; annotations CC BY-NC-SA 4.0 & 508 GB; non-commercial use\\
-MagnaTagATune~\cite{ref:Law:2009tagatune} & 25,863 clips from over 5,000 songs; 50 common tags & 16 kHz mono MP3 for research & Low quality; several clips per song\\
-GTZAN~\cite{ref:Tzanetakis:2002genre,ref:Sturm:2013gtzan} & 1,000 excerpts of 30 s; 10 genres & Publicly downloadable & Faults; 290-clip test split\\
-NSynth~\cite{ref:Engel:2017nsynth} & 305,979 notes; 1,006 instruments; 11 families & CC BY 4.0 & Isolated single notes\\
-OpenMIC-2018~\cite{ref:Humphrey:2018openmic} & 20,000 clips of 10 s; 20 instruments & Open on Zenodo with audio and features & Weak crowd labels; derived from FMA\\
-\end{longtable}}
-
-{\small\singlespacing
-\renewcommand{\arraystretch}{1.1}
-\begin{longtable}{|P{2.6cm}|P{4.1cm}|P{4.0cm}|P{3.4cm}|}
-\caption[Summary of related applications and frameworks]{Summary of related applications and frameworks: their main features, their relevance to this project, and their limitations.}\label{tab:lr-tools}\\
-\hline
-\textbf{Application} & \textbf{Features} & \textbf{Relevance} & \textbf{Limitations}\\
-\hline
-\endfirsthead
-\hline
-\textbf{Application} & \textbf{Features} & \textbf{Relevance} & \textbf{Limitations}\\
-\hline
-\endhead
-\hline
-\endfoot
-EVAR~\cite{ref:EVARGit} & Linear, fine-tuning and zero-shot evaluation; over 12 tasks and 10 models; plugins & Protocol of the M2D papers; GTZAN, NSynth, ESC-50 and UrbanSound8K ready & FMA-small and MagnaTagATune need new metadata\\
-M2D repository~\cite{ref:M2DGit} & Code, weights, further pre-training scripts and guide & Starting point and training code & Patch-based setup; no CQT teacher\\
-nnAudio~\cite{ref:Cheuk:2020nnaudio} & GPU mel and constant-Q transforms & Inputs and CQT targets from one library & CQT settings must match MERT\\
-X-ARES~\cite{ref:XARESGit} & 21 datasets; linear and kNN probing & Includes FMA-small and GTZAN & Not used in this project\\
-Public checkpoints~\cite{ref:MERTCard,ref:MATPACGit,ref:MusicFMGit} & MERT, MATPAC++ and MusicFM weights & Reference models without pre-training & Licenses and input rates differ\\
+Huang et al.~\cite{ref:Huang:2022audiomae} & Masked autoencoder on spectrograms; 80\% masking; local-window decoder & AudioSet-2M mAP 47.3; ESC-50 94.1\% (fine-tuned) & Reconstruction target; needs fine-tuning\\ \hline
+Chen et al.~\cite{ref:Chen:2023beats} & Iterative acoustic tokenizer and discrete-label prediction & AudioSet-2M mAP 48.6 (single), 50.6 (ensemble); ESC-50 98.1\% & Multi-stage; best variants use a supervised teacher\\ \hline
+Niizumi et al.~\cite{ref:Niizumi:2023m2d} & Online and target networks; target sees only masked patches; ViT-Base on AudioSet & Linear-evaluation average 80.2 on nine tasks; best on four & Costly pre-training; less sensitive to pitch\\ \hline
+Niizumi et al.~\cite{ref:Niizumi:2024m2dx} & Background noise and an offline network (labels, distillation or regularization) & ICBHI score 61.93, 61.17 (naive), 62.73 (noise), 63.29 (M2D-X) & One small medical task; no music; forgetting not measured\\ \hline
+Riou et al.~\cite{ref:Riou:2024jepa} & Study of masking and input duration for audio JEPA & Random masking best; GTZAN 82.1 to 86.9 as duration grows from 2.1 to 6.4 s & AudioSet only; few designs tested\\ \hline
+Tuncay et al.~\cite{ref:Tuncay:2025audiojepa} & Audio JEPA, ViT-Base, AudioSet, about 13 epochs & kNN: first on ESC-50, FMA-small and GTZAN among three models & Under-trained; weak linear probing; preprint\\ \hline
+Quelennec et al.~\cite{ref:Quelennec:2025matpac} & Latent prediction plus DINO-style classification & Average 74.9 against 74.0 without classification and 73.7 for M2D; MTT 41.1 mAP & Classification acts as regularizer; AudioSet version drift\\ \hline
+Quelennec et al.~\cite{ref:Quelennec:2025matpacpp} & Multiple-hypothesis predictor with annealed MCL & Average 75.7; music-only 47.9 against 47.2 for AudioSet training & Preprint; private data\\ \hline
+Castellon et al.~\cite{ref:Castellon:2021jukemir} & Probes on Jukebox language-model features & 30\% better than tag-pretrained models on four tasks; strong key detection & Billions of parameters; four tasks\\ \hline
+McCallum et al.~\cite{ref:McCallum:2022mule} & Music against general audio; supervised against contrastive & Music-only pre-training best among unsupervised models, with smaller batches & Private 117,497-h dataset\\ \hline
+Li et al.~\cite{ref:Li:2024mert} & Masked prediction with acoustic and CQT teachers; 95M and 330M & Best overall on 14 tasks; key 55.1 to 65.0 with CQT & 5-s context; instability; large data\\ \hline
+Won et al.~\cite{ref:Won:2024musicfm} & Random-projection targets; Conformer, 330M & FMA-only (8,000 h) below the 160,000-h model & Random targets; large model\\ \hline
+Zhu et al.~\cite{ref:Zhu:2025muq} & Mel-RVQ tokens; Conformer & 0.9K h beats MERT and MusicFM; average 75.8, 76.7, 77.0 & 160K-h data private; separate tokenizer stage\\ \hline
+Gu et al.~\cite{ref:Gu:2026pupum2d} & 2-D music model, 100,000 h, mixed masking, SwiGLU, RoPE & Key 66.1; GTZAN 86.9; MTT AP 40.8; general models match on tagging and instruments & Preprint; private data; very large compute\\ \hline
+Hsu et al.~\cite{ref:Hsu:2021robustw2v2} & Pre-training on in-domain unlabeled speech & Closes 66--73\% of the domain gap & Speech; large corpora\\ \hline
+Lee et al.~\cite{ref:Lee:2023selfdistill} & Self-distillation for further pre-training of transformers & Beats baselines on image and text benchmarks & Two rounds; teacher may overfit\\ \hline
+Zhang et al.~\cite{ref:Zhang:2025sonar} & Continual pre-training of BEATs with distillation and sampling & GTZAN F1 86.0 (original), 76.0 (naive), 88.0 (SONAR); AudioSet mAP 34.7 against 14.7 & Preprint; tokenizer-specific\\ \hline
+Gemmeke et al.~\cite{ref:Gemmeke:2017audioset} & Dataset: 2,084,320 labeled 10-s YouTube clips; 527 annotated classes & Standard general-audio pre-training corpus; source of M2D & Clips disappear; versions differ\\ \hline
+Defferrard et al.~\cite{ref:Defferrard:2017fma} & Dataset: 106,574 Creative Commons tracks; subsets of 8,000 and 25,000 clips & Artist-filtered splits; redistributable audio & Noisy genre labels; some corrupted files\\ \hline
+Fonseca et al.~\cite{ref:Fonseca:2022fsd50k} & Dataset: 51,197 Freesound clips; 200 classes & Openly licensed; noise corpus of M2D-X & Short clips; includes instrument classes\\ \hline
+Santana et al.~\cite{ref:Santana:2020music4all} & Dataset: 109,269 excerpts of 30 s; about 910 h & Training data of MERT-v0-public and small MuQ & Mostly pop; 30-s excerpts\\ \hline
+Yuan et al.~\cite{ref:Yuan:2023marble} & Benchmark: 18 tasks on 12 datasets, including GTZAN, MagnaTagATune and NSynth & Large musical language models best on most tasks & Heavy; versions not comparable; dataset faults\\ \hline
+Turian et al.~\cite{ref:Turian:2022hear} & Benchmark: 29 models, 19 tasks, 16 datasets & First broad frozen-embedding comparison & 2021 models; few music tasks\\ \hline
 \end{longtable}}
 
 \section{Conclusion}
 \label{sec:lr-conclusion}
-The literature shows that masked latent prediction on spectrograms yields strong general-purpose audio representations, with M2D and MATPAC++ at the top of the AudioSet-trained models. These general-audio models are already strong on music: in the unified comparison of MATPAC++, the AudioSet-trained models were on a par with or above MERT, and music-only training added about 0.7 points on average~\cite{ref:Quelennec:2025matpacpp}; in the evaluation of PupuM2D, AudioSet-trained M2D, M2D-X and MATPAC++ checkpoints matched or exceeded MERT, MuQ and MusicFM on tagging and instrument classification, and a 100,000-hour in-domain model was clearly ahead mainly on valence in emotion recognition, while the frame-level tasks (key, beat) could not be compared with the general models~\cite{ref:Gu:2026pupum2d}. Music-specific models gain from music-oriented targets, such as the CQT of MERT and the Mel-RVQ tokens of MuQ, but they rely on 900 to 160,000 hours of music, often private, and on multi-GPU training, and a model trained on FMA alone was weaker than one trained on a larger curated corpus~\cite{ref:Won:2024musicfm}.
+The literature shows that masked latent prediction on spectrograms yields strong general-purpose audio representations, with M2D, MATPAC and MATPAC++ at the top of the AudioSet-trained models. These general-audio models are already strong on music: in the unified comparison of MATPAC++, the AudioSet-trained models were on a par with or above MERT, and music-only training added about 0.7 points on average~\cite{ref:Quelennec:2025matpacpp}; in the evaluation of PupuM2D, AudioSet-trained M2D, M2D-X and MATPAC++ checkpoints matched or exceeded MERT, MuQ and MusicFM on tagging and instrument classification, and a 100,000-hour in-domain model was clearly ahead mainly on valence in emotion recognition, while the frame-level tasks (key, beat) could not be compared with the general models~\cite{ref:Gu:2026pupum2d}. Music-specific models gain from modeling music audio and from music-oriented targets, such as the CQT of MERT and the Mel-RVQ tokens of MuQ~\cite{ref:Castellon:2021jukemir,ref:McCallum:2022mule,ref:Li:2024mert,ref:Zhu:2025muq}, but they rely on 900 to 160,000 hours of music, often private, and a model trained on FMA alone was weaker than one trained on a larger curated corpus~\cite{ref:Won:2024musicfm}.
 
-Further pre-training on domain data is established in language, speech and respiratory sound~\cite{ref:Gururangan:2020dsp,ref:Hsu:2021robustw2v2,ref:Niizumi:2025resp}, and the M2D-X recipe makes it practical on one GPU through background noise and a frozen-teacher regularizer~\cite{ref:Niizumi:2024m2dx}. The risks are also documented: naive continuation can overfit and forget, as the FMA-based experiments of SONAR on a different model family show~\cite{ref:Zhang:2025sonar}. Public resources suffice to run such a study: FMA is the only open, artist-filtered and redistributable full-quality music corpus of suitable size, FSD50K supplies noise, and EVAR provides a protocol for the M2D family together with the public MERT, MATPAC++ and MusicFM checkpoints for reference. Protocols differ between benchmarks, so numbers from different papers cannot be compared directly.
+Further pre-training on domain data closes part of a domain gap~\cite{ref:Hsu:2021robustw2v2}, and the M2D-X recipe makes it practical on one GPU through background noise and a frozen-teacher regularizer~\cite{ref:Niizumi:2024m2dx}. The risks are also documented: further pre-training on small data can overfit~\cite{ref:Lee:2023selfdistill}, and naive continuation can forget, as the FMA-based experiments of SONAR on a different model family show~\cite{ref:Zhang:2025sonar}. Open data suffice to run such a study: FMA is the only open, artist-filtered and redistributable full-quality music corpus of suitable size, FSD50K supplies noise, and MARBLE provides the music tasks, while HEAR established the frozen-feature protocol. Protocols differ between benchmarks, so numbers from different papers cannot be compared directly.
 
 No reviewed work applies the M2D-X recipe to music, combines noise, a frozen-teacher regularizer and a music-specific CQT teacher in one framework, does so on a small open subset of about 10,000 tracks with one GPU, or measures the retention of general-audio ability next to the music gain under one protocol. This project addresses that gap: it further pre-trains the AudioSet M2D model on FMA with the M2D-X-Music objective, compares each component in a controlled set of arms, and compares the result with music-specific references (Chapter~\ref{ch:m5}).
 
@@ -1856,7 +1365,7 @@ This chapter specified the M2D Music Dashboard, the small web application that a
 
 \chapter{Proposed Approach and Methodology}
 \label{ch:m5}
-This chapter describes the proposed approach at the level of algorithms and procedures. The study asks whether a general-purpose audio model trained by masked latent prediction can compete with music-specific foundation models after further pre-training on a small amount of music data. Figure~\ref{fig:m5-overview} gives an overview. The approach has four parts: a data pipeline that acquires a 10,000-track subset of the Free Music Archive (FMA) and converts it into the exact input format of the pre-trained model; a further pre-training framework, called M2D-X-Music in this report, that combines the denoising and regularization recipe of M2D-X with a MERT-style musical teacher; an experimental design that isolates the contribution of each component and of the amount of data under a single-GPU budget; and an evaluation protocol that measures gains on music tasks, retention of general-audio ability, and the remaining gap to music-specific reference models. Section~\ref{sec:m5-foundations} first summarizes the literature that motivates each design choice. No results are reported in this chapter: it specifies what will be run and how the outcome will be judged.
+This chapter describes how the study is carried out. The AudioSet-pretrained M2D model is further pre-trained on 10,000 tracks of the Free Music Archive (FMA) and compared, with frozen features, against its unmodified version and against public music-specific models. Figure~\ref{fig:m5-overview} shows the four parts of the approach: the acquisition and preprocessing of the data (Sections~\ref{sec:m5-acq} and~\ref{sec:m5-prep}), the further pre-training framework, called M2D-X-Music in this report (Section~\ref{sec:m5-frame}), the experimental arms (Section~\ref{sec:m5-design}) and the evaluation protocol (Section~\ref{sec:m5-eval}).
 
 \begin{figure}[htbp]
 \centering
@@ -1869,7 +1378,7 @@ This chapter describes the proposed approach at the level of algorithms and proc
   \node[m5train] (pt) at (8.4,1.0) {Further pre-training\\M2D-X-Music: noise,\\regularizer, CQT teacher\\(Section~\ref{sec:m5-frame})};
   \node[m5eval] (ev) at (12.6,1.0) {Frozen-feature\\evaluation: music and\\retention tasks\\(Section~\ref{sec:m5-eval})};
   \node[m5ref] (ref) at (12.6,3.5) {Reference models\\MERT, MATPAC++,\\MusicFM};
-  \node[m5box] (ana) at (12.6,-1.2) {Analysis of\\RQ1--RQ5\\(Section~\ref{sec:m5-rq})};
+  \node[m5box] (ana) at (12.6,-1.2) {Analysis\\aggregate scores,\\gap to references};
   \draw[m5arrow] (fma) -- (prep);
   \draw[m5arrow] (fsd) -- (prep);
   \draw[m5arrow] (prep) -- (pt);
@@ -1883,72 +1392,12 @@ This chapter describes the proposed approach at the level of algorithms and proc
 \end{figure}
 
 
-\section{Methodological Foundations}
-\label{sec:m5-foundations}
-This section reviews the work on which the methodology builds and states, for each source, what is adopted and what is deliberately left out. Table~\ref{tab:m5-decisions} at the end of the section collects these decisions.
-
-\subsection{Masked Latent Prediction and M2D}
-Masked prediction teaches an encoder to infer hidden parts of an input from the visible parts. Masked autoencoders reconstruct the hidden input values, first for images~\cite{ref:He:2022mae} and then for audio spectrograms~\cite{ref:Huang:2022audiomae}, so the learning signal depends partly on low-level detail. Methods that predict targets produced by a separate network instead avoid this dependence: BYOL~\cite{ref:Grill:2020byol}, data2vec~\cite{ref:Baevski:2022data2vec} and I-JEPA~\cite{ref:Assran:2023ijepa} regress the continuous latents of a slowly updated target network, and BEATs~\cite{ref:Chen:2023beats} predicts discrete labels from an acoustic tokenizer. Masked Modeling Duo (M2D)~\cite{ref:Niizumi:2023m2d,ref:Niizumi:2024m2dx} applies this idea to audio spectrograms with one distinguishing choice: the target network encodes \emph{only the masked patches}, so the target does not carry information about the visible patches that the online network could exploit, and both networks are encouraged to model the input.
-
-The released M2D model~\cite{ref:M2DGit} takes a log-mel spectrogram of 6~s of audio at 16~kHz with 80 mel bins (80$\times$608 frames) and splits it into $16\times16$ patches, giving $N_F=5$ frequency positions and $N_T=38$ time positions, that is, $N=190$ patches. A vanilla ViT-Base encoder~\cite{ref:Dosovitskiy:2021vit} with 768-dimensional tokens and about 86~M parameters encodes the visible 30\,\% of the patches. A shallow transformer predictor, taken from the MAE decoder, receives the encoded visible patches together with shared learnable mask tokens and predicts the representations of the masked patches. The target encoder is an exponential moving average (EMA) of the online encoder. The model was pre-trained on AudioSet~\cite{ref:Gemmeke:2017audioset} (2,005,132 clips, 5,569~h) for 300 epochs with an effective batch size of 2,048~\cite{ref:Niizumi:2024m2dx}, and it achieved top-level linear-evaluation results across environmental, speech and music tasks. Related members of the family add an unsupervised classification objective (MATPAC~\cite{ref:Quelennec:2025matpac}) or multiple prediction hypotheses (MATPAC++~\cite{ref:Quelennec:2025matpacpp}), and M2D-CLAP aligns the representation with text~\cite{ref:Niizumi:2024m2dclap}. M2D is chosen as the base model of this study for three practical reasons: the code and the AudioSet weights are public~\cite{ref:M2DGit}, an official recipe for further pre-training exists, and its ViT-Base encoder is small enough for a single 16~GB GPU.
-
-\subsection{Specializing a General Model: M2D-X}
-M2D-X extends M2D to learn representations specialized to an application $X$ whose data are scarce and differ from the pre-training distribution~\cite{ref:Niizumi:2024m2dx}. It adds three ingredients. First, background noise from another corpus is mixed into the input of M2D. This acts as data augmentation, which matters because masked prediction normally needs large datasets~\cite{ref:Xie:2023datascaling}, and, because an additional network sees the clean signal, it forms a denoising task. Second, an \emph{offline network} receives the clean input and provides an additional training signal through a configurable loss, which can be supervised labels, the features of a domain model (distillation), or the features of the original pre-trained model (regularization). Third, the total loss is a weighted sum of the M2D loss and the offline loss. The earlier speech variant, M2D for Speech, distilled HuBERT features while denoising and reached results close to HuBERT on several speech tasks~\cite{ref:Niizumi:2023m2ds,ref:Hsu:2021hubert}.
-
-The evidence most relevant to this project comes from the ICBHI 2017 respiratory-sound task, where only 539 training recordings (about 5.5~h for the whole database) were available~\cite{ref:Niizumi:2024m2dx}. The AudioSet model (a variant with $16\times4$ patches and 2-s inputs) scored 61.93 on the task metric. Further pre-training with the M2D loss alone and no background noise \emph{lowered} the score to 61.17, indicating overfitting to the small corpus. Adding background noise (mixing ratio 0.3) raised it to 62.73, and the full M2D-X, which adds the frozen-teacher regularizer, reached 63.29. The training list was replicated to 10,000 samples per epoch, 600 epochs were run with an effective batch size of 128 on a single 24~GB GPU, with the stated aim of completing pre-training within a day. The authors' guide~\cite{ref:M2DGit} states that this procedure suits application datasets of fewer than about 10,000 samples and that an effective batch size of 128 with 600 epochs worked for 10,000 samples. The 10,000-track budget of this project therefore sits at the upper end of the regime the recipe was designed for, which makes it a natural, low-risk starting point.
-
-\subsection{Music-Specific Self-Supervised Models}
-\paragraph{MERT.} MERT~\cite{ref:Li:2024mert} follows HuBERT-style masked prediction on raw audio with two teachers. The \emph{acoustic teacher} supplies discrete targets, obtained either by K-means on log-mel and chroma features or from the residual vector quantization codes of EnCodec~\cite{ref:Defossez:2023encodec}. The \emph{musical teacher} is a linear head on the encoder output that regresses the constant-Q transform (CQT)~\cite{ref:Brown:1991cqt} of the audio with a mean-squared-error loss, and the total loss is $\alpha\mathcal{L}_{H}+\mathcal{L}_{\mathrm{CQT}}$. The CQT has logarithmically spaced bins, so every octave has the same number of bins, which suits pitch and harmony. Adding the CQT term raised key-detection accuracy from 55.1 to 65.0 and GTZAN genre accuracy from 75.2 to 78.6 for the K-means teacher, and from 60.5 to 63.2 and from 72.8 to 77.2 for the RVQ teacher~\cite{ref:Li:2024mert}. MERT also mixes short excerpts from the same batch into each clip (in-batch noise mixup) with probability 0.5 in its final setting. Its official implementation computes the CQT magnitude with nnAudio~\cite{ref:Cheuk:2020nnaudio} using 84 bins at 12 bins per octave starting at 32.7~Hz~\cite{ref:MERTGit}, which is the configuration adopted here for the musical teacher. The base model was trained on about 1,000~h of music in the paper and on 160,000~h for the 330~M-parameter model~\cite{ref:Li:2024mert}; the public MERT-v1-95M checkpoint used in this study was trained on 20,000~h~\cite{ref:MERTCard}.
-
-\paragraph{MusicFM and MuQ.} MusicFM~\cite{ref:Won:2024musicfm} adapts the BEST-RQ idea~\cite{ref:Chiu:2022bestrq} to music: targets are produced by a frozen random projection and a random codebook applied to normalized log-mel features, and a Conformer is trained to predict them. A variant trained on the whole FMA (about 8,000~h) scored below the variant trained on a 160,000-h in-house corpus on most downstream tasks, which the authors attribute to scale and to the crowd-sourced nature of FMA~\cite{ref:Won:2024musicfm}. MuQ~\cite{ref:Zhu:2025muq} predicts Mel-RVQ tokens and reports that it outperforms earlier self-supervised music models with only about 900~h of open-source pre-training data. These two models show that the FMA corpus is usable but not ideal, and that the choice of target matters more than its sophistication; they are used as reference models and their target definitions are not adopted, because both require pre-training from scratch.
-
-\paragraph{MATPAC and MATPAC++.} MATPAC combines masked latent prediction with a DINO-style unsupervised classification objective~\cite{ref:Caron:2021dino}, with total loss $(1-\alpha)\mathcal{L}_{\mathrm{cls}}+\alpha\mathcal{L}_{\mathrm{pred}}$ and $\alpha=0.5$~\cite{ref:Quelennec:2025matpac}. MATPAC++ replaces the single prediction by several hypotheses selected with annealed multiple choice learning~\cite{ref:Perera:2024annealed,ref:Quelennec:2025matpacpp}. The finding that matters here is the effect of domain-specific training. When MATPAC++ was trained only on music (about 0.9~M Million Song Dataset samples plus about 0.18~M web-radio samples, roughly 30~h on four H100 GPUs for 6-s segments), its average over eight music tasks rose from 47.2 to 47.9 compared with training on AudioSet, a gain of 0.7 points~\cite{ref:Quelennec:2025matpacpp}. In the same table the AudioSet-trained M2D averages 46.3 against 44.2 for MERT, although the MERT scores were taken from its paper and the protocols are not identical. In short, general-audio models are already strong on music tasks, and large-scale music-only training adds little. This is the observation that motivates studying whether a \emph{small, cheap} music-specific step can recover a comparable increment.
-
-\subsection{Further Pre-training, Forgetting and Regularization}
-Continuing self-supervised pre-training on domain data is an established idea. In language modeling, domain-adaptive pre-training improves downstream tasks in both high- and low-resource settings~\cite{ref:Gururangan:2020dsp}. In speech, adding unlabeled in-domain data to pre-training reduces most of the gap caused by domain shift~\cite{ref:Hsu:2021robustw2v2}. The risks are equally well documented. Vision transformers further pre-trained on small target data overfit, which motivates distilling from a teacher that was itself further pre-trained~\cite{ref:Lee:2023selfdistill}. For audio, SONAR continues pre-training BEATs on domain data and compares it with direct continual pre-training that resumes the original objective unchanged~\cite{ref:Zhang:2025sonar}. On FMA-derived data of 30,000 to 50,000 segments, direct continuation reduced the frozen-feature GTZAN F1 score from 86.0 to 76.0 and lowered the AudioSet tagging mAP from 34.8 to 14.7, whereas SONAR, which adds distillation-based regularization and data sampling, raised GTZAN to 88.0 and kept the mAP at 34.7~\cite{ref:Zhang:2025sonar}. Another study with M2D found that, for narrow and small respiratory datasets, models pre-trained on diverse general audio beat models trained on the domain alone, and that further pre-training on a combination of general and domain data improved results~\cite{ref:Niizumi:2025resp}. The frozen-teacher term of M2D-X is closely related to learning without forgetting~\cite{ref:Li:2018lwf} and knowledge distillation~\cite{ref:Hinton:2015distill}, and it avoids the parameter-importance estimates required by elastic weight consolidation~\cite{ref:Kirkpatrick:2017ewc}. These studies jointly imply that naive continuation should be treated as a control that may fail, and that retention of general ability must be measured, not assumed.
-
-\subsection{Design Decisions Derived from the Literature}
-Table~\ref{tab:m5-decisions} summarizes, source by source, which finding is used and which decision follows from it in this study.
-
-\begin{table}[!t]
-\centering
-\caption[Literature findings and the design decisions they lead to]{Literature findings and the design decisions they lead to.}
-\label{tab:m5-decisions}
-\small\singlespacing
-\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{2.7cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
-\toprule
-\textbf{Source} & \textbf{Finding used} & \textbf{Decision in this study}\\
-\midrule
-M2D, M2D-X~\cite{ref:Niizumi:2023m2d,ref:Niizumi:2024m2dx} & Latent prediction of masked patches; public AudioSet weights and further pre-training code; recipe for fewer than about 10,000 samples & Start from the AudioSet checkpoint with 80$\times$608 input, $16\times16$ patches and masking ratio 0.7; keep its loss as the base objective\\
-M2D-X noise and regularizer~\cite{ref:Niizumi:2024m2dx} & Naive further pre-training degraded the score; noise and a frozen original-model teacher recovered and exceeded it & Use background noise ($\eta=0.3$) and the original M2D as frozen offline teacher; keep naive and partial variants as controls\\
-MERT~\cite{ref:Li:2024mert} & A CQT-regression musical teacher improves key detection and genre classification; in-batch mixup helps the RVQ variant & Add a CQT teacher (84 bins) through the offline branch with weight 1; do not train an acoustic tokenizer\\
-MATPAC, MATPAC++~\cite{ref:Quelennec:2025matpac,ref:Quelennec:2025matpacpp} & Music-only pre-training at scale adds about 0.7 points over AudioSet training; public checkpoints & Use their checkpoints as references; do not add the classification head or multiple hypotheses\\
-MusicFM, MuQ~\cite{ref:Won:2024musicfm,ref:Zhu:2025muq} & FMA-only training trails a larger corpus; about 900~h of open data is enough for competitive results & Use as references with matched or larger data; do not adopt quantizer targets\\
-Domain-adaptive pre-training, SONAR~\cite{ref:Gururangan:2020dsp,ref:Zhang:2025sonar,ref:Lee:2023selfdistill} & Naive continuation can hurt and forget; regularization and replay of general data help & Measure retention on environmental-sound tasks and report a forgetting score\\
-FMA~\cite{ref:Defferrard:2017fma} & Creative Commons audio; 30-s clips; artist-filtered train, validation and test splits; curated medium subset & Sample from the training split of the medium subset only; cap tracks per artist; use no genre labels for pre-training\\
-EVAR, MARBLE, HEAR~\cite{ref:M2DGit,ref:EVARGit,ref:Yuan:2023marble,ref:Turian:2022hear} & Frozen-feature linear probing is the common protocol for comparing audio representations & Evaluate every model with the same linear-probe protocol\\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\section{Research Questions and Hypotheses}
-\label{sec:m5-rq}
-The study is organized around five questions. Each is paired with a hypothesis that can be contradicted by the planned measurements. The arms and metrics named below are defined in Sections~\ref{sec:m5-design} and~\ref{sec:m5-eval}.
-\begin{itemize}
-  \item \textbf{RQ1.} Does further pre-training of the AudioSet-pretrained M2D on about 83~h of FMA music improve its frozen-feature performance on music tasks? \emph{H1:} the full recipe (A4) improves the average music score over the unmodified model (A0), whereas naive continuation (A1) does not.
-  \item \textbf{RQ2.} Which parts of M2D-X are needed on music data? \emph{H2:} the order of the music score is A1 $<$ A2 $<$ A3, that is, background noise and the frozen-teacher regularizer each add a gain, as in the respiratory-sound study.
-  \item \textbf{RQ3.} Does a CQT musical teacher add value beyond M2D-X? \emph{H3:} A4 exceeds A3 on pitch-related tasks (NSynth pitch) by more than the probe-seed uncertainty, and is not worse elsewhere.
-  \item \textbf{RQ4.} How much of the gap to music-specific models does the cheap step close, and is general-audio ability kept? \emph{H4:} the best arm closes a clearly positive fraction of the gap to the public MERT checkpoints and loses less than 1 point of average environmental-sound accuracy (a tolerance fixed in advance), while a gap to the larger, longer-trained references may remain.
-  \item \textbf{RQ5.} How does the benefit depend on the number of FMA tracks? \emph{H5:} the gain increases from 1,000 to 10,000 tracks with diminishing returns, so that most of it is reached before 10,000 tracks.
-\end{itemize}
-An outcome contradicting a hypothesis, such as no benefit of the CQT teacher or a collapse of retention, is a valid finding and will be reported as such.
-
 \section{Dataset Acquisition}
 \label{sec:m5-acq}
-This section describes where the pre-training audio comes from, which part of it is eligible, and how the 10,000-sample subset is drawn. Throughout this report a \emph{sample} is one 30-s FMA clip, that is, one track, so 10,000 samples correspond to 10,000 tracks or about 83.3~h of music. This is about 1.5\,\% of the 5,569~h of AudioSet on which M2D was trained.
+This section describes the source of the pre-training audio and how the 10,000-track subset is drawn. Throughout this report a \emph{sample} is one 30-s FMA clip, that is, one track, so 10,000 samples correspond to about 83.3~h of music, or about 1.5\,\% of the 5,569~h of AudioSet on which M2D was trained.
 
 \subsection{Choice of Corpus}
-The pre-training corpus must satisfy five requirements: it can be obtained and used legally for research; it provides full-quality audio, not only derived features or links; its metadata identify artists and provide predefined splits, so that leakage can be controlled; it is small enough to download and process on one workstation; and it has been used in earlier music self-supervised work, so that results can be compared. The Free Music Archive (FMA)~\cite{ref:Defferrard:2017fma} meets all five requirements. Its audio is licensed under Creative Commons licenses chosen by the artists, the tracks are MP3 files, most of them stereo at 44.1~kHz and 320~kbit/s (263~kbit/s on average), and the metadata include artist identifiers and an official split with an artist filter. FMA has been used to pre-train MusicFM~\cite{ref:Won:2024musicfm}, it is part of the data of the public MERT-v0-public model according to its model card~\cite{ref:MERTCard}, and FMA-derived data were used for continual pre-training of BEATs~\cite{ref:Zhang:2025sonar}. The alternatives are less suitable: the Million Song Dataset does not distribute audio, AudioSet consists of links to online videos whose availability changes, which already makes published results hard to compare~\cite{ref:Quelennec:2025matpacpp}, and MagnaTagATune (32~kbit/s, 16~kHz mono) and GTZAN (about 1,000 clips with documented faults~\cite{ref:Sturm:2013gtzan}) are too small or too low in quality for pre-training and are used only as evaluation sets.
+The pre-training corpus must be usable for research, provide full-quality audio, identify artists and provide predefined splits so that leakage into the evaluation can be controlled, and be small enough to process on one workstation. The Free Music Archive (FMA)~\cite{ref:Defferrard:2017fma} meets these requirements: its audio is released under Creative Commons licenses chosen by the artists, the tracks are MP3 files, most of them stereo at 44.1~kHz and 320~kbit/s, and the metadata include artist identifiers and an official, artist-filtered split.
 
 \subsection{Archives and Metadata}
 FMA is distributed as one metadata archive (\texttt{fma\_metadata.zip}) and four audio archives that are nested subsets of one another~\cite{ref:Defferrard:2017fma,ref:FMAGit}. The metadata table \texttt{tracks.csv} describes all 106,574 tracks, with artist, album, genre, license, and the columns that give the subset and the official training, validation and test split of each track. In the medium, small and large subsets the audio of a track is a 30-s clip cut from the middle of the full track, or the whole track if it is shorter. The medium subset contains 25,000 clips with a single top-level genre each, selected according to the completeness of their metadata and their popularity in the hope of selecting tracks of higher quality; the small subset is the balanced selection of 1,000 clips from each of the eight most popular genres of the medium subset~\cite{ref:Defferrard:2017fma}. The splits are 80\,\%/10\,\%/10\,\% for training, validation and test, stratified by genre, with an artist filter so that every artist appears in only one split, and a track keeps the same split in every subset~\cite{ref:Defferrard:2017fma}.
@@ -2004,9 +1453,6 @@ $L\leftarrow$ empty list; $\mathrm{count}[a]\leftarrow 0$ for every artist $a$\;
 
 \subsection{Background-Noise Corpus}
 The denoising component of M2D-X needs a corpus of background sounds. The official recipe uses the FSD50K dataset~\cite{ref:Fonseca:2022fsd50k,ref:Niizumi:2024m2dx}, which contains 51,197 Freesound clips (108.3~h) under Creative Commons licenses, labeled with 200 classes of the AudioSet ontology. Only the development portion is used as noise, and the evaluation portion is left untouched. Because the ontology includes musical instruments, an optional ablation restricts the pool to clips that carry no music-related label, to test whether purely non-musical noise is a better distractor for music (Section~\ref{sec:m5-design}).
-
-\subsection{Licensing and Ethics}
-FMA tracks carry artist-chosen Creative Commons licenses that permit research use. Audio and the spectrograms derived from it are kept local and are not redistributed; only the list of track identifiers and the seed are published. The metadata contain only public artist information and no personal data. The CC-BY-NC license of the MERT weights~\cite{ref:MERTCard} is respected by using them for non-commercial comparison only.
 
 \section{Data Preprocessing Pipeline}
 \label{sec:m5-prep}
@@ -2089,7 +1535,7 @@ At every visit, a random window of 608 frames is cut from the stored 30-s spectr
 \bar{x}=\frac{x-\mu_{\mathrm{AS}}}{\sigma_{\mathrm{AS}}},
 \label{eq:m5-norm}
 \end{equation}
-with the AudioSet statistics of Table~\ref{tab:m5-frontend}, so that the pre-trained encoder initially sees inputs of the same scale as during its original pre-training. The official M2D-X code instead recomputes these statistics from the application data at run time. The deviation is deliberate: it removes one source of change at the start of training. The mean and standard deviation of the selected FMA subset are computed and reported so that the size of the shift is known, and training with the FMA statistics is kept as an optional ablation.
+with the AudioSet statistics of Table~\ref{tab:m5-frontend}, so that the pre-trained encoder initially sees inputs of the same scale as during its original pre-training. Unlike the official M2D-X code, which recomputes these statistics from the application data, fixed statistics remove one source of change at the start of training; the statistics of the selected FMA subset are reported, and training with them is an optional run.
 
 \subsection{Musical-Teacher Targets}
 The musical teacher uses the constant-Q transform~\cite{ref:Brown:1991cqt}, whose center frequencies are spaced logarithmically,
@@ -2103,7 +1549,7 @@ so that every semitone has its own bin and the top bin lies at about 3.95~kHz, b
 \bar{c}_{k,\tau}=\frac{1}{P}\sum_{t=(\tau-1)P+1}^{\tau P}\tilde{c}_{k,t}.
 \label{eq:m5-cqttarget}
 \end{equation}
-The choices differ from MERT in three respects, each for a reason. MERT regresses the linear magnitude on masked frames at its own frame rate; here the logarithm and the per-bin standardization keep the target on a scale comparable to the log-mel input and avoid a regression dominated by a few loud low-frequency bins, and the pooling matches the 160-ms time step of an M2D token. The CQT is deterministic and needs no additional network, and nnAudio is already a dependency of the M2D front-end. Because the two transforms use the same hop and centered frames, the log-mel and CQT arrays of a clip have the same number of frames; if they differ by a frame because of padding, both are trimmed to the shorter, and one random start index is used to crop both.
+Unlike MERT, which regresses the linear magnitude at its own frame rate~\cite{ref:MERTGit}, the logarithm and the per-bin standardization keep the target on the scale of the log-mel input, and the pooling matches the 160-ms time step of an M2D token. Because the two transforms use the same hop and centered frames, the log-mel and CQT arrays of a clip have the same number of frames; if they differ by a frame because of padding, both are trimmed to the shorter, and one random start index is used to crop both.
 
 \subsection{Storage, Manifest and Integrity Checks}
 For each accepted track the pipeline writes one half-precision array for the log-mel spectrogram (about 4.8~GB for 10,000 clips) and one for the CQT (about 5.0~GB), and a row in a manifest file with the track identifier, artist identifier, file paths, frame counts, SHA-1 of the source file, audit outcome and split. The noise corpus is converted to log-mel arrays only. The following checks are run and their outcome is saved: the SHA-1 of every source file matches the published checksum; log-mel and CQT frame counts agree; no array contains NaN or infinite values; value ranges lie within a plausible interval of the normalized scale; and a gallery of 20 randomly chosen spectrograms is inspected by eye against the audio. The conversion is resumable and driven by one configuration file, so an interrupted run does not repeat finished tracks.
@@ -2115,50 +1561,55 @@ This section defines M2D-X-Music, the objective and the training procedure appli
 \begin{figure}[htbp]
 \centering
 \resizebox{\linewidth}{!}{%
-\begin{tikzpicture}
-  \node[m5box] (xn) at (0,3.7) {Noise log-mel\\$x^{(b)}$ (FSD50K)};
-  \node[m5box] (xc) at (0,1.4) {Clean music log-mel\\$\bar{x}$ (FMA)};
-  \node[m5box] (mix) at (2.9,2.55) {Log-domain\\mixture ($\eta$)\\noisy input $\tilde{x}$};
-  \node[m5box] (mask) at (5.5,2.55) {Patchify and\\random mask\\ratio $\rho=0.7$};
-  \node[m5train] (tg) at (8.1,4.5) {Target encoder $f_\xi$\\(EMA, masked patches)};
-  \node[m5train] (on) at (8.1,2.55) {Online encoder $f_\theta$\\(visible patches)};
-  \node[m5train] (pr) at (10.7,2.55) {Predictor $g_\theta$};
-  \node[m5box, fill=red!10] (lm) at (13.3,3.5) {$\mathcal{L}_{\mathrm{m2d}}$\\masked latent\\prediction};
-  \node[m5train, text width=3.6cm] (hh) at (8.1,0.45) {Frame features $\hat{h}$\\(visible $z_V$, predicted $\hat{z}_M$)};
-  \node[m5ref] (fo) at (2.9,-1.7) {Frozen original M2D\\$f_{\mathrm{orig}}$ (clean input)};
-  \node[m5box, fill=red!10] (lo) at (5.9,-1.7) {$\mathcal{L}_{\mathrm{off}}$\\denoising\\distillation};
-  \node[m5box, fill=red!10] (lc) at (10.3,-1.7) {$\mathcal{L}_{\mathrm{cqt}}$\\musical\\teacher};
-  \node[m5ref] (cq) at (13.3,-1.7) {CQT target $\bar{c}$\\(precomputed from\\clean audio)};
-  \draw[m5arrow] (xn) -- (mix);
-  \draw[m5arrow] (xc) -- (mix);
+\begin{tikzpicture}[x=1cm,y=1cm, m5node/.style={text width=2.4cm, minimum height=1.05cm}]
+  % inputs and noisy path
+  \node[m5box, m5node] (xn) at (0,3.4) {Noise log-mel $x^{(b)}$\\(FSD50K)};
+  \node[m5box, m5node] (xc) at (0,1.4) {Clean music\\log-mel $\bar{x}$ (FMA)};
+  \node[m5box, m5node] (mix) at (3.8,2.4) {Log-domain mixture ($\eta$): noisy input $\tilde{x}$};
+  \node[m5box, m5node] (mask) at (7.6,2.4) {Patchify and random mask ($\rho=0.7$)};
+  \node[m5train, m5node] (on) at (11.4,2.4) {Online encoder $f_\theta$\\(visible patches)};
+  \node[m5train, m5node] (pr) at (15.2,2.4) {Predictor $g_\theta$};
+  \node[m5train, m5node] (tg) at (11.4,4.6) {Target encoder $f_\xi$\\(masked patches)};
+  \node[m5box, m5node, fill=red!10] (lm) at (15.2,4.6) {$\mathcal{L}_{\mathrm{m2d}}$\\masked prediction};
+  % shared frame features
+  \node[m5train, text width=6.2cm, minimum height=0.9cm] (hh) at (13.3,0.45) {Frame features $\hat{h}$: encoder outputs $z_{\mathcal V}$ at visible and predictions $\hat{z}_{\mathcal M}$ at masked positions};
+  % clean offline branch
+  \node[m5ref, m5node] (fo) at (7.6,-1.6) {Frozen original\\M2D $f_{\mathrm{orig}}$};
+  \node[m5box, m5node, fill=red!10] (lo) at (11.4,-1.6) {$\mathcal{L}_{\mathrm{off}}$\\regularization};
+  \node[m5box, m5node, fill=red!10] (lc) at (15.2,-1.6) {$\mathcal{L}_{\mathrm{cqt}}$\\musical teacher};
+  \node[m5ref, m5node] (cq) at (19.0,-1.6) {CQT target $\bar{c}$\\(from clean audio)};
+  % arrows
+  \draw[m5arrow] (xn.east) -| (mix.north);
+  \draw[m5arrow] (xc.east) -| (mix.south);
   \draw[m5arrow] (mix) -- (mask);
-  \draw[m5arrow] (mask) -- (on);
-  \draw[m5arrow] (mask.north east) -- (tg.west);
+  \draw[m5arrow] (mask) -- node[above, font=\scriptsize] {visible} (on);
+  \draw[m5arrow] (mask.north) |- node[pos=0.75, above, font=\scriptsize] {masked} (tg.west);
+  \draw[m5arrow, dashed] (on) -- node[right, font=\scriptsize] {EMA} (tg);
   \draw[m5arrow] (on) -- (pr);
-  \draw[m5arrow] (tg.east) -| (lm.north);
-  \draw[m5arrow] (pr.east) -| (lm.south);
-  \draw[m5arrow] (on) -- (hh);
-  \draw[m5arrow] (pr.south) |- (hh.east);
+  \draw[m5arrow] (tg) -- node[above, font=\scriptsize] {target} (lm);
+  \draw[m5arrow] (pr) -- node[right, font=\scriptsize] {prediction} (lm);
+  \draw[m5arrow] (on) -- (on |- hh.north);
+  \draw[m5arrow] (pr) -- (pr |- hh.north);
+  \draw[m5arrow] (lo |- hh.south) -- node[right, font=\scriptsize] {$W_{\mathrm{off}}$} (lo);
+  \draw[m5arrow] (lc |- hh.south) -- node[right, font=\scriptsize] {$W_{\mathrm{cqt}}$} (lc);
   \draw[m5arrow] (xc.south) |- (fo.west);
-  \draw[m5arrow] (fo) -- (lo);
-  \draw[m5arrow] (hh.south west) -- node[left, font=\tiny] {$W_{\mathrm{off}}$} (lo.north);
-  \draw[m5arrow] (hh.south east) -- node[right, font=\tiny] {$W_{\mathrm{cqt}}$} (lc.north);
+  \draw[m5arrow] (fo) -- node[above, font=\scriptsize] {$y^{\mathrm{off}}$} (lo);
   \draw[m5arrow] (cq) -- (lc);
-  \node[font=\scriptsize, align=center] at (8.1,-3.3) {Total objective: $\mathcal{L}=\lambda_{\mathrm{m2d}}\mathcal{L}_{\mathrm{m2d}}+\lambda_{\mathrm{off}}\mathcal{L}_{\mathrm{off}}+\lambda_{\mathrm{cqt}}\mathcal{L}_{\mathrm{cqt}}$};
+  \node[font=\small] at (11.4,-3.3) {Total objective: $\mathcal{L}=\lambda_{\mathrm{m2d}}\mathcal{L}_{\mathrm{m2d}}+\lambda_{\mathrm{off}}\mathcal{L}_{\mathrm{off}}+\lambda_{\mathrm{cqt}}\mathcal{L}_{\mathrm{cqt}}$};
   \begin{scope}[on background layer]
-    \node[fit=(mask)(tg)(on)(pr)(lm), fill=blue!5, draw=blue!30, rounded corners, inner sep=7pt] {};
-    \node[fit=(fo)(lo)(lc)(cq), fill=orange!6, draw=orange!40, rounded corners, inner sep=7pt] {};
+    \node[fit=(mask)(on)(pr)(tg)(lm), fill=blue!5, draw=blue!30, rounded corners, inner sep=6pt] (rn) {};
+    \node[fit=(fo)(lo)(lc)(cq), fill=orange!6, draw=orange!40, rounded corners, inner sep=6pt] (ro) {};
   \end{scope}
+  \node[font=\scriptsize\itshape, anchor=south west] at (rn.north west) {noisy input to online and target networks};
+  \node[font=\scriptsize\itshape, anchor=north east] at (ro.south east) {clean input to offline targets};
 \end{tikzpicture}}
-\caption[Architecture of the further pre-training framework]{Architecture of the further pre-training framework. The online and target networks receive the noisy input (top region), whereas the offline branch receives the clean input and its precomputed targets (bottom region). The frame features $\hat{h}$ are shared by the two offline losses through separate linear mappers $W_{\mathrm{off}}$ and $W_{\mathrm{cqt}}$. Only the online encoder $f_\theta$ is kept after pre-training.}
+\caption[Architecture of the further pre-training framework]{Architecture of the further pre-training framework. Clean music and background noise are mixed into the noisy input of the online and target networks (blue region): the online encoder sees the visible patches, the target encoder, an exponential moving average of the online encoder, sees the masked patches, and the predictor is trained with the masked-prediction loss $\mathcal{L}_{\mathrm{m2d}}$. The frame features $\hat{h}$, built from the encoder outputs at visible positions and the predictions at masked positions, feed two linear heads $W_{\mathrm{off}}$ and $W_{\mathrm{cqt}}$ whose targets come from the clean input (orange region): the features of the frozen original M2D and the precomputed CQT. Only the online encoder $f_\theta$ is kept after pre-training.}
 \label{fig:m5-framework}
 \end{figure}
 
 
-\subsection{Overview, Initialization and Alternatives Considered}
+\subsection{Initialization}
 Training starts from the released checkpoint M2D/0.7 (80$\times$608 input, $16\times16$ patches, masking ratio 0.7)~\cite{ref:M2DGit}. The online encoder $f_\theta$, the predictor $g_\theta$ and the EMA target encoder $f_\xi$ are all initialized from this checkpoint, and a frozen copy $f_{\mathrm{orig}}$ of the original encoder serves as offline teacher. Two linear mappers, $W_{\mathrm{off}}$ and $W_{\mathrm{cqt}}$, are newly initialized. The online and target networks see the \emph{noisy} input, whereas the offline branch sees the \emph{clean} input and its precomputed targets. After pre-training only the online encoder is kept; its output features are what the evaluation of Section~\ref{sec:m5-eval} uses.
-
-Four alternatives were considered and not adopted. Pre-training on FMA from scratch would answer a different question and is far beyond the single-GPU budget. Restricting updates to adapter or low-rank parameters would reduce forgetting but changes the model the study sets out to compare, and it is better left to later work. Distilling the features of a frozen MERT model is the exact analogue of the HuBERT distillation of M2D for Speech, but it needs a second, 24-kHz raw-audio branch and a second data format; it is kept as an optional extension. Replacing the objective by quantizer targets in the style of MusicFM or MuQ would require training the whole model again.
 
 \subsection{Masked Latent Prediction on Noisy Music}
 The standardized window is cut into $N=N_FN_T=190$ patches. A random subset $\mathcal{M}$ of $|\mathcal{M}|=\mathrm{round}(\rho N)=133$ patches is masked with $\rho=0.7$, and the remaining 57 patches form the visible set $\mathcal{V}$. The online encoder maps the visible patches to $z_{\mathcal V}=f_\theta(\tilde{x}_{\mathcal V})$, and the predictor, given mask tokens $m$ and positional encodings $p$, predicts all token representations,
@@ -2208,7 +1659,7 @@ The musical teacher adds a second offline task on the same frame features. A lin
 \mathcal{L}_{\mathrm{cqt}}=\frac{1}{N_T\,K_c}\sum_{\tau=1}^{N_T}\left\lVert W_{\mathrm{cqt}}\hat{h}_\tau+b_{\mathrm{cqt}}-\bar{c}_\tau\right\rVert_2^{2},\qquad K_c=84.
 \label{eq:m5-cqt}
 \end{equation}
-Because $\hat{h}_\tau$ is built from encoder outputs at visible positions and from predictor outputs at masked positions, the term has two roles at once: it asks the encoder to recover the clean pitch content from noisy visible patches, and it asks the predictor to infer the pitch content of hidden regions. This differs from MERT, where the CQT is regressed on masked positions of a single network, and it keeps the M2D-X convention that offline losses act on all frames. Since the target is standardized, the initial value of the loss is of the order of one, comparable to the other two terms, and the weight $\lambda_{\mathrm{cqt}}=1$ follows MERT's finding that a unit weight worked best among 1, 2 and 5~\cite{ref:Li:2024mert}.
+Because $\hat{h}_\tau$ is built from encoder outputs at visible positions and from predictor outputs at masked positions, the term has two roles at once: it asks the encoder to recover the clean pitch content from noisy visible patches, and it asks the predictor to infer the pitch content of hidden regions. Since the target is standardized, the initial value of the loss is of the order of one, comparable to the other two terms, and the weight $\lambda_{\mathrm{cqt}}=1$ follows MERT's finding that a unit weight worked best among 1, 2 and 5~\cite{ref:Li:2024mert}.
 
 \subsection{Joint Objective and Optimization}
 The full objective is the weighted sum
@@ -2282,41 +1733,7 @@ One run processes $600\times10{,}000=6.0$ million sample views, which is about 1
 
 \section{Experimental Design}
 \label{sec:m5-design}
-The experiments fall into three groups: reference models that are only evaluated, a small set of further pre-training \emph{arms} that differ in one factor at a time, and runs that vary the number of FMA tracks. All pre-training runs are compute-matched, that is, each processes the same number of sample views.
-
-\subsection{Reference Models}
-Table~\ref{tab:m5-refs} lists the models against which the further pre-trained checkpoints are compared. They are chosen to separate the effect of data volume from the effect of the objective. MERT-v1-95M and MERT-v0-public have a parameter count similar to that of the M2D encoder (95~M against 86~M) but were trained from scratch on about 20,000~h and about 900~h of music, which is roughly 240 and 11 times the 83~h of FMA used here, and MusicFM-FMA shows what training from scratch on the whole of FMA achieves. Reference models are never fine-tuned or further trained. For transformer references whose layers differ in quality, features of all layers are extracted and the best layer is chosen per task on the validation split; this is a favorable setting for the references and therefore a conservative one for the claims of this study. For the M2D family the final-layer features with the 3,840-dimensional frame layout of the original linear evaluation are used. Audio is resampled to the rate of each model and cut into windows of the context length of the model (5~s for MERT), and the segment embeddings are averaged over time.
-
-\begin{table}[htbp]
-\centering
-\caption[Reference models]{Reference models. Parameter counts and pre-training data are as reported in the cited sources; MATPAC++ values are from its preprint and the checkpoints are the ones published by its authors.}
-\label{tab:m5-refs}
-\small\singlespacing
-\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{3.7cm}rY>{\raggedright\arraybackslash}p{3.1cm}}
-\toprule
-\textbf{Model} & \textbf{Params} & \textbf{Pre-training data} & \textbf{Role}\\
-\midrule
-M2D/0.7~\cite{ref:Niizumi:2024m2dx} & 86~M & AudioSet, 5,569~h & Arm A0: starting point without FMA training\\
-MERT-v1-95M~\cite{ref:Li:2024mert,ref:MERTCard} & 95~M & About 20,000~h of music; 24~kHz & Music-specific, same size, large data\\
-MERT-v0-public~\cite{ref:MERTCard} & 95~M & About 900~h of open music (Music4All and part of FMA); 16~kHz & Music-specific, same size, small data\\
-MusicFM (FMA)~\cite{ref:Won:2024musicfm,ref:MusicFMGit} & About 330~M & FMA, about 8,000~h & Music-specific, same corpus family, larger model\\
-MATPAC++ (music)~\cite{ref:Quelennec:2025matpacpp,ref:MATPACGit} & About 86~M & Million Song Dataset samples and web-radio samples, about 1.1~M in total & Music-specific model of the masked-latent-prediction family\\
-MATPAC++ (general)~\cite{ref:Quelennec:2025matpacpp,ref:MATPACGit} & About 86~M & AudioSet & General counterpart of the previous row\\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\subsection{Pre-training Arms}
-Table~\ref{tab:m5-arms} defines the arms. The five arms A1 to A5 form a design in which each component is switched on or off, so that every claim about a component rests on a specific, pre-declared comparison rather than on a free search through results:
-\begin{itemize}
-  \item A1 against A0: the effect of naive continuation of M2D on FMA (RQ1, RQ2).
-  \item A2 against A1: the effect of background noise.
-  \item A3 against A2: the effect of the frozen-teacher regularizer.
-  \item A4 against A3: the effect of the musical teacher on top of M2D-X (RQ3).
-  \item A5 against A2 and A4 against A5: the effect of the musical teacher without the regularizer, and of the regularizer when the teacher is present.
-  \item S1 to S3 against the best of A3 and A4: the effect of the number of tracks (RQ5).
-\end{itemize}
-The best of A3 and A4, called A$^{*}$, is chosen by the mean music score on the \emph{validation} splits only, so that the test splits take no part in any choice. If time is short, the arms are run in the order A3, A1, A4, A2, A5, then S1 to S3, then the optional runs.
+The experiments consist of a small set of further pre-training \emph{arms}, defined in Table~\ref{tab:m5-arms}, that switch the components of the framework on and off one at a time, and of runs that vary the number of FMA tracks. All runs use the same track list and seeds and are compute-matched, that is, each processes the same 6.0~M sample views. The planned contrasts are A1 against A0 (naive continuation), A2 against A1 (background noise), A3 against A2 (frozen-teacher regularizer), A4 against A3 and A5 against A2 (musical teacher with and without the regularizer), and S1 to S3 against the best arm (number of tracks). The best arm, A$^{*}$, is the better of A3 and A4 by the mean music score on the \emph{validation} splits only, so that the test splits take no part in any choice.
 
 \begin{table}[htbp]
 \centering
@@ -2338,17 +1755,11 @@ S1--S3 & 0.3 & as A$^{*}$ & as A$^{*}$ & 1,000; 2,500; 5,000 & Data-size study w
 \end{tabularx}
 \end{table}
 
-Optional runs, executed only if time remains, are: a noise pool without music-related FSD50K classes; a lower noise ratio $\eta=0.1$; training with the FMA normalization statistics; a 20,000-track run with 300 epochs so that the number of sample views stays at 6.0~M; a second pre-training seed for A3 and A4; and distillation of frozen MERT features as a second domain teacher.
-
-\subsection{Controls and Reproducibility}
-Several measures keep the comparison honest. All arms share the track list of Algorithm~\ref{alg:m5-select} and the same seed for data order and masking. The reported checkpoint is the one at epoch 600, fixed before any test result is seen; checkpoints at epochs 100 to 500 are evaluated on the validation splits of the small tasks only (GTZAN, FMA-small, ESC-50, UrbanSound8K) to show the learning curve and to detect degradation or collapse, as in the checkpoint analysis of the authors~\cite{ref:Niizumi:2024m2dx}. The official training script also logs label-free feature statistics at fixed intervals, which provides an additional collapse indicator. The seeds, the configuration files, the track list and the manifest are stored with the code. If time permits, a second pre-training seed for A3 and A4 estimates the variance that comes from pre-training itself rather than from the probes.
+The reported checkpoint of every arm is the one at epoch 600. If time is short, the arms are run in the order A3, A1, A4, A2, A5, then S1 to S3. Optional runs follow only if time remains: a noise pool without music-related FSD50K classes, a lower noise ratio $\eta=0.1$, the FMA normalization statistics, a 20,000-track run, a second pre-training seed for A3 and A4, and the distillation of frozen MERT features as a second teacher. The checkpoints are compared with public music-specific models, namely MERT-v1-95M and MERT-v0-public~\cite{ref:Li:2024mert,ref:MERTCard}, MusicFM trained on FMA~\cite{ref:Won:2024musicfm} and the music and general versions of MATPAC++~\cite{ref:Quelennec:2025matpacpp}, which are evaluated with the same protocol and are never further trained.
 
 \section{Evaluation Protocol}
 \label{sec:m5-eval}
-Evaluation uses frozen features and a linear classifier, which isolates the quality of the representation from the capacity of the classifier and is the protocol used for the M2D family, MATPAC and the HEAR and MARBLE benchmarks~\cite{ref:Niizumi:2024m2dx,ref:Quelennec:2025matpac,ref:Turian:2022hear,ref:Yuan:2023marble}.
-
-\subsection{Downstream Tasks}
-Table~\ref{tab:m5-tasks} lists the tasks. The music tasks cover genre (GTZAN and FMA-small), instrument family (NSynth), pitch (NSynth) and tagging (MagnaTagATune). The pitch task is included because the CQT teacher injects exactly this kind of information, so it is where the benefit of the teacher should be most visible, as key and pitch detection were in MERT~\cite{ref:Li:2024mert}. FMA-small is the only in-domain task; its test clips come from artists who are absent from pre-training because of the artist-filtered split. Two environmental-sound tasks, ESC-50 and UrbanSound8K, measure whether general-audio ability is retained. GTZAN is used with its fault-filtered split~\cite{ref:Kereliuk:2015adversaries,ref:Sturm:2013gtzan}. The tasks GTZAN, NSynth (instrument and pitch), ESC-50 and UrbanSound8K are available in the EVAR toolkit of the M2D authors~\cite{ref:EVARGit}; FMA-small and MagnaTagATune are added by writing task metadata in the same format, using the official FMA split and one fixed published split of MagnaTagATune that is recorded before any evaluation.
+Every model is evaluated with frozen features and a linear classifier, the protocol of the M2D authors~\cite{ref:Niizumi:2024m2dx}, on the tasks of Table~\ref{tab:m5-tasks}. The music tasks cover genre, instrument family, pitch and tagging; pitch is included because the CQT teacher targets exactly this information, and ESC-50 and UrbanSound8K measure whether general-audio ability is retained. The tasks are run with the EVAR toolkit~\cite{ref:EVARGit}, to which metadata for FMA-small and MagnaTagATune are added. Clips are cut into consecutive 6.08-s windows, each window is encoded with all patches visible, and the clip embedding is the temporal mean of the 3,840-dimensional frame features. A single linear layer is trained on the standardized embeddings with Adam at a learning rate of $3\times10^{-5}$ for at most 200 epochs, with early stopping after 20 epochs without improvement on the validation split, using the softmax cross-entropy loss for single-label tasks and the sigmoid binary cross-entropy loss for tagging. Each probe is trained with six random seeds.
 
 \begin{table}[htbp]
 \centering
@@ -2370,48 +1781,22 @@ UrbanSound8K~\cite{ref:Salamon:2014urbansound} & Retention & 10 sound classes & 
 \end{tabularx}
 \end{table}
 
-\subsection{Frozen-Feature Linear Evaluation}
-For every task, clips longer than the 6.08-s input of M2D are cut into consecutive windows, each window is encoded with all patches visible, and the frame features of the windows are concatenated along time, which is the first of the two options for variable-length audio described by the authors~\cite{ref:Niizumi:2024m2dx}. The clip embedding is the temporal mean of the $T'$ frame features $h_\tau$ of the encoder,
-\begin{equation}
-e=\frac{1}{T'}\sum_{\tau=1}^{T'}h_\tau\in\mathbb{R}^{3840}.
-\label{eq:m5-emb}
-\end{equation}
-A single linear layer is trained on the standardized embeddings with the Adam optimizer, a learning rate of $3\times10^{-5}$ for at most 200 epochs, and early stopping with a patience of 20 epochs on the validation split, following the evaluation of the M2D authors~\cite{ref:Niizumi:2024m2dx}, and the model of the best validation epoch is evaluated on the test split. The softmax cross-entropy loss is used for single-label tasks and the sigmoid binary cross-entropy loss for tagging. Each probe is trained with six random seeds. Because the encoder is frozen, the embeddings of each model are computed once per task and cached, so the cost of evaluating a checkpoint is dominated by the forward pass over the data, and the large NSynth task is evaluated only for the final checkpoints.
-
-\subsection{Metrics, Aggregates and Statistics}
-Accuracy is used for single-label tasks and mean average precision (mAP) for tagging, all expressed in percent. Two aggregate scores summarize a model $m$ over the music tasks $\mathcal{T}_{\mathrm{mus}}$ and the retention tasks $\mathcal{T}_{\mathrm{gen}}$, with $s_u(m)$ the score on task $u$:
+Accuracy is reported for single-label tasks and mean average precision (mAP) for tagging, in percent, as the mean over the six probe seeds with a 95\,\% confidence interval. With $s_u(m)$ the score of model $m$ on task $u$, the music score and the retention score are the means over the music tasks $\mathcal{T}_{\mathrm{mus}}$ and the retention tasks $\mathcal{T}_{\mathrm{gen}}$,
 \begin{equation}
 S_{\mathrm{mus}}(m)=\frac{1}{|\mathcal{T}_{\mathrm{mus}}|}\sum_{u\in\mathcal{T}_{\mathrm{mus}}}s_u(m),\qquad
 S_{\mathrm{gen}}(m)=\frac{1}{|\mathcal{T}_{\mathrm{gen}}|}\sum_{u\in\mathcal{T}_{\mathrm{gen}}}s_u(m),
 \label{eq:m5-agg}
 \end{equation}
-and the forgetting score is $\Delta_{\mathrm{gen}}(m)=S_{\mathrm{gen}}(m)-S_{\mathrm{gen}}(\mathrm{A0})$, which is negative when general ability is lost. To express how far the cheap step goes towards a music-specific reference $r$, the gap-closure ratio on task $u$ is
+and $S_{\mathrm{gen}}(m)-S_{\mathrm{gen}}(\mathrm{A0})$ measures forgetting. The gap-closure ratio
 \begin{equation}
-\mathrm{GCR}_u(m;r)=\frac{s_u(m)-s_u(\mathrm{A0})}{s_u(r)-s_u(\mathrm{A0})},
+\mathrm{GCR}_u(m;r)=\frac{s_u(m)-s_u(\mathrm{A0})}{s_u(r)-s_u(\mathrm{A0})}
 \label{eq:m5-gcr}
 \end{equation}
-where a value of 0 means no change from the unmodified model, 1 means parity with the reference, and values above 1 mean that the adapted model surpasses it. The ratio is unstable when the reference is close to A0, so it is computed only on tasks where $s_u(r)-s_u(\mathrm{A0})\ge1$ point, and the number of such tasks is reported next to the mean. In addition, the number of tasks on which a model is within the confidence interval of a reference, or above it, is reported as a parity count.
-
-Uncertainty is handled at two levels. For one trained model, the mean over the $n=6$ probe seeds is reported with the 95\,\% interval
-\begin{equation}
-\bar{s}\pm t_{n-1,\,0.975}\,\frac{\mathrm{sd}}{\sqrt{n}}.
-\label{eq:m5-ci}
-\end{equation}
-For the difference between two models on a fixed test split, a paired bootstrap over the test clips with 10,000 resamples gives a 95\,\% percentile interval of the difference~\cite{ref:Efron:1993bootstrap}; for the cross-validated tasks the per-fold differences are used instead. A difference between two arms is called \emph{supported} only if the interval of the difference excludes zero and, where a second pre-training seed exists, the sign is the same for both seeds; otherwise it is reported as inconclusive. Only the contrasts listed in Section~\ref{sec:m5-design} are tested, so that the number of comparisons stays small and fixed in advance.
-
-\subsection{Threats to Validity}
-\begin{itemize}
-  \item \textbf{Small test sets.} The GTZAN test split has 290 clips, so one clip is worth about 0.34 points and its confidence intervals are several points wide. Conclusions will not rest on GTZAN alone, and the bootstrap intervals are reported.
-  \item \textbf{Uncontrolled references.} The reference models differ in size, training data, sampling rate and context length (Table~\ref{tab:m5-refs}). Comparisons with them are indicative of what is possible, not controlled experiments; only A0 to A5 differ in one factor at a time.
-  \item \textbf{In-domain advantage.} FMA-small shares its source with the pre-training data. Its result is therefore reported separately from the out-of-domain music tasks, and conclusions about general music understanding rely on the latter.
-  \item \textbf{Limited tuning and seeds.} The noise ratio and loss weights are taken from the literature and not tuned, the best arm is selected on validation data only, and only one or two pre-training seeds are affordable. Differences smaller than the seed-to-seed gap will not be claimed.
-  \item \textbf{Possible overlap with external data.} The AudioSet-pretrained starting point may already have seen music similar to the evaluation sets, and no audio fingerprinting is run between FMA and the external benchmarks, so a small undetected overlap cannot be excluded.
-  \item \textbf{Computational nondeterminism.} Seeds are fixed, but GPU kernels are not bitwise deterministic, so repeating a run may give slightly different numbers.
-\end{itemize}
+expresses how far an arm moves from the unmodified model towards a reference model $r$, from 0 (no change) to 1 (parity), and is computed only on tasks where the reference leads A0 by at least one point. A difference between two models is tested with a paired bootstrap over the test clips with 10,000 resamples~\cite{ref:Efron:1993bootstrap}, or with per-fold differences for the cross-validated tasks, and is called supported only if its 95\,\% interval excludes zero. FMA-small is reported separately from the other music tasks because it shares its source with the pre-training data.
 
 \section{Conclusion}
 \label{sec:m5-conclusion}
-This chapter presented the proposed approach. A resumable pipeline selects 10,000 tracks of the Free Music Archive from the training split of the medium subset with a seeded, artist-capped, nested sampling procedure, audits them, and converts them with the front-end of the original M2D model into log-mel arrays and into CQT targets for a musical teacher. The further pre-training framework M2D-X-Music extends the M2D-X recipe: the online and target networks receive music mixed with background noise, a frozen copy of the original model regularizes the features on clean input, and an additional linear head regresses the CQT of the clean audio in the manner of the musical teacher of MERT. The experimental design turns these components on and off in a small number of compute-matched arms, adds runs with fewer tracks, and compares the results with public music-specific models. The evaluation uses a frozen-feature linear protocol on music tasks and on two retention tasks, with aggregate scores, a gap-closure ratio, bootstrap intervals and a pre-declared rule for calling a difference supported. The limits of the design, in particular the small test sets, the uncontrolled references and the single GPU, are stated so that the results can be interpreted correctly. The next chapter presents the high-level and low-level design of the system that implements this approach.
+This chapter presented the proposed approach. A seeded, artist-capped procedure selects nested subsets of up to 10,000 tracks from the training split of the FMA medium subset, and a resumable pipeline converts them with the front-end of the original M2D model into log-mel arrays and CQT targets. The M2D-X-Music framework further pre-trains M2D on music mixed with background noise, regularizes it with a frozen copy of the original model, and adds a linear head that regresses the CQT of the clean audio in the manner of the musical teacher of MERT. Compute-matched arms switch these components on and off and vary the number of tracks, and every checkpoint and reference model is evaluated with the same frozen-feature linear protocol on music and retention tasks. The next chapter presents the high-level and low-level design of the system that implements this approach.
 \chapter{High-Level and Low-Level Design}
 \label{ch:design}
 % --- Helpers for Chapter 6 (architecture, sequence and class diagrams) ---
