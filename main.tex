@@ -2413,102 +2413,359 @@ For the difference between two models on a fixed test split, a paired bootstrap 
 \label{sec:m5-conclusion}
 This chapter presented the proposed approach. A resumable pipeline selects 10,000 tracks of the Free Music Archive from the training split of the medium subset with a seeded, artist-capped, nested sampling procedure, audits them, and converts them with the front-end of the original M2D model into log-mel arrays and into CQT targets for a musical teacher. The further pre-training framework M2D-X-Music extends the M2D-X recipe: the online and target networks receive music mixed with background noise, a frozen copy of the original model regularizes the features on clean input, and an additional linear head regresses the CQT of the clean audio in the manner of the musical teacher of MERT. The experimental design turns these components on and off in a small number of compute-matched arms, adds runs with fewer tracks, and compares the results with public music-specific models. The evaluation uses a frozen-feature linear protocol on music tasks and on two retention tasks, with aggregate scores, a gap-closure ratio, bootstrap intervals and a pre-declared rule for calling a difference supported. The limits of the design, in particular the small test sets, the uncontrolled references and the single GPU, are stated so that the results can be interpreted correctly. The next chapter presents the high-level and low-level design of the system that implements this approach.
 \chapter{High-Level and Low-Level Design}
-Provide the high- and low-level design of your system in this chapter. Select the design that is appropriate for your project.\\
-\textcolor{red}{NOTE: This Chapter is compulsory for both R\&D projects and Development projects.}
+\label{ch:design}
+% --- Helpers for Chapter 6 (architecture, sequence and class diagrams) ---
+\tikzset{
+  desfile/.style={draw=black!50, fill=yellow!10, rounded corners=1pt, align=center, font=\scriptsize,
+    inner sep=2.5pt, text width=3.3cm},
+  deslayer/.style={draw=black!45, dashed, rounded corners=3pt, inner sep=5pt},
+  desactor/.style={draw=black!70, fill=blue!6, font=\scriptsize, align=center, inner sep=3pt, minimum height=0.75cm},
+  desmsg/.style={-{Stealth[length=2mm]}, draw=black!80},
+  desret/.style={-{Stealth[length=2mm]}, dashed, draw=black!70},
+  deslbl/.style={font=\scriptsize, fill=white, inner sep=1pt},
+  desinh/.style={-{Triangle[open, length=2.6mm, width=2.6mm]}, draw=black!80},
+  desdep/.style={-{Stealth[length=2mm]}, dashed, draw=black!70},
+  desasc/.style={-{Stealth[length=2mm]}, draw=black!80},
+  descls/.style={draw=black!80, inner sep=0pt, font=\scriptsize, fill=white},
+  desold/.style={descls, fill=gray!15}
+}
+\newcommand{\desclass}[3]{\begin{tabular}{@{\,}p{3.55cm}@{\,}}\textbf{#1}\\ \hline #2\\ \hline #3\end{tabular}}
+\newcommand{\desframe}[5]{% x1 y1 x2 y2 label
+  \draw[black!70] (#1,#2) rectangle (#3,#4);
+  \node[draw=black!70, fill=white, anchor=north west, font=\scriptsize, inner sep=2pt] at (#1,#2) {#5};}
+
+This chapter presents the design of the whole system: the research platform that carries out the method of Chapter~\ref{ch:m5} and the demonstration dashboard specified in Chapter~\ref{ch:srs}. It first gives an overview and the considerations that shaped the design, then describes the architecture at system and subsystem level with two interaction scenarios. It then explains the main architectural strategies, the class diagram, and the policies and tactics that govern the implementation. All software is written in Python, and all models are trained and run with PyTorch~\cite{ref:Paszke:2019pytorch}. Wherever possible, the design extends the public M2D code base~\cite{ref:M2DGit} and the EVAR evaluation toolkit~\cite{ref:EVARGit} rather than replacing them, and it borrows the conventions of the MERT~\cite{ref:MERTGit} and MATPAC++~\cite{ref:MATPACGit} code bases where they fit.
+
 \section{System Overview}
-Provide a general description of the software system, including its functionality and matters related to the overall system and its design (perhaps including a discussion of the basic design approach or organization). Feel free to split this discussion up into subsections (and sub-subsections, etc. ...).
+\label{sec:des-overview}
+The system consists of four subsystems. The data preparation pipeline turns the Free Music Archive and the noise corpus into the input format of M2D. The further pre-training framework trains one checkpoint per experimental arm. The evaluation and analysis subsystem measures every checkpoint and every reference model with the same protocol. The demonstration dashboard presents the results and runs the four demonstration tasks. The subsystems communicate only through files on disk: spectrogram arrays, CSV lists of training files, model checkpoints, score files and saved linear probes. Each subsystem can therefore be run, tested and replaced on its own, and every result can be traced to the files that produced it.
+
+\subsection{Data Preparation Pipeline}
+A command-line package, \texttt{fmaprep}, runs the steps of Section~\ref{sec:m5-prep} as named stages: \emph{select} draws the nested 1,000- to 10,000-track subsets, \emph{audit} decodes and screens each track, \emph{convert} writes the log-mel and CQT arrays, and \emph{check} runs the integrity checks. Each stage reads the outputs of the earlier stages and writes to its own folder, so an interrupted run resumes where it stopped.
+
+\subsection{Further Pre-training Framework}
+The framework is the M2D code base with a small extension that adds the musical teacher, the CQT targets and fixed normalization statistics. One training run produces the checkpoints of one arm (Table~\ref{tab:m5-arms}); the arms differ only in the command-line options of the training script.
+
+\subsection{Evaluation and Analysis}
+The EVAR toolkit computes frozen embeddings, trains the linear probes and records the scores. Small wrapper classes make the reference models available through the same interface, and analysis scripts compute the aggregates, confidence intervals and gap-closure ratios of Section~\ref{sec:m5-eval}.
+
+\subsection{Demonstration Dashboard}
+A FastAPI backend serves a single-page HTML and JavaScript frontend, reads the imported results from a SQLite database and runs the encoders and probes of the evaluation for the four demonstration tasks (Chapter~\ref{ch:srs}).
+
 \section{Design Considerations}
-This section describes many issues that need to be addressed or resolved before attempting to devise a complete design solution.
+\label{sec:des-considerations}
+The design must fit a single GPU and a three-month schedule, keep the comparison between arms fair, and produce results that can be reproduced and traced. The considerations below shaped it.
+
 \subsection{Assumptions and Dependencies}
-Describe any assumptions or dependencies regarding the software and its use. These may concern such issues as:
 \begin{itemize}
-\item Related software or hardware 
-  \item Operating systems 
-  \item End-user characteristics 
-  \item Possible and/or probable changes in functionality
+  \item \textbf{Software.} The M2D code base at a fixed commit, together with the MAE source files that it patches~\cite{ref:He:2022mae}, the timm library and nnAudio~\cite{ref:Cheuk:2020nnaudio}; the EVAR toolkit; PyTorch with CUDA; and the Hugging Face \texttt{transformers} library~\cite{ref:Wolf:2020transformers} for loading the MERT and MATPAC++ checkpoints. A change in the training interface of the M2D code would affect the extension built on it, which is why the commit is fixed.
+  \item \textbf{Operating system.} Linux on the workstation, with the NVIDIA driver and CUDA runtime.
+  \item \textbf{Hardware.} One NVIDIA RTX A4000 with 16~GB of memory for training, evaluation and the dashboard; the dashboard can also run on a CPU, more slowly.
+  \item \textbf{Data.} The FMA medium subset and metadata, the FSD50K development set and the downstream datasets of Table~\ref{tab:m5-tasks} are available locally at configured paths, together with the released checkpoints of M2D/0.7 and of the reference models.
+  \item \textbf{Users.} Researchers use the command line and configuration files; visitors use only the web interface of the dashboard.
+  \item \textbf{Likely changes.} The best arm A$^{*}$ is known only at the end of the experiments; optional runs (Section~\ref{sec:m5-design}), the distillation of MERT features as a second teacher, and further dashboard tasks may be added later. The design keeps each of these to a new script, a new option or new database rows.
 \end{itemize}
-Do not just add random generic statements, be clear and concise about what you are writing.
+
 \subsection{General Constraints}
-Describe any global limitations or constraints that have a significant impact on the design of the system's software (and describe the associated impact). Such constraints may be imposed by any of the following (the list is not exhaustive):
 \begin{itemize}
-\item Hardware or software environment 
-\item End-user environment 
-\item Availability or volatility of resources 
-\item Standards compliance 
-\item Interoperability requirements 
-\item Interface/protocol requirements 
-\item Data repository and distribution requirements 
-\item Security requirements (or other such regulations) 
-\item Memory and other capacity limitations 
-\item Performance requirements 
-\item Network communications 
-\item Verification and validation requirements (testing) 
-\item Other means of addressing quality goals 
-\item Other requirements described in the requirements specification 
+  \item \textbf{Memory and compute.} The online, target and predictor networks, the frozen teacher and the two linear heads must fit into 16~GB during training. This fixes the micro-batch at 32 with four accumulation steps (Table~\ref{tab:m5-hparams}), mixed precision, and a teacher that runs without gradients on the same GPU.
+  \item \textbf{Input compatibility.} Spectrograms must be computed with exactly the front-end of the original M2D pre-training (Table~\ref{tab:m5-frontend}); any other implementation would add a distribution shift that cannot be separated from the effect under study.
+  \item \textbf{Storage.} About 10~GB of half-precision arrays for 10,000 tracks (Section~\ref{sec:m5-prep}), plus the checkpoints of every arm, which hold the online and target networks and the optimizer state and are saved every 100 epochs.
+  \item \textbf{Licensing.} FMA audio is used under its Creative Commons licenses, and the MERT weights are licensed for non-commercial use~\cite{ref:MERTCard}; no audio is redistributed except the openly licensed dashboard samples.
+  \item \textbf{Library compatibility.} The MATPAC++ inference code pins an old version of timm that conflicts with the version needed by the M2D code~\cite{ref:MATPACGit}, so the two cannot share one Python environment.
+  \item \textbf{Reproducibility and verification.} All arms must use the same track list and seeds, every stage must verify its outputs, and the dashboard must meet the non-functional requirements of Section~\ref{sec:srs-nfr}.
 \end{itemize}
 
 \subsection{Goals and Guidelines}
-Describe any goals, guidelines, principles, or priorities which dominate or embody the design of the system's software. Such goals might be:
 \begin{itemize}
-\item The KISS principle ("Keep it simple stupid!") 
-\item Emphasis on speed versus memory use 
-\item Working, looking, or "feeling" like an existing product
+  \item \textbf{Reuse before rewrite.} The official recipe is only reproduced faithfully if its code is reused, so new code is added as subclasses and options of the existing code rather than as a re-implementation.
+  \item \textbf{One factor per arm.} Arms differ only in command-line options, never in code paths that are switched by editing files, so that a comparison between arms is a comparison of exactly the intended factor.
+  \item \textbf{One front-end everywhere.} Training, evaluation and the dashboard compute spectrograms and embeddings with the same functions, so that the dashboard demonstrates the models that were evaluated.
+  \item \textbf{Keep it simple.} Plain files, command-line scripts and a file-based database are used instead of services, because the data are small and must be easy to inspect.
+  \item \textbf{Fail loudly.} Missing files, shape mismatches, non-finite losses and unknown codes stop the run with a clear message instead of being skipped silently.
+  \item \textbf{Reproducible by default.} Every run stores its options, the code version and a hash of its track list next to its outputs.
 \end{itemize}
-For each such goal or guideline, unless it is implicitly obvious, describe the reason for its desirability. Feel free to state and describe each goal in its own sub subsection if you wish.
-\subsection{ Development Methods}
-Briefly describe the method or approach used for this software design. If one or more formal/published methods were adopted or adapted, then include a reference to a more detailed description of these methods. If several methods were seriously considered, then each such method should be mentioned, along with a brief explanation of why all or part of it was used or not used.
+
+\subsection{Development Methods}
+The project follows an iterative, research-driven process. The data pipeline and its tests are built first; a pilot run of a few epochs then measures time and memory on the A4000 (Section~\ref{sec:m5-frame}); the arms are run in the order fixed in Chapter~\ref{ch:m5}, with evaluation of each checkpoint as it appears; and the dashboard is built in small steps once the first probes exist, starting with the unmodified model A0 (Section~\ref{sec:srs-risks}). A strict waterfall process was rejected because the pilot run can change the schedule, for example by reducing the number of epochs for all arms. Parts whose correctness can be checked automatically, such as subset selection, shapes and losses, are developed with unit tests; the rest is checked with spectrogram galleries, training curves and the label-free feature statistics logged by the training script.
+
 \section{System Architecture}
-This section should describe both the internal architecture of the modules, as well as the external architecture of the system with other systems, if any. Diagrammatic architecture is compulsory.\\
-This section should provide a high-level overview of how the functionality and responsibilities of the system were partitioned and then assigned to subsystems or components. Do not go into too much detail about the individual components themselves (there is a subsequent section for detailed component descriptions). The main purpose here is to gain a general understanding of how and why the system was decomposed, and how the individual parts work together to provide the desired functionality.\\
-At the top-most level, describe the major responsibilities that the software must undertake and the various roles that the system (or portions of the system) must play. Describe how the system was broken down into its components/subsystems (identifying each top-level component/subsystem and the roles/responsibilities assigned to it). Describe how the higher-level components collaborate with each other in order to achieve the required results. Don't forget to provide some sort of rationale for choosing this particular decomposition of the system (perhaps discussing other proposed decompositions and why they were rejected). Feel free to make use of design patterns, either in describing parts of the architecture (in pattern format), or for referring to elements of the architecture that employ them.\\
-If there are any diagrams, models, flowcharts, documented scenarios or use-cases of the system behavior and/or structure, they may be included here (unless you feel they are complex enough to merit being placed in the Detailed System Design section). Diagrams that describe a particular component or sub-system should be included within the particular subsection that describes that component or subsystem.\\
-\textcolor{red}{Note: This section (and its subsections) really applies only to newly developed (or yet-to-be developed) portions of the system.} If there are parts of the system that already existed before this development effort began, then you only need to describe the pre-existing parts that the new parts of the system depend upon, and only in enough detail sufficient to describe the relationships and interactions between the old parts and the new parts. Pre-existing parts that are modified or enhanced need to be described only to the extent that is necessary for the reader to gain a sufficient understanding of the nature of the changes that were made.
+\label{sec:des-arch}
+Figure~\ref{fig:des-layers} shows the layered architecture. The data layer holds the raw corpora, the downstream datasets and the released checkpoints. The preparation layer turns the corpora into arrays and file lists. The learning layer runs the further pre-training of each arm with the frozen original model as teacher. The evaluation layer measures checkpoints and reference models and computes the statistics. The presentation layer imports the results into the dashboard. Each layer depends only on the files written by the layers below it.
+
+This decomposition was chosen because the three expensive steps, conversion, training and embedding extraction, have very different costs and must not be repeated when a later step changes. With files between the layers, a new arm reuses the converted data, and a new statistic reuses the cached embeddings. A single training script that reads MP3 files and evaluates at the end was rejected: it would mix data handling with model code, repeat the conversion for every arm, and make it hard to show that all arms saw the same data.
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % data
+  \node[m5data] (dfma) at (3.0,0) {FMA \texttt{fma\_medium}\\and metadata};
+  \node[m5data] (dnoi) at (6.2,0) {FSD50K\\development set};
+  \node[m5data] (dck) at (9.2,0) {Released\\checkpoints};
+  \node[m5data] (dtask) at (13.0,0) {Downstream\\task datasets};
+  % preparation
+  \node[m5proc, text width=6.4cm] (prep) at (5.0,1.9) {\texttt{fmaprep}: select $\rightarrow$ audit $\rightarrow$ convert (log-mel with \texttt{wav\_to\_lms.py}, CQT with nnAudio) $\rightarrow$ check};
+  \node[desfile] (f1) at (3.0,3.35) {\texttt{fma\_lms/}, \texttt{fma\_cqt/}, \texttt{fsd50k\_lms/} (float16 \texttt{.npy})};
+  \node[desfile] (f2) at (6.6,3.35) {\texttt{files\_fma10k.csv} and nested lists, \texttt{manifest.csv}};
+  % learning
+  \node[m5train, text width=4.6cm] (train) at (4.8,4.85) {M2D trainer (\texttt{train\_audio.py})\\M2D-X-Music, one run per arm};
+  \node[m5ref, text width=2.6cm] (teach) at (9.2,4.85) {Frozen teacher\\original M2D/0.7};
+  \node[desfile, text width=4.4cm] (f3) at (4.8,6.3) {\texttt{runs/<arm>/checkpoint-*.pth}, logs, options};
+  % evaluation
+  \node[m5eval, text width=3.0cm] (ana) at (3.0,7.8) {Analysis scripts\\CI, bootstrap, GCR};
+  \node[m5eval, text width=6.4cm] (evar) at (10.1,7.8) {EVAR linear evaluation: wrappers for M2D, MERT and MATPAC++, cached embeddings, saved probes};
+  \node[desfile, text width=5.2cm] (f4) at (6.6,9.25) {\texttt{scores.csv}, saved probes, aggregate tables};
+  % presentation
+  \node[m5box, text width=3.4cm] (imp) at (3.6,10.75) {Import script $\rightarrow$ SQLite database};
+  \node[m5box, text width=4.6cm] (dash) at (9.6,10.75) {FastAPI backend and HTML/JavaScript frontend};
+  % arrows
+  \draw[m5arrow] (dfma) -- (dfma |- prep.south);
+  \draw[m5arrow] (dnoi) -- (dnoi |- prep.south);
+  \draw[m5arrow] (prep.north -| f1) -- (f1);
+  \draw[m5arrow] (prep.north -| f2) -- (f2);
+  \draw[m5arrow] (f1) -- (train);
+  \draw[m5arrow] (f2) -- (train);
+  \draw[m5arrow] (dck) -- (teach);
+  \draw[m5arrow] (teach) -- (train);
+  \draw[m5arrow] (train) -- (f3);
+  \draw[m5arrow] (f3.north east) -- (evar.south west);
+  \draw[m5arrow] (dck.east) -| node[pos=0.75, right, font=\scriptsize] {reference models} ([xshift=0.9cm]evar.south);
+  \draw[m5arrow] (dtask) -- (dtask |- evar.south);
+  \draw[m5arrow] (evar) -- node[above, font=\scriptsize] {scores} (ana);
+  \draw[m5arrow] (evar) -- (f4);
+  \draw[m5arrow] (ana) -- (f4);
+  \draw[m5arrow] (f4) -- (imp);
+  \draw[m5arrow] (imp) -- (dash);
+  \draw[m5arrow] (f4) -- node[right, font=\scriptsize] {A0, A$^{*}$ probes} (dash);
+  % layers
+  \begin{scope}[on background layer]
+    \node[deslayer, fit=(dfma)(dtask)] (Ld) {};
+    \node[deslayer, fit=(prep)] (Lp) {};
+    \node[deslayer, fit=(train)(teach)] (Ll) {};
+    \node[deslayer, fit=(ana)(evar)] (Le) {};
+    \node[deslayer, fit=(imp)(dash)] (Lpr) {};
+  \end{scope}
+  \node[font=\scriptsize\bfseries, anchor=east] at (1.25,0) {Data};
+  \node[font=\scriptsize\bfseries, anchor=east] at (1.25,1.9) {Preparation};
+  \node[font=\scriptsize\bfseries, anchor=east] at (1.25,4.85) {Learning};
+  \node[font=\scriptsize\bfseries, anchor=east] at (1.25,7.8) {Evaluation};
+  \node[font=\scriptsize\bfseries, anchor=east] at (1.25,10.75) {Presentation};
+\end{tikzpicture}}
+\caption[Layered system architecture]{Layered system architecture, read from bottom to top. The data layer holds FMA, the FSD50K noise corpus, the released checkpoints and the downstream datasets. The preparation layer, the \texttt{fmaprep} pipeline, writes spectrogram and CQT arrays and the training file lists (yellow boxes are files). The learning layer trains one run per arm, with the frozen original M2D model as teacher, and writes checkpoints. The evaluation layer runs EVAR on the checkpoints and on the reference models, and the analysis scripts compute the statistics. At the top, the results and the probes of A0 and A$^{*}$ are imported into the dashboard.}
+\label{fig:des-layers}
+\end{figure}
+
 \subsection{Subsystem Architecture}
-If a particular component is one which merits a more detailed discussion than what was presented in the System Architecture section, provide that more detailed discussion in a subsection of the System Architecture section (or it may even be more appropriate to describe the component in its own design document). If necessary, describe how the component was further divided into subcomponents, and the relationships and interactions between the subcomponents (similar to what was done for top-level components in the System Architecture section).\\
-If any subcomponents are also deemed to further merit discussion, then describe them in a separate subsection of this section (and in a similar fashion). Proceed to go into as many levels/subsections of discussion as needed in order for the reader to gain a high-level understanding of the entire system or subsystem (but remember to leave the gory details for the Detailed System Design section).\\
-If this component is very large and/or complex, you may want to consider documenting its design in a separate document and simply including a reference to it in this section. If this is the option you choose, the design document for this component should have an organizational format that is very similar (if not identical to) this document.
+\textbf{Further pre-training.} Figure~\ref{fig:des-train} shows the modules of the training subsystem; the data flow of the objective itself is given in Figure~\ref{fig:m5-framework}. The training script \texttt{train\_audio.py} of the M2D code base parses the options of a run, creates the run folder and builds three objects. The dataset \texttt{MusicMixedSpecDataset} extends the mixed-noise dataset of M2D-X: it reads the music and noise spectrograms through the existing \texttt{SpectrogramDataset}, mixes them with the existing log-domain mixing function, crops the CQT array at the same start frame, and applies the fixed AudioSet statistics. The model \texttt{M2D\_X\_Music\_ViT} extends \texttt{M2D\_X\_ViT}, which already contains the online encoder, the predictor, the EMA target encoder and the offline linear head, with a second linear head for the CQT target. The teacher is the existing \texttt{RuntimeM2D} class loaded with the original M2D/0.7 weights and frozen. A training loop adapted from \texttt{train\_one\_epoch\_m2dx} passes the three losses to the optimizer, updates the target encoder and logs each loss separately. Checkpoints are written every 100 epochs by the existing \texttt{misc.save\_model}, which also starts the evaluation hook \texttt{quick\_eval.sh}.
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[desfile, text width=2.9cm] (lists) at (-1.4,2.4) {CSV lists (\texttt{file\_name}, \texttt{cqt\_file}) and \texttt{.npy} arrays};
+  \node[m5train, text width=4.2cm] (cli) at (6.0,4.3) {\texttt{train\_audio.py}\\options of the arm, run folder};
+  \node[m5train, text width=3.2cm] (ds) at (2.4,2.4) {\texttt{MusicMixedSpecDataset}\\noisy, clean and CQT crops};
+  \node[m5train, text width=3.4cm] (model) at (6.0,2.4) {\texttt{M2D\_X\_Music\_ViT}\\encoder, predictor, target, offline and CQT heads};
+  \node[m5ref, text width=3.0cm] (teach) at (9.8,2.4) {\texttt{RuntimeM2D}\\frozen M2D/0.7 teacher};
+  \node[m5ref, text width=3.2cm] (sds) at (2.4,0.4) {\texttt{SpectrogramDataset}, \texttt{log\_mixup\_exp}};
+  \node[m5train, text width=3.9cm] (eng) at (6.0,0.4) {\texttt{train\_one\_epoch\_m2dx\_music}\\accumulation, AMP, EMA};
+  \node[m5ref, text width=3.0cm] (save) at (9.8,0.4) {\texttt{misc.save\_model}, \texttt{quick\_eval.sh}};
+  \node[desfile, text width=3.0cm] (out) at (13.4,0.4) {\texttt{checkpoint-*.pth}, TensorBoard, console log};
+  \node[desfile, text width=3.0cm] (evar) at (13.4,2.4) {EVAR validation scores};
+  \draw[m5arrow] (cli) -- node[above left, font=\scriptsize] {builds} (ds);
+  \draw[m5arrow] (cli) -- (model);
+  \draw[m5arrow] (cli) -- node[above right, font=\scriptsize] {loads} (teach);
+  \draw[m5arrow] (lists) -- (ds);
+  \draw[m5arrow, dashed] (ds) -- node[left, font=\scriptsize] {uses} (sds);
+  \draw[m5arrow] (ds.south east) -- node[above, sloped, font=\scriptsize] {batches} (eng.north west);
+  \draw[m5arrow, {Stealth[length=2mm]}-{Stealth[length=2mm]}] (model) -- node[right, font=\scriptsize] {losses} (eng);
+  \draw[m5arrow] (teach.south west) -- node[above, sloped, font=\scriptsize] {$y^{\mathrm{off}}$} (eng.north east);
+  \draw[m5arrow] (eng) -- (save);
+  \draw[m5arrow] (save) -- (out);
+  \draw[m5arrow] (save.north east) -- (evar.south west);
+  % legend
+  \node[m5ref, text width=2.6cm, minimum height=0.5cm] at (-1.4,4.3) {reused from M2D};
+  \node[m5train, text width=2.6cm, minimum height=0.5cm] at (-1.4,3.55) {new or extended};
+\end{tikzpicture}}
+\caption[Modules of the further pre-training subsystem]{Modules of the further pre-training subsystem. Grey boxes are reused unchanged from the M2D code base, orange boxes are new or extended, and yellow boxes are files. The training script builds the music dataset, the model and the frozen teacher. The dataset reads the file lists and arrays through the existing spectrogram dataset and mixing function. The training loop takes batches from the dataset and teacher features from the frozen model, obtains the losses from the model, and passes checkpoints to the existing saving function, which also starts a quick evaluation with EVAR.}
+\label{fig:des-train}
+\end{figure}
+
+\textbf{Data preparation.} The stages of \texttt{fmaprep} follow Figure~\ref{fig:m5-pipeline}. Each stage is a class with a \texttt{run} method and writes a completion marker, so finished stages are skipped unless forced. All paths, seeds and thresholds are read from one YAML file. The convert stage calls the unchanged converter of \texttt{wav\_to\_lms.py} for log-mel spectrograms and an nnAudio CQT layer with the settings of the MERT musical teacher~\cite{ref:MERTGit}, and writes the training list in the CSV format of the M2D code, extended with a column for the CQT file.
+
+\textbf{Evaluation.} Each model is described by an EVAR configuration file that names its wrapper class, weight file, sampling rate and normalization statistics. The M2D checkpoints use the existing wrapper \texttt{AR\_M2D}; new wrappers \texttt{AR\_MERT} and \texttt{AR\_MATPAC} load the reference models from the Hugging Face hub and return the features of a chosen layer. Task metadata for FMA-small and MagnaTagATune are added as CSV files in the format of the existing tasks. EVAR caches the embeddings of each model and task, trains the probes with the protocol of Section~\ref{sec:m5-eval}, saves the trained linear layers on request, and appends every score to one results file, which the analysis scripts read.
+
+\textbf{Dashboard.} The backend has four modules: an API module with the routes for results, tasks, samples and predictions; an inference module whose \texttt{InferenceService} holds the loaded encoders and probes and processes one request at a time; a repository module that maps the tables of Figure~\ref{fig:srs-er} with SQLAlchemy; and the import script of use case UC-06. The frontend consists of one HTML page, one script and one style sheet, and it obtains all data through the JSON API.
+
+\subsection{Sequence Diagrams}
+Figures~\ref{fig:des-seq-train} and~\ref{fig:des-seq-predict} show the two central interactions: one step of further pre-training, and one prediction request of the dashboard.
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \foreach \x/\n in {0/{Training loop},3.3/{\texttt{MusicMixed-}\\\texttt{SpecDataset}},6.6/{\texttt{RuntimeM2D}\\(teacher)},9.9/{\texttt{M2D\_X\_Music\_ViT}},13.2/{AdamW and\\gradient scaler}} {
+    \node[desactor, text width=2.6cm] at (\x,0.5) {\n};
+    \draw[dashed, black!45] (\x,0) -- (\x,-10.0);
+  }
+  \desframe{-1.3}{-0.35}{14.6}{-9.8}{loop [epoch $e=1,\dots,600$]}
+  \desframe{-1.1}{-0.95}{14.4}{-8.05}{loop [each micro-batch of 32 clips]}
+  \draw[desmsg] (0,-1.75) -- node[deslbl, above] {next batch} (3.3,-1.75);
+  \draw[desret] (3.3,-2.2) -- node[deslbl, above] {(noisy, clean, cqt)} (0,-2.2);
+  \draw[desmsg] (0,-2.75) -- node[deslbl, above, pos=0.6] {\texttt{encode\_lms}(clean), no gradient} (6.6,-2.75);
+  \draw[desret] (6.6,-3.25) -- node[deslbl, above, pos=0.6] {$y^{\mathrm{off}}$ [32, 38, 3840]} (0,-3.25);
+  \draw[desmsg] (0,-3.8) -- node[deslbl, above, pos=0.7] {forward(noisy, $y^{\mathrm{off}}$, cqt, mask ratio 0.7)} (9.9,-3.8);
+  \draw[desmsg] (9.9,-4.05) -- ++(0.5,0) -- ++(0,-0.5) -- ++(-0.5,0);
+  \node[font=\scriptsize, anchor=west, align=left] at (10.5,-4.3) {mask, encode, predict,\\target encoder, three losses};
+  \draw[desret] (9.9,-5.0) -- node[deslbl, above, pos=0.3] {$\mathcal{L}$; $\mathcal{L}_{\mathrm{m2d}}$, $\mathcal{L}_{\mathrm{off}}$, $\mathcal{L}_{\mathrm{cqt}}$ for the log} (0,-5.0);
+  \draw[desmsg] (0,-5.55) -- node[deslbl, above, pos=0.8] {backpropagate $\mathcal{L}/4$, accumulate gradients} (13.2,-5.55);
+  \desframe{-0.9}{-6.0}{14.2}{-7.85}{opt [every 4th micro-batch]}
+  \draw[desmsg] (0,-6.75) -- node[deslbl, above, pos=0.8] {clip norm at 3.0, AdamW step, zero gradients} (13.2,-6.75);
+  \draw[desmsg] (0,-7.4) -- node[deslbl, above, pos=0.7] {\texttt{update\_target\_network}($\tau_k$)} (9.9,-7.4);
+  \desframe{-1.1}{-8.3}{14.4}{-9.6}{opt [$e$ is a multiple of 100]}
+  \draw[desmsg] (0,-8.85) -- ++(0.5,0) -- ++(0,-0.45) -- ++(-0.5,0);
+  \node[font=\scriptsize, anchor=west] at (0.6,-9.07) {save \texttt{checkpoint-$e$.pth}; start \texttt{quick\_eval.sh} in a subprocess};
+\end{tikzpicture}}
+\caption[Sequence diagram of one further pre-training step]{Sequence diagram of further pre-training with five participants: the training loop, the music dataset, the frozen teacher, the model and the optimizer with the gradient scaler. In a loop over epochs and an inner loop over micro-batches, the loop takes a batch of noisy, clean and CQT crops; the teacher encodes the clean crop without gradient; the model masks, encodes and predicts on the noisy crop and returns the total loss and its three terms. The scaled loss is backpropagated, and every fourth micro-batch the gradients are clipped, the AdamW step is taken and the target encoder is updated. Every 100 epochs a checkpoint is saved and a quick evaluation is started.}
+\label{fig:des-seq-train}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \foreach \x/\n in {0/Visitor,2.7/{Browser\\(\texttt{app.js})},5.6/{FastAPI\\(\texttt{/api/predict})},8.6/{\texttt{Inference-}\\\texttt{Service}},11.5/{\texttt{RuntimeM2D},\\\texttt{ProbeHead}},14.2/{SQLite}} {
+    \node[desactor, text width=2.2cm] at (\x,0.5) {\n};
+    \draw[dashed, black!45] (\x,0) -- (\x,-9.2);
+  }
+  \draw[desmsg] (0,-0.7) -- node[deslbl, above] {task, clip, model; Run} (2.7,-0.7);
+  \draw[desmsg] (2.7,-1.25) -- node[deslbl, above] {POST: file or sample, task, models} (5.6,-1.25);
+  \draw[desmsg] (5.6,-1.5) -- ++(0.5,0) -- ++(0,-0.45) -- ++(-0.5,0);
+  \node[font=\scriptsize, anchor=west, align=left] at (6.2,-1.72) {check type and size, decode,\\mono 16 kHz, first 30 s};
+  \desframe{-0.9}{-2.3}{15.3}{-8.6}{alt [invalid file]}
+  \draw[desret] (5.6,-2.85) -- node[deslbl, above] {error message} (2.7,-2.85);
+  \draw[desret] (2.7,-3.25) -- node[deslbl, above] {show message} (0,-3.25);
+  \draw[black!70, dashed] (-0.9,-3.5) -- (15.3,-3.5);
+  \node[font=\scriptsize, anchor=north west] at (-0.85,-3.5) {[else]};
+  \draw[desmsg] (5.6,-3.95) -- node[deslbl, above] {enqueue job} (8.6,-3.95);
+  \desframe{7.4}{-4.25}{13.0}{-6.15}{loop [each model]}
+  \draw[desmsg] (8.6,-5.05) -- node[deslbl, above] {\texttt{encode}: 6.08-s windows} (11.5,-5.05);
+  \draw[desret] (11.5,-5.45) -- node[deslbl, above] {embedding $e$} (8.6,-5.45);
+  \draw[desmsg] (8.6,-5.9) -- node[deslbl, above] {\texttt{predict}($e$): scores} (11.5,-5.9);
+  \draw[desmsg] (8.6,-6.45) -- node[deslbl, above, pos=0.7] {insert \texttt{InferenceLog}} (14.2,-6.45);
+  \draw[desret] (8.6,-6.95) -- node[deslbl, above] {outputs, latency} (5.6,-6.95);
+  \draw[desmsg] (5.6,-7.15) -- ++(0.5,0) -- ++(0,-0.4) -- ++(-0.5,0);
+  \node[font=\scriptsize, anchor=west] at (6.2,-7.35) {delete upload};
+  \draw[desret] (5.6,-7.85) -- node[deslbl, above] {JSON response} (2.7,-7.85);
+  \draw[desret] (2.7,-8.3) -- node[deslbl, above] {bars or comparison} (0,-8.3);
+\end{tikzpicture}}
+\caption[Sequence diagram of a dashboard prediction request]{Sequence diagram of a dashboard prediction request (use cases UC-04 and UC-05) with six participants: the visitor, the browser, the FastAPI route, the inference service, the encoder with its probe, and the SQLite database. The browser posts the clip, task and models; the route checks and decodes the audio. If the file is invalid, an error message is returned and shown. Otherwise the job is queued, and for each selected model the encoder computes the clip embedding and the probe returns the scores. The request is logged, the uploaded file is deleted, and the browser shows the bars or the side-by-side comparison.}
+\label{fig:des-seq-predict}
+\end{figure}
+
 \section{Architectural Strategies}
-Explain all strategies that you use for designing of the Architecture. Describe any design decisions and/or strategies that affect the overall organization of the system and its higher-level structures. These strategies should provide insight into the key abstractions and mechanisms used in the system architecture. Describe the reasoning employed for each decision and/or strategy (possibly referring to previously stated design goals and principles) and how any design goals or priorities were balanced or traded-off. Such decisions might concern (but are not limited to) things like the following:
-\begin{itemize}
-    \item Use of a particular type of product (programming language, database, library, etc. ...) 
-  \item Reuse of existing software components to implement various parts/features of the system 
-  \item Future plans for extending or enhancing the software 
-  \item User interface paradigms (or system input and output models) 
-  \item Hardware and/or software interface paradigms 
-  \item Error detection and recovery 
-  \item Memory management policies 
-  \item External databases and/or data storage management and persistence 
-  \item Distributed data or control over a network 
-  \item Generalized approaches to control 
-  \item Concurrency and synchronization 
-  \item Communication mechanisms 
-  \item Management of other resources
-\end{itemize}
-\subsection{Architectural Strategies Strategy-1 name or description} 
-\subsection{Architectural Strategies Strategy-2 name or description} 
-Each significant strategy employed should probably be discussed in its subsection or (if it is complex enough) in a separate design document (with an appropriate reference here, of course). Make sure that when describing a design decision you also discuss any other significant alternatives that were considered and your reasons for rejecting them (as well as your reasons for accepting the alternative you finally chose). Sometimes it will be most effective to employ the "pattern format" for describing a strategy.
+\label{sec:des-strategies}
+The strategies below have the largest effect on the structure of the system. For each, the alternatives that were considered are given.
+
+\subsection{Extending the M2D Code Base}
+The further pre-training is implemented as a small extension of the M2D code base: a model subclass, a dataset subclass, an adapted training loop and three new options (the CQT loss weight, the CQT column of the file list, and the use of the fixed normalization statistics given by the existing \texttt{--norm\_stats} option). Everything else, from masking to the EMA schedule and checkpointing, is the code that produced the published M2D-X results~\cite{ref:Niizumi:2024m2dx}, and arms A1 to A3 run on it unchanged except for the normalization statistics. The musical-teacher head copies the structure of the CQT predictor of MERT, a single linear layer from the features to 84 CQT bins~\cite{ref:MERTGit}. Three alternatives were rejected. Porting the method to the fairseq framework~\cite{ref:Ott:2019fairseq}, on which the MERT and MATPAC++ training code is built, would require converting the M2D weights and re-implementing the recipe. Writing a new training loop from scratch would risk small deviations from the recipe that could not be told apart from the effects under study. A framework such as PyTorch Lightning would add a layer of indirection around a loop that already exists and works.
+
+\subsection{Offline Precomputation of Inputs and Targets}
+Log-mel spectrograms and CQT targets are computed once and stored as half-precision arrays, and the data loader only crops, mixes and normalizes them. This follows the M2D code, which also trains from precomputed spectrograms, and it keeps the GPU free for the networks. The alternative of the MERT implementation, computing the CQT on the GPU at every step, was rejected: with 10,000 tracks the one-time conversion is cheap, whereas a per-step transform would cost memory and time on a 16-GB GPU for every one of the 600 epochs. Mixing the noise at load time, rather than storing noisy copies, keeps the noise samples different in every epoch, as in the official recipe.
+
+\subsection{Experiments as Command Lines and Run Folders}
+Each arm is a short shell script that calls the training script with its options, for example the noise ratio, the loss weights, the file list and the seed; the arms of Table~\ref{tab:m5-arms} differ only in these options. The training script writes the options, the commit of the code and a hash of the track list into the run folder next to the checkpoints and logs, so that the folder is a complete record of the run. Configuration through Hydra YAML files, as in the fairseq-based code of MERT and MATPAC++, was considered but not adopted, because the M2D code is configured with command-line options and two configuration systems would have to be kept consistent.
+
+\subsection{One Evaluation Interface for All Models}
+All models, whether further pre-trained checkpoints or references, are evaluated through the model interface of EVAR, in which a wrapper class turns a batch of waveforms into frame features. The same probe code, splits and seeds therefore apply to every model, and the probes saved by EVAR are the ones loaded by the dashboard. The reference models are loaded from the Hugging Face hub with the \texttt{transformers} library~\cite{ref:Wolf:2020transformers} in a separate environment, because of the library conflict noted above; this environment writes only embeddings to the shared cache. Evaluating with the MARBLE toolkit, for which EVAR provides a plug-in, was rejected for this study because of its cost on one GPU and because scores of its revised versions are not comparable with each other (Chapter~\ref{ch:lr}).
+
+\subsection{Files as Interfaces and Single-Worker Serving}
+The subsystems exchange only files, and the dashboard reads only the files exported by the evaluation and its own database. Training curves are kept in TensorBoard logs, which the M2D code already writes, rather than in an experiment-tracking server, which would add a service to maintain. In the dashboard, the encoders and probes are loaded once at start-up and all inference requests pass through one queue processed by a single worker, which bounds the GPU memory and satisfies the concurrency requirement of Section~\ref{sec:srs-nfr}. A task queue with a separate broker, such as Celery with Redis, and loading the models for each request were both rejected: the first is unnecessary for a handful of visitors, and the second would make every prediction slow.
+
 \section{Domain Model/Class Diagram}
-In this subsection, add the Class Diagram of your system. Class diagrams represent the structure design of your system.
+\label{sec:des-classes}
+{\sloppy Figure~\ref{fig:des-classes} shows the main classes. Grey classes are reused unchanged from the M2D code base and EVAR; white classes are new. In the data part, \texttt{MusicMixedSpecDataset} extends \texttt{MixedSpecDataset}, which is composed of two \texttt{SpectrogramDataset} objects for music and noise, and the preparation stages share the abstract class \texttt{Stage}. In the model part, \texttt{M2D\_X\_Music\_ViT} extends \texttt{M2D\_X\_ViT} (itself derived from \texttt{M2DViT}) with the CQT head, and the training loop uses the dataset, the model and \texttt{RuntimeM2D} as teacher. In the evaluation part, the wrappers derive from \texttt{BaseAudioRepr}. In the dashboard part, \texttt{InferenceService} holds encoders and \texttt{ProbeHead} objects and writes through \texttt{ResultRepository}, which \texttt{ResultImporter} also uses. \texttt{RuntimeM2D} appears three times: as the teacher during training, inside \texttt{AR\_M2D} during evaluation, and inside \texttt{InferenceService} in the dashboard. This single encoder path is what makes the dashboard demonstrate exactly the evaluated models.\par}
+
+\begin{figure}[htbp]
+\centering
+\singlespacing
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % row A: data
+  \node[descls] (stage) at (0,0) {\desclass{\textit{Stage} (abstract)}{name: str\\cfg: dict (YAML)}{run(ctx)\\is\_done(), mark\_done()\\\textit{Select, Audit, Convert, Check}}};
+  \node[desold] (sds) at (4.6,0) {\desclass{SpectrogramDataset}{folder, files\\crop\_frames, norm\_stats}{\_\_getitem\_\_(i): log-mel crop}};
+  \node[desold] (mds) at (9.2,0) {\desclass{MixedSpecDataset}{ds1, ds2: SpectrogramDataset\\noise\_ratio}{\_\_getitem\_\_(i)\\get\_next\_bgidx()}};
+  \node[descls] (mmd) at (13.8,0) {\desclass{MusicMixedSpecDataset}{cqt\_files\\norm\_stats = ($-7.1$, 4.2)}{\_\_getitem\_\_(i):\\(noisy, clean, cqt)}};
+  % row B: model
+  \node[desold] (mx) at (0,-3.6) {\desclass{M2D\_X\_ViT}{(extends M2DViT)\\encoder, predictor, target\\offline\_predictor:\\\quad Linear(3840, 3840)\\loss\_m2d, loss\_off}{forward\_encoder()\\forward\_decoder()\\update\_target\_network($\tau$)}};
+  \node[descls] (mm) at (4.6,-3.6) {\desclass{M2D\_X\_Music\_ViT}{cqt\_predictor:\\\quad Linear(3840, 84)\\loss\_cqt}{forward(noisy, y\_off, cqt):\\\quad loss and three terms}};
+  \node[descls] (eng) at (9.2,-3.6) {\desclass{$\langle\langle$module$\rangle\rangle$ engine}{--}{train\_one\_epoch\_m2dx\_music(\\\quad model, teacher, loader,\\\quad optimizer, scaler, ema)}};
+  \node[desold] (rt) at (13.8,-3.6) {\desclass{RuntimeM2D}{cfg, encoder weights}{encode\_lms(lms)\\encode(audio)\\get\_scene\_embeddings(audio)}};
+  % row C/D: evaluation
+  \node[desold] (base) at (9.2,-6.8) {\desclass{BaseAudioRepr}{cfg}{encode\_frames(audio)\\forward(audio)}};
+  \node[descls] (armert) at (4.6,-9.1) {\desclass{AR\_MERT}{\texttt{m-a-p/MERT-v1-95M}\\output layer}{encode\_frames(audio)}};
+  \node[descls] (armat) at (9.2,-9.1) {\desclass{AR\_MATPAC}{music and general\\checkpoints}{encode\_frames(audio)}};
+  \node[desold] (arm2d) at (13.8,-9.1) {\desclass{AR\_M2D}{runtime: RuntimeM2D}{encode\_frames(audio)}};
+  % row E: dashboard
+  \node[descls] (imp) at (0,-12.4) {\desclass{ResultImporter}{repository}{import\_file(path, replace)}};
+  \node[descls] (repo) at (4.6,-12.4) {\desclass{ResultRepository}{SQLAlchemy session\\ORM classes of the\\seven tables}{results(group), tasks()\\samples(task), log(record)}};
+  \node[descls] (probe) at (9.2,-12.4) {\desclass{ProbeHead}{weights, mean, std\\labels, threshold}{predict(e): scores}};
+  \node[descls] (inf) at (13.8,-12.4) {\desclass{InferenceService}{encoders: RuntimeM2D\\probes: ProbeHead\\queue (one worker)}{predict(task, models, audio)}};
+  % relations
+  \draw[desinh] (mmd) -- (mds);
+  \draw[black!80, {Diamond[length=2.6mm, width=2.2mm]}-] (mds) -- node[above, font=\scriptsize] {2} (sds);
+  \draw[desdep] (stage) -- node[above, font=\scriptsize] {files} (sds);
+  \draw[desinh] (mm) -- (mx);
+  \draw[desasc] (eng) -- (mm);
+  \draw[desasc] (eng) -- node[above, font=\scriptsize] {teacher} (rt);
+  \draw[desasc] (eng.north) -- (mmd.south west);
+  \draw[desinh] (armat) -- (base);
+  \draw[desinh] (armert.north) |- (base.west);
+  \draw[desinh] (arm2d.north) |- (base.east);
+  \draw[desasc] (arm2d.north east) -- (rt.south east);
+  \draw[desasc] (inf) -- node[above, font=\scriptsize] {1..*} (probe);
+  \draw[desasc] (inf.east) -- ++(0.55,0) |- node[pos=0.25, right, font=\scriptsize] {1..*} (rt.east);
+  \draw[desasc] (inf.south) -- ++(0,-0.4) -| (repo.south);
+  \draw[desasc] (imp) -- (repo);
+  % legend
+  \node[desold, minimum width=2.4cm, minimum height=0.45cm, font=\scriptsize] at (1.0,-6.6) {reused class};
+  \node[descls, minimum width=2.4cm, minimum height=0.45cm, font=\scriptsize] at (1.0,-7.3) {new class};
+\end{tikzpicture}}
+\caption[Class diagram]{Class diagram. Grey classes are reused from the M2D code base and EVAR, white classes are new; open triangles mark inheritance, the diamond composition, solid arrows associations and the dashed arrow a dependency through files. Top row (data): the preparation stages derive from \texttt{Stage} and write the files read by \texttt{SpectrogramDataset}; \texttt{MixedSpecDataset} is composed of two spectrogram datasets and is extended by \texttt{MusicMixedSpecDataset}. Second row (model): \texttt{M2D\_X\_Music\_ViT} extends \texttt{M2D\_X\_ViT}; the training-loop module uses the dataset, the model and \texttt{RuntimeM2D} as teacher. Middle (evaluation): \texttt{AR\_MERT}, \texttt{AR\_MATPAC} and \texttt{AR\_M2D} derive from \texttt{BaseAudioRepr}, and \texttt{AR\_M2D} wraps \texttt{RuntimeM2D}. Bottom row (dashboard): \texttt{InferenceService} uses \texttt{RuntimeM2D} encoders and \texttt{ProbeHead} objects and logs through \texttt{ResultRepository}, which \texttt{ResultImporter} also uses.}
+\label{fig:des-classes}
+\end{figure}
 
 \section{Policies and Tactics}
-Describe any design policies and/or tactics that do not have sweeping architectural implications (meaning they would not significantly affect the overall organization of the system and its high-level structures) but which nonetheless affect the details of the interface and/or implementation of various aspects of the system. Such decisions might concern (but are not limited to) things like the following:
-\begin{itemize}
-    \item Choice of which specific product to use (compiler, interpreter, database, library, etc. ...) 
- \item Engineering trade-offs 
- \item	Coding guidelines and conventions 
- \item	The protocol of one or more subsystems, modules, or subroutines 
- \item The choice of a particular algorithm or programming idiom (design pattern) to implement portions of the system's functionality 
- \item	Plans for ensuring requirements traceability 
- \item	Plans for testing the software 
- \item	Plans for maintaining the software 
- \item	Interfaces for end-users, software, hardware, and communications 
- \item	Hierarchical organization of the source code into its physical components (files and directories). 
- \item	How to build and/or generate the system's deliverables (how to compile, link, load, etc. ...) 
-\end{itemize}
-\subsection{Policy/tactic-1 name or description}
-\subsection{Policy/tactic-2 name or description}
-Each particular policy or set of tactics employed should probably be discussed in its own subsection, or (if it is large or complex enough) in a separate design document (with an appropriate reference here of course). Make sure that when describing a design decision that you also discuss any other significant alternatives that were considered, and your reasons for rejecting them (as well as your reasons for accepting the alternative you finally chose). For this reason, it may frequently be convenient to use one of the more popular "pattern formats" to describe a given tactic.\\
-For this particular section, it may become difficult to decide whether a particular policy or set of tactics should be discussed in this section, or in the System Architecture section, or in the Detailed System Design section for the appropriate component. You will have to use your own "best" judgment to decide this. There will usually be some global policies and tactics that should be discussed here. Still, decisions about interfaces, algorithms, and/or data structures might be more appropriately discussed in the same (sub) section as its corresponding software component in one of these other sections.
+\label{sec:des-policies}
+These policies and tactics affect the details of the implementation rather than its overall structure.
+
+\subsection{Choice of Tools}
+Python 3.10 or above and PyTorch~\cite{ref:Paszke:2019pytorch} are used throughout, with the versions of PyTorch, timm and nnAudio pinned in a conda environment file. A second environment with the versions required by the reference models is used only for extracting their embeddings. TensorBoard records training curves, pytest runs the tests, and the dashboard uses FastAPI with Uvicorn, SQLAlchemy with SQLite, and Chart.js, as listed in Section~\ref{sec:srs-hwsw}. fairseq is not installed, because no fairseq-based model is trained; MERT and MATPAC++ are only used through their published checkpoints.
+
+\subsection{Coding Guidelines and Conventions}
+The code follows PEP~8 and is checked with a linter; functions carry type hints and docstrings. Extensions of the M2D code follow its naming, for example \texttt{M2D\_X\_Music\_ViT} with the factory function \texttt{m2d\_x\_music\_vit\_base} and the option \texttt{--loss\_cqt}, so that they read like the existing \texttt{M2D\_X\_ViT}, \texttt{m2d\_x\_vit\_base} and \texttt{--loss\_off}. Changes to upstream files are kept in a patch file, in the same way as the M2D code base distributes its own changes to the MAE files, and new classes are placed in new files. Paths are never hard-coded; they come from options or the configuration file. Every source of randomness takes an explicit seed.
+
+\subsection{Testing}
+Unit tests with pytest cover the parts whose correctness can be checked automatically: the subset selection (nested lists, artist cap and identical output for the same seed); the audit rules on synthetic silent, short and duplicate files; the equal frame counts of log-mel and CQT arrays; the mixing function against Equation~\ref{eq:m5-mix}; the shapes of the CQT head output ($32\times38\times84$); and checkpoint loading, which must accept the M2D/0.7 weights with only the new heads missing. Two tests guard the comparison between arms. The first checks that, with the CQT weight set to zero, the loss of the new model equals that of \texttt{M2D\_X\_ViT} on the same batch and masks, so that the extension cannot change arms A1 to A3. The second checks which view each network receives: the dataset returns its views by name rather than by position, and the test asserts that the online network gets the noisy view and the teacher the clean view, because swapping two tensors of the same shape would raise no error. A smoke test runs one epoch on a list of a few tracks, and the pilot run of Chapter~\ref{ch:m5} serves as the system test of training. For the dashboard, API tests use the FastAPI test client, and a consistency test checks that the dashboard reproduces the cached EVAR embeddings of a few test clips. The full test cases are given in the next chapter.
+
+\subsection{Requirements Traceability}
+Each research question is linked to the arms and contrasts that answer it (Section~\ref{sec:m5-design}), each contrast to rows of the results file, and each row to its checkpoint, task, split and probe seed. The functional requirements FR-01 to FR-18 of the dashboard (Table~\ref{tab:srs-fr}) map to the modules of Section~\ref{sec:des-arch}: results views to the API and repository, FR-06 to FR-15 to the API and inference modules, FR-16 to the repository, and FR-17 to the import script. The database keeps the source file of every imported score, so every number on the dashboard can be traced back to a run.
+
+\subsection{Source Organization and Build}
+The repository contains the following folders: \texttt{fmaprep/} (preparation stages and their YAML configuration); \texttt{m2d/} (a clone of the M2D code at a fixed commit, the downloaded MAE files and the patch \texttt{patch\_music.diff}); \texttt{evar/} (a clone of EVAR with the new wrappers, configuration files and task metadata); \texttt{runs/} (one script per arm); \texttt{analysis/} (statistics and report tables); \texttt{dashboard/backend/} and \texttt{dashboard/frontend/}; and \texttt{tests/}. Data, arrays, checkpoints and caches are kept outside version control. The system is built by creating the conda environments, cloning the two upstream repositories, downloading the MAE files and applying the patches, as in the setup of the M2D code base~\cite{ref:M2DGit}. Then \texttt{python -m fmaprep all} prepares the data, \texttt{bash runs/A4.sh} trains an arm, the EVAR command \texttt{lineareval.py} evaluates a checkpoint on a task, and \texttt{uvicorn} starts the dashboard.
+
+\subsection{Maintenance}
+A new arm is added as one script in \texttt{runs/}, a new reference model as one wrapper class and configuration file, and a new dashboard task as task metadata, a saved probe and database rows. If the upstream code changes, the patch is re-applied at the new commit and the unit tests show whether the extension still behaves as before.
+
+\section{Conclusion}
+\label{sec:des-conclusion}
+This chapter presented the design of the system. A layered architecture separates data preparation, further pre-training, evaluation and presentation, which communicate only through files, so that each expensive step runs once and every result can be traced. The main strategies are a small extension of the M2D code base instead of a new framework, offline precomputation of spectrograms and CQT targets, experiments defined by command-line options and recorded in run folders, one evaluation interface for all models, and single-worker serving in the dashboard. The sequence and class diagrams show how the components collaborate, with one encoder path shared by training, evaluation and the dashboard, and the policies and tactics fix the tools, conventions, tests and traceability. Together with the method of Chapter~\ref{ch:m5} and the requirements of Chapter~\ref{ch:srs}, this design is the basis for the implementation and the test cases in the next chapter.
+
 \chapter{Implementation and Test Cases}
 For each chapter, provide a paragraph of introduction and at the end, a paragraph of conclusions. (Not the programming code but the algorithmic and procedural details especially related to the hidden/ backend algorithms that are not covered in the design)
 \section{Implementation}

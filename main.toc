@@ -145,37 +145,50 @@
 \contentsline {section}{\numberline {5.8}Conclusion}{85}{section.5.8}%
 \contentsline {chapter}{\numberline {6}High-Level and Low-Level Design}{87}{chapter.6}%
 \contentsline {section}{\numberline {6.1}System Overview}{87}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Design Considerations}{87}{section.6.2}%
-\contentsline {subsection}{\numberline {6.2.1}Assumptions and Dependencies}{87}{subsection.6.2.1}%
-\contentsline {subsection}{\numberline {6.2.2}General Constraints}{87}{subsection.6.2.2}%
-\contentsline {subsection}{\numberline {6.2.3}Goals and Guidelines}{88}{subsection.6.2.3}%
-\contentsline {subsection}{\numberline {6.2.4} Development Methods}{88}{subsection.6.2.4}%
-\contentsline {section}{\numberline {6.3}System Architecture}{89}{section.6.3}%
-\contentsline {subsection}{\numberline {6.3.1}Subsystem Architecture}{89}{subsection.6.3.1}%
-\contentsline {section}{\numberline {6.4}Architectural Strategies}{90}{section.6.4}%
-\contentsline {subsection}{\numberline {6.4.1}Architectural Strategies Strategy-1 name or description}{91}{subsection.6.4.1}%
-\contentsline {subsection}{\numberline {6.4.2}Architectural Strategies Strategy-2 name or description}{91}{subsection.6.4.2}%
-\contentsline {section}{\numberline {6.5}Domain Model/Class Diagram}{91}{section.6.5}%
-\contentsline {section}{\numberline {6.6}Policies and Tactics}{91}{section.6.6}%
-\contentsline {subsection}{\numberline {6.6.1}Policy/tactic-1 name or description}{92}{subsection.6.6.1}%
-\contentsline {subsection}{\numberline {6.6.2}Policy/tactic-2 name or description}{92}{subsection.6.6.2}%
-\contentsline {chapter}{\numberline {7}Implementation and Test Cases}{93}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Implementation}{93}{section.7.1}%
-\contentsline {subsection}{\numberline {7.1.1}Implementation of First Component/Algorithm}{93}{subsection.7.1.1}%
-\contentsline {section}{\numberline {7.2}Test case Design and description}{93}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Test Metrics}{94}{section.7.3}%
-\contentsline {subsection}{\numberline {7.3.1}Sample Test case Metric.No.2}{94}{subsection.7.3.1}%
-\contentsline {chapter}{\numberline {8}User Manual}{95}{chapter.8}%
-\contentsline {chapter}{\numberline {9}Experimental Results and Discussion}{96}{chapter.9}%
-\contentsline {chapter}{\numberline {10}Conclusions}{97}{chapter.10}%
-\contentsline {section}{\numberline {10.1}aa}{97}{section.10.1}%
-\contentsline {subsection}{\numberline {10.1.1}dfs}{97}{subsection.10.1.1}%
-\contentsline {subsubsection}{\numberline {10.1.1.1}dsd}{97}{subsubsection.10.1.1.1}%
-\contentsline {chapter}{\numberline {A}First Appendix if Required}{105}{appendix.A}%
-\contentsline {section}{\numberline {A.1}References}{105}{appendix.A.1}%
-\contentsline {section}{\numberline {A.2}Equations}{105}{appendix.A.2}%
-\contentsline {section}{\numberline {A.3}Figures}{105}{appendix.A.3}%
-\contentsline {section}{\numberline {A.4}Tables}{106}{appendix.A.4}%
-\contentsline {section}{\numberline {A.5}Pseudo Code}{106}{appendix.A.5}%
-\contentsline {section}{\numberline {A.6}Code of Programming Languages}{106}{appendix.A.6}%
-\contentsline {section}{\numberline {A.7}Recommendations for \LaTeX }{107}{appendix.A.7}%
+\contentsline {subsection}{\numberline {6.1.1}Data Preparation Pipeline}{87}{subsection.6.1.1}%
+\contentsline {subsection}{\numberline {6.1.2}Further Pre-training Framework}{87}{subsection.6.1.2}%
+\contentsline {subsection}{\numberline {6.1.3}Evaluation and Analysis}{88}{subsection.6.1.3}%
+\contentsline {subsection}{\numberline {6.1.4}Demonstration Dashboard}{88}{subsection.6.1.4}%
+\contentsline {section}{\numberline {6.2}Design Considerations}{88}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Assumptions and Dependencies}{88}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}General Constraints}{89}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {6.2.3}Goals and Guidelines}{89}{subsection.6.2.3}%
+\contentsline {subsection}{\numberline {6.2.4}Development Methods}{90}{subsection.6.2.4}%
+\contentsline {section}{\numberline {6.3}System Architecture}{90}{section.6.3}%
+\contentsline {subsection}{\numberline {6.3.1}Subsystem Architecture}{91}{subsection.6.3.1}%
+\contentsline {subsection}{\numberline {6.3.2}Sequence Diagrams}{93}{subsection.6.3.2}%
+\contentsline {section}{\numberline {6.4}Architectural Strategies}{93}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Extending the M2D Code Base}{93}{subsection.6.4.1}%
+\contentsline {subsection}{\numberline {6.4.2}Offline Precomputation of Inputs and Targets}{94}{subsection.6.4.2}%
+\contentsline {subsection}{\numberline {6.4.3}Experiments as Command Lines and Run Folders}{95}{subsection.6.4.3}%
+\contentsline {subsection}{\numberline {6.4.4}One Evaluation Interface for All Models}{95}{subsection.6.4.4}%
+\contentsline {subsection}{\numberline {6.4.5}Files as Interfaces and Single-Worker Serving}{95}{subsection.6.4.5}%
+\contentsline {section}{\numberline {6.5}Domain Model/Class Diagram}{96}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Policies and Tactics}{96}{section.6.6}%
+\contentsline {subsection}{\numberline {6.6.1}Choice of Tools}{96}{subsection.6.6.1}%
+\contentsline {subsection}{\numberline {6.6.2}Coding Guidelines and Conventions}{96}{subsection.6.6.2}%
+\contentsline {subsection}{\numberline {6.6.3}Testing}{97}{subsection.6.6.3}%
+\contentsline {subsection}{\numberline {6.6.4}Requirements Traceability}{98}{subsection.6.6.4}%
+\contentsline {subsection}{\numberline {6.6.5}Source Organization and Build}{98}{subsection.6.6.5}%
+\contentsline {subsection}{\numberline {6.6.6}Maintenance}{98}{subsection.6.6.6}%
+\contentsline {section}{\numberline {6.7}Conclusion}{99}{section.6.7}%
+\contentsline {chapter}{\numberline {7}Implementation and Test Cases}{100}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Implementation}{100}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}Implementation of First Component/Algorithm}{100}{subsection.7.1.1}%
+\contentsline {section}{\numberline {7.2}Test case Design and description}{100}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Test Metrics}{101}{section.7.3}%
+\contentsline {subsection}{\numberline {7.3.1}Sample Test case Metric.No.2}{101}{subsection.7.3.1}%
+\contentsline {chapter}{\numberline {8}User Manual}{102}{chapter.8}%
+\contentsline {chapter}{\numberline {9}Experimental Results and Discussion}{103}{chapter.9}%
+\contentsline {chapter}{\numberline {10}Conclusions}{104}{chapter.10}%
+\contentsline {section}{\numberline {10.1}aa}{104}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}dfs}{104}{subsection.10.1.1}%
+\contentsline {subsubsection}{\numberline {10.1.1.1}dsd}{104}{subsubsection.10.1.1.1}%
+\contentsline {chapter}{\numberline {A}First Appendix if Required}{112}{appendix.A}%
+\contentsline {section}{\numberline {A.1}References}{112}{appendix.A.1}%
+\contentsline {section}{\numberline {A.2}Equations}{112}{appendix.A.2}%
+\contentsline {section}{\numberline {A.3}Figures}{112}{appendix.A.3}%
+\contentsline {section}{\numberline {A.4}Tables}{113}{appendix.A.4}%
+\contentsline {section}{\numberline {A.5}Pseudo Code}{113}{appendix.A.5}%
+\contentsline {section}{\numberline {A.6}Code of Programming Languages}{113}{appendix.A.6}%
+\contentsline {section}{\numberline {A.7}Recommendations for \LaTeX }{114}{appendix.A.7}%

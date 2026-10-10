@@ -16,9 +16,14 @@
 \contentsline {figure}{\numberline {5.2}{\ignorespaces Data acquisition and preprocessing pipeline}}{73}{figure.caption.21}%
 \contentsline {figure}{\numberline {5.3}{\ignorespaces Architecture of the further pre-training framework}}{76}{figure.caption.23}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Layered system architecture}}{91}{figure.caption.29}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces Modules of the further pre-training subsystem}}{92}{figure.caption.30}%
+\contentsline {figure}{\numberline {6.3}{\ignorespaces Sequence diagram of one further pre-training step}}{93}{figure.caption.31}%
+\contentsline {figure}{\numberline {6.4}{\ignorespaces Sequence diagram of a dashboard prediction request}}{94}{figure.caption.32}%
+\contentsline {figure}{\numberline {6.5}{\ignorespaces Class diagram}}{97}{figure.caption.33}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {A.1}{\ignorespaces {\textbf {Fast Logo is the Caption.}}}}{105}{figure.caption.32}%
+\contentsline {figure}{\numberline {A.1}{\ignorespaces {\textbf {Fast Logo is the Caption.}}}}{112}{figure.caption.37}%

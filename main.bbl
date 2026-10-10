@@ -368,6 +368,28 @@ I.~Loshchilov and F.~Hutter, ``Decoupled weight decay regularization,'' in {\em
 B.~Efron and R.~J. Tibshirani, {\em An Introduction to the Bootstrap}.
 \newblock Chapman and Hall/CRC, 1993.
 
+\bibitem{ref:Paszke:2019pytorch}
+A.~Paszke, S.~Gross, F.~Massa, A.~Lerer, J.~Bradbury, G.~Chanan, T.~Killeen,
+  Z.~Lin, N.~Gimelshein, L.~Antiga, A.~Desmaison, A.~K{\"o}pf, E.~Yang,
+  Z.~DeVito, M.~Raison, A.~Tejani, S.~Chilamkurthy, B.~Steiner, L.~Fang,
+  J.~Bai, and S.~Chintala, ``{PyTorch}: An imperative style, high-performance
+  deep learning library,'' in {\em Advances in Neural Information Processing
+  Systems (NeurIPS)}, vol.~32, pp.~8024--8035, 2019.
+
+\bibitem{ref:Wolf:2020transformers}
+T.~Wolf, L.~Debut, V.~Sanh, J.~Chaumond, C.~Delangue, A.~Moi, P.~Cistac,
+  T.~Rault, R.~Louf, M.~Funtowicz, J.~Davison, S.~Shleifer, P.~von Platen,
+  C.~Ma, Y.~Jernite, J.~Plu, C.~Xu, T.~L. Scao, S.~Gugger, M.~Drame, Q.~Lhoest,
+  and A.~M. Rush, ``Transformers: State-of-the-art natural language
+  processing,'' in {\em Proc. Conference on Empirical Methods in Natural
+  Language Processing (EMNLP): System Demonstrations}, pp.~38--45, 2020.
+
+\bibitem{ref:Ott:2019fairseq}
+M.~Ott, S.~Edunov, A.~Baevski, A.~Fan, S.~Gross, N.~Ng, D.~Grangier, and
+  M.~Auli, ``fairseq: A fast, extensible toolkit for sequence modeling,'' in
+  {\em Proc. Conference of the North American Chapter of the Association for
+  Computational Linguistics (NAACL-HLT): Demonstrations}, pp.~48--53, 2019.
+
 \bibitem{ref:Duda:2000}
 R.~O. Duda, P.~E. Hart, and D.~G. Stork, {\em Pattern Classification}.
 \newblock John Wiley and Sons, 2000.
