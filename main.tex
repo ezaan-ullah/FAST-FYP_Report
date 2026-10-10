@@ -24,13 +24,12 @@
   m5arrow/.style={-{Stealth[length=2mm]}, thick, draw=black!70}
 }
 \begin{document}
-\newcommand{\supervisor}{SupervisorName}
+\newcommand{\supervisor}{Mr. Hamad Ul Qudous}
 \newcommand{\university}{National University of Computer and Emerging Sciences, Lahore}
-\newcommand{\fyptitle}{FYP Report Title}
-\newcommand{\degree}{BS}
-\newcommand{\Studentone}{Name of Student 1     Roll No. 1    BS(CS/DS/SE)} 
-\newcommand{\Studenttwo}{Name of Student 2     Roll No. 2    BS(CS/DS/SE)}
-\newcommand{\Studentthree}{Name of Student 3     Roll No. 3    BS(CS/DS/SE)}
+\newcommand{\fyptitle}{VOX}
+\newcommand{\degree}{BSCS}
+\newcommand{\Studentone}{Maryam Salman     23L-0920    BS(CS)} 
+\newcommand{\Studenttwo}{Muhammad Ezaan Ullah    23L-0676    BS(CS)}
 \date{\today}
 \renewcommand{\contentsname}{Table of Contents}
 
@@ -42,7 +41,7 @@
             {\large\bfseries \university}\\[7ex]
             \includegraphics[width=0.4\linewidth]{Figures/fastlogo.png}\\[8ex]
             {\huge \bfseries  \fyptitle }\\[10ex] 
-            {\Studentone}\\{\Studenttwo}\\{\Studentthree}\\[4ex] 
+            {\Studentone}\\{\Studenttwo}\\[4ex] 
             {Supervisor: \supervisor} \\ [10ex]
             {Final Year Project}\\
             {\large \@date}
@@ -110,67 +109,139 @@ The executive summary should be one to two pages’ of an overview of the inform
 
 
 \chapter{Introduction}
-This chapter is mandatory. The introduction should contain a brief overview of the problem being addressed and the background information needed for the reader to understand the work being done and the reasoning behind it.  
-The last paragraph of the introduction chapter should contain an outline of the entire report.  Summarize each chapter in one line to make the last paragraph.
+Self-supervised learning lets an audio model learn from unlabeled recordings, and masked latent prediction has become one of its strongest forms. Models such as Masked Modeling Duo (M2D) learn general-purpose audio representations from AudioSet that transfer to environmental sound, speech and music tasks with a frozen encoder. Music-specific foundation models such as MERT and MusicFM reach strong results on music tasks, but they are trained from scratch on 900 to 160,000 hours of music, often private, with multi-GPU budgets. This project asks whether a much cheaper route is possible: take an existing general-audio model and further pre-train it on a small open music subset using one GPU. This chapter states the purpose of the report, its audience, the terms used, and the structure of the remaining chapters.
+
 \section{Purpose of this Document}
-\textbf{Specify the purpose of this Project.}
-The purpose of the document in an FYP report is to clearly and concisely state the main objective and goals of the project, as well as the research question(s) or hypothesis(es) being investigated. It should provide a brief overview of the background and context of the project, and explain why the research is important and relevant. The purpose of the document should be written in a way that is easy for the reader to understand, and should be included at the beginning of the report.\\ In addition to providing an overview of the project, the purpose of the document should also outline the specific objectives and goals of the research, such as what the project aims to achieve and what the research questions or hypotheses are. This will help the reader understand the scope of the project and what to expect from the report. It is also important to include a brief description of the methods and techniques used in the research, as well as any limitations or assumptions of the project. This will provide the reader with a clear understanding of how the research was conducted and what the results and conclusions are based on. Finally, it should be clear what the report is going to cover, what kind of information will be presented, and in what order.\\
-For Example, "The purpose of this document is to present the design, implementation, and evaluation of our Final Year Project (FYP) which aims to develop a web-based application for small businesses to manage their inventory and customer orders. The project will focus on creating a user-friendly interface and providing a seamless user experience. The goal of this research is to provide a Minimum Viable Product (MVP) that can be used by small businesses to improve their inventory management and customer order processing. The research question we aim to answer is: Can we develop a web-based application that can improve inventory management and customer order processing for small businesses? This report will present the methodology, design, implementation, testing, and evaluation of our project, as well as the limitations and future work."
+% \textbf{Specify the purpose of this Project.}
+The purpose of this document is to present the motivation, requirements, methodology, design, implementation and evaluation of our Final Year Project (FYP), which investigates further pre-training of the AudioSet-pretrained M2D model on music. The project develops M2D-X-Music, a framework that combines the denoising and frozen-teacher regularization recipe of M2D-X with a MERT-style constant-Q transform (CQT) musical teacher. The framework is trained on a subset of 10,000 tracks (about 83 hours) of the Free Music Archive (FMA) on a single 16 GB GPU.
+
+The central research question is: \textit{Can a small, open, single-GPU further pre-training step make a general-purpose audio model competitive with music-specific foundation models on music tasks, without losing its general-audio ability?} The study answers it through five sub-questions:
+
+• \textbf{RQ1:} Does further pre-training on about 83 hours of FMA music improve frozen-feature performance on music tasks?
+
+• \textbf{RQ2:} Which components of M2D-X (background noise, frozen-teacher regularizer) are needed on music data?
+
+• \textbf{RQ3:} Does a CQT musical teacher add value beyond M2D-X, especially on pitch-related tasks?
+
+• \textbf{RQ4:} How much of the gap to music-specific models is closed, and is general-audio ability retained?
+
+• \textbf{RQ5:} How does the benefit depend on the number of FMA tracks?
+
+The methods are a seeded data pipeline, a set of compute-matched pre-training arms that differ in one factor at a time, and a frozen-feature linear-probe evaluation on music and environmental-sound tasks. The main limitations are the small test sets, the uncontrolled differences between reference models, and the single-GPU budget; the main assumption is that the public AudioSet checkpoint and FMA audio are available and licensed for research use. The report covers these items in the order given in Section 1.4.
+
+
 \section{Intended Audience}
-Identifying and writing the intended audience for a Final Year Project (FYP) report is an important step in the writing process. The intended audience is the group of people for whom the report is written and who will primarily read and use the report. It is crucial to identify the intended audience early in the writing process as this will guide the report's style, tone, and level of detail.\\
-To identify the intended audience, consider the report's purpose, who will be using the report and for what purpose. For example, the intended audience for a FYP report in Computer Science may be a panel of professors who will be evaluating the project. In contrast, the intended audience for a FYP report in Business may be potential investors or clients.
+The primary audience is the FYP evaluation panel of the Computer Science department: supervisors and faculty who judge the project for technical soundness, reproducibility and clarity. The second audience is students and researchers in machine learning and music information retrieval who want to reproduce the experiments or extend them, for example with other teachers, other base models or larger subsets. Readers are assumed to know deep learning basics (transformers, self-supervised learning, linear probing) but not the details of M2D, MERT or FMA, which the report introduces where needed. The style is therefore technical and formal, with equations and algorithms given in full so that the pipeline can be rebuilt from the text alone. 
+
 \section{Definitions, Acronyms, and Abbreviations}
-List all important definitions, acronyms, and abbreviations used in this document. For example: 
-\textbf{SDG}: Sustainable Development Goal\\
-\textbf{FYP:} Final Year Project\\
-\textbf{MVP}: Minimum Viable Product\\
-\textbf{UI}: User Interface\\
-\textbf{UX}: User Experience\\
-\textbf{Agile}: Agile Development\\
-\textbf{SCRUM}: Scrum Development\\
-\textbf{REST}: Representational State Transfer\\
-\textbf{ORM}: Object-Relational Mapping\\
-\textbf{CRUD}: Create, Read, Update, Delete\\
-\textbf{API}: Application Programming Interface
+\textbf{FYP}:	Final Year Project\\
+\textbf{SDG}:	Sustainable Development Goal\\
+\textbf{SSL}: Self-Supervised Learning\\
+\textbf{M2D}:	Masked Modeling Duo, a masked latent prediction audio model\\
+\textbf{M2D-X}:	Extension of M2D for specialized applications (background noise plus offline teacher)\\
+\textbf{M2D-X-Music}:	The further pre-training framework proposed in this report\\
+\textbf{MERT	Music}: Understanding model with large-scale self-supervised Training\\
+\textbf{MATPAC}:	Masked latent prediction And Classification\\
+\textbf{FMA}:	Free Music Archive\\
+\textbf{FSD50K}:	Freesound Dataset 50K, used as the background-noise corpus\\
+\textbf{GTZAN}:	A 1,000-clip, 10-genre music dataset\\
+\textbf{NSynth}:	A dataset of 305,979 single musical notes\\
+\textbf{ESC-50}: Environmental Sound Classification dataset with 50 classes\\
+\textbf{CQT}:	Constant-Q Transform, a log-frequency spectrogram suited to pitch\\
+\textbf{STFT}:	Short-Time Fourier Transform\\
+\textbf{ViT}: 	Vision Transformer\\
+\textbf{EMA}:	Exponential Moving Average\\
+\textbf{EVAR}:	Evaluation of Audio Representations, the M2D authors' toolkit\\
+\textbf{MARBLE}:	Music Audio Representation Benchmark for Universal Evaluation\\
+\textbf{HEAR}:	Holistic Evaluation of Audio Representations\\
+\textbf{MAP}:	Mean Average Precision\\
+\textbf{GCR}:	Gap-Closure Ratio\\
+\textbf{GPU}:	Graphics Processing Unit\\
+\textbf{RQ}:	Research Question\\
+\textbf{Linear probe}:	A single linear classifier trained on frozen encoder features\\
+\textbf{Retention}	Preservation of general-audio ability after further pre-training
+
 \section{Conclusion}
-The last paragraph of the introduction chapter should contain an outline of the entire report. Summarize each chapter in one line to make the last paragraph.
+This report is organized as follows. Chapter 1 gives the problem background, purpose, audience and terminology; Chapter 2 defines the vision, problem, goals, scope, SDG alignment, constraints and stakeholders; Chapter 3 reviews related research, public datasets and tools and identifies the gap this project fills; Chapter 4 specifies the requirements of the experimental system, including features, use cases, resources and risks; Chapter 5 describes the proposed approach, from data acquisition and preprocessing to the M2D-X-Music objective, the experimental arms and the evaluation protocol; Chapter 6 presents the high-level and low-level design of the system; Chapter 7 reports the implementation, experiments and results; and Chapter 8 concludes with findings, limitations and future work.
 \chapter{Project Vision}
-For each related work provide a paragraph of introduction and at the end, a paragraph of conclusions. Give a page break after the chapter ends.  This chapter is mandatory.  
-Clearly specify the goals and objectives of the project along with the scope of the project. (You can make sub-heading of goals and objectives and the scope of the project).
+This chapter sets out what the project is, why it is needed and how far it goes. It describes the problem domain, states and elaborates the problem, lists the goals, objectives and scope, links the work to a Sustainable Development Goal, and describes constraints, the opportunity and the stakeholders.
 \section{Problem Domain Overview}
-Describe in full detail what your system does. This section can be further divided into sub-sections, but basically, a paragraph description of the system is required.
+The project belongs to music information retrieval and audio representation learning. An audio encoder converts a recording into a feature vector that downstream tasks, such as genre classification, instrument recognition or tagging, can use with a very simple classifier. The system built in this project is an experimental pipeline, not an end-user application. It acquires a 10,000-track subset of the Free Music Archive, audits it and converts it into log-mel spectrograms and CQT targets. It then further pre-trains the publicly available M2D model, which was trained on AudioSet, with the M2D-X-Music objective: music mixed with background noise from FSD50K as input, a frozen copy of the original model as a regularizing teacher on clean input, and a CQT regression head as a musical teacher. Finally, it evaluates the resulting checkpoints and public music-specific reference models (MERT, MATPAC++, MusicFM) with frozen features and linear probes on genre, instrument, pitch, tagging and environmental-sound tasks. All of this runs on one 16 GB GPU.
 \section{Problem Statement}
-Provide the \textbf{problem} which you are trying to solve. 
+Music-specific foundation models achieve strong results but need very large, often private music corpora and multi-GPU training, which puts them out of reach for most students and small labs. General-audio models are public and already strong on music, yet it is unknown whether a small, cheap, music-specific further pre-training step can improve them on music tasks without making them forget general-audio ability. 
 \section{Problem Elaboration}
-Describe the problem in detail and the various sub-problems you would work on.
+The problem splits into five sub-problems, which correspond to the research questions.
+
+• \textbf{Data under a small budget.} A legal, full-quality, artist-filtered music corpus must be selected and converted, with a limit of five tracks per artist, quality audits and nested subsets, so that every experiment draws on identical data. Audio must reach the model through exactly the same front-end as in the original pre-training, or distribution shift would be confused with the effect under study.
+
+• \textbf{Overfitting and forgetting.} Further pre-training on about 83 hours (about 1.5 \% of AudioSet) risks overfitting, and earlier work shows that naive continuation can degrade a model. The project must test which of noise and the frozen-teacher regularizer are needed on music (RQ1, RQ2).
+
+• \textbf{Music-specific targets.} MERT showed that a CQT teacher improves pitch-related tasks such as key detection. It is unknown whether the same teacher helps inside the M2D framework on a small dataset (RQ3).
+
+• \textbf{Fair measurement.} Reference models differ in size, data, sampling rate and context length, and some test sets are small (GTZAN has 290 test clips). The evaluation must use one frozen-feature protocol, report uncertainty and measure retention next to the music gain (RQ4).
+
+• \textbf{Data scaling.} The project must show how much of the benefit depends on the number of tracks, from 1,000 to 10,000 (RQ5).
+
+No reviewed work combines noise, a frozen-teacher regularizer and a CQT teacher on a small open subset with one GPU, or measures retention under the same protocol; this is the gap addressed here.
+
 \section{Goals and Objectives}
-Write goals and objectives here.
+\textbf{Goal.} To show whether, and to what extent, a single-GPU further pre-training step on a small open music subset can bring a general-purpose masked-latent-prediction audio model close to music-specific foundation models while preserving its general-audio ability.
+\textbf{Objectives.}
+
+1. Build a reproducible, resumable pipeline that selects, audits and converts 10,000 FMA tracks (nested subsets of 1,000, 2,500, 5,000 and 10,000) and a noise corpus into M2D-compatible log-mel arrays and CQT targets.
+
+2. Implement the M2D-X-Music objective on top of the official M2D code, adding the CQT teacher, which the repository does not support.
+
+3. Train compute-matched arms A1 to A5 (naive continuation, noise, frozen-teacher regularizer, CQT teacher, teacher without regularizer) and data-size runs S1 to S3, each with 6.0 million sample views.
+
+4. Evaluate all checkpoints and references on GTZAN, FMA-small, NSynth (instrument and pitch), MagnaTagATune, ESC-50 and UrbanSound8K with a six-seed linear probe, bootstrap intervals and a pre-declared rule for calling a difference supported.
+
+5. Report the music gain, the forgetting score and the gap-closure ratio to MERT, MATPAC++ and MusicFM, and state the limits of every comparison.
+
+6. Release the track list, seeds and configuration files so that others can repeat the study.
+
 \section{Project Scope}
-Specify the scope of your project here.\\
-For example, The scope of this project is to design and develop a web-based application for small businesses to manage their inventory and customer orders. The application will allow small businesses to:
+The scope of this project is to design, implement, and evaluate a further pre-training study of M2D on music. The project will focus on adapting the AudioSet M2D checkpoint to music data and evaluating the resulting models using frozen-feature linear probes. The project will involve the following activities:
+
 \begin{itemize}
-    \item Create, read, update, and delete inventory items
-   \item Create, read, update, and delete customer orders
-   \item Generate reports on inventory levels and customer orders
-   \item Send notifications to customers about their orders
-   \item Provide an easy-to-use user interface and a seamless user experience
+    \item Download the FMA metadata and medium audio archive, along with the FSD50K development set, verify their checksums, and select 10,000 tracks from the training split using a seeded, artist-capped procedure.
+    \item Convert the audio files into log-mel spectrograms and Constant-Q Transform (CQT) targets, and perform integrity checks to ensure data quality and consistency.
+    \item Further pre-train the AudioSet M2D checkpoint using the specified training configurations on a single NVIDIA RTX A4000 GPU with 16 GB of memory.
+    \item Evaluate the resulting checkpoints and publicly available reference models using frozen-feature linear probes.
+    \item Analyze the experimental results in relation to research questions RQ1 to RQ5, including the discussion of negative or inconclusive outcomes.
 \end{itemize}
-The project will be developed using a combination of HTML, CSS, JavaScript, and a web-development framework such as React.js or Angular.js. The application will use a RESTful API to communicate with a back-end database, which will be implemented using a ORM library. The project will be developed using Agile development principles, and project management will be done using SCRUM.\\
+
+The project will be developed in Python using PyTorch, the official M2D and EVAR codebases, and nnAudio. Development and experimentation will be managed through short, iterative milestones. A pilot training run of a few epochs will be conducted to validate the training pipeline and confirm that the experiments fit within the available computational budget before proceeding with the main training runs.\\
+
 The project deliverables will include:
+
 \begin{itemize}
- \item A functional web-based application for small businesses to manage their inventory and customer orders
- \item A user manual for the application
- \item A documentation of the design, implementation, and testing process
- \end{itemize}
+    \item The data-processing pipeline code, selected track list, random seeds, dataset manifest, and configuration files.
+    \item The M2D-X-Music training code and the resulting further pre-trained model checkpoints.
+    \item The evaluation code, including additional FMA-small and MagnaTagATune task definitions.
+    \item This project report, documenting the methodology, experimental results, analysis, and limitations.
+\end{itemize}
+
 The project scope does not include the following:
+
 \begin{itemize}
- \item  Providing hosting or server infrastructure for the application
- \item Developing mobile applications (iOS or Android)
- \item  Integrating the application with third-party services or APIs
- \end{itemize}
-This project scope will be used as a guide throughout the development
+    \item Pre-training any model from scratch or developing and training an acoustic tokenizer.
+    \item Fine-tuning any model or reference checkpoint, as all evaluations will use frozen features.
+    \item Implementing adapter-based or low-rank adaptation methods, multiple-hypothesis predictors, or classification heads, which will be left for future work.
+    \item Redistributing FMA audio files or derived spectrograms, or developing a user-facing application.
+    \item Investigating tasks beyond the seven specified evaluation tasks, such as key detection, beat tracking, or emotion recognition.
+\end{itemize}
+
+Additional experiments, including a lower noise ratio, FMA normalization statistics, a 20,000-track training run, a second random seed, and MERT distillation, will only be conducted if time and computational resources permit.\\
+
+This project scope will serve as a guide throughout the implementation and evaluation process, ensuring that the work remains focused on the planned research questions, available computational resources, and defined deliverables.
+
+
 \section{Sustainable Development Goal (SDG)}
-Identify at least one SDG area that you are targeting in this project. This has to be documented as a paragraph. The complete SDG list is shown in Figure \ref{fig:my_label}.
+The project targets \textbf{SDG 9: Industry, Innovation and Infrastructure}, and in particular its aim of strengthening scientific research and innovation. By showing that a strong music representation model can be obtained from public data and one consumer-grade GPU, the project lowers the compute and data barrier to audio research and supports researchers outside large, well-funded labs. It also supports \textbf{SDG 4: Quality Education}, because the open code, track list and configuration files give students a reproducible example of modern self-supervised audio learning. The complete SDG list is shown in Figure 2.1.
+
+\textit{Figure 2.1: The 17 United Nations Sustainable Development Goals, shown as a grid of 17 colored square tiles in rows of six, each with its goal number, a short title and a simple icon, from No Poverty (1) and Zero Hunger (2) to Partnerships for the Goals (17). The tiles for SDG 9 (Industry, Innovation and Infrastructure) and SDG 4 (Quality Education), the goals targeted by this project, are the ones this project addresses. (Insert the official SDG image here.)}
+
 \begin{figure} [!h]
     \centering
 \includegraphics[width=0.8\textwidth]{Figures/Picture1}
@@ -178,13 +249,73 @@ Identify at least one SDG area that you are targeting in this project. This has 
     \label{fig:1}
 \end{figure}
 \section{Constraints}
+•	Hardware. One RTX A4000 with 16 GB of memory; the micro-batch may have to be halved with doubled gradient accumulation, and the number of epochs reduced for all arms alike if throughput is low.
+•	Time. The FYP calendar limits the study to the arms A1 to A5, S1 to S3 and a few optional runs; the run order is fixed in advance (A3, A1, A4, A2, A5, S1 to S3).
+•	Data. Only 10,000 FMA tracks (about 83 hours) are used, from the training split of the medium subset; FMA genre labels are noisy and experimental music is under-represented.
+•	Licensing. FMA audio is Creative Commons and kept local; the MERT weights are CC-BY-NC and used for non-commercial comparison only.
+•	Technical. The M2D code has no CQT teacher and no FMA-small or MagnaTagATune tasks in EVAR, so both must be implemented; the CQT settings must match the MERT implementation.
+•	Evaluation. Reference models differ in size, data and context length, and some test sets are small, so comparisons with references are indicative, not controlled.
 \section{Business Opportunity}
+Although this is a research project, its result has practical value. Music platforms, startups and independent developers need audio embeddings for tagging, genre and instrument classification, recommendation and search, but cannot afford to pre-train music foundation models from scratch. If a roughly 83-hour, one-GPU step recovers a useful part of the gap, a team can adapt a public general-audio checkpoint to its own catalogue in about a day, using licensed or in-house music. The same recipe can be reused for other narrow domains with scarce data, such as podcasts, regional music traditions or bioacoustics. The released pipeline and track list can also serve as a low-cost baseline for later work.
+
 \section{Stakeholders Description/ User Characteristics}
-Identify and briefly describe who the users of this system will be, and their roles.
+The system is a research pipeline, so its users are the people who run, evaluate and build on it.
 \subsection{Stakeholders Summary}
+\begin{table}
+\centering
+
+\begin{tabular}{| l | l |}
+\hline
+Stakeholder & Role \\
+\hline
+
+Project team (students) & Build the pipeline, run training and evaluation, write the report \\
+\hline
+Supervisor & Guides the research design and checks scientific soundness \\
+\hline
+FYP evaluation panel & Judges rigor, reproducibility and clarity of the work \\
+\hline
+Researchers in audio and music information retrieval & Reuse the code, checkpoints and findings, or compare against them \\
+\hline
+Developers of music applications & May adopt the recipe to adapt general-audio models to their catalogue \\
+\hline
+Dataset and model providers (FMA, FSD50K, M2D, MERT authors) & Supply the data and models; their licenses must be respected \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
 \subsection{Key High-Level Goals and Problems of Stakeholders}
-Notice how a section’s heading is changed to “heading 1”.  It will show up in the table of contents as a section under a chapter.  Notice its numbering also. Similarly, subsections can have heading 2 and heading 3 styles.\\
-\textcolor{red}{NOTE: Subsections from 2.7 to 2.9 are optional for Research projects but compulsory for Development projects.}
+
+\begin{table}
+\centering
+
+\begin{tabular}{| l | l | l |}
+\hline
+Stakeholder & Key goals & Problems addressed or faced \\
+\hline
+
+Project team & Finish a valid, reproducible study within the single-GPU budget & Limited compute, time and data; risk of overfitting and forgetting \\
+\hline
+Supervisor & Clear hypotheses that the data can contradict & Avoiding conclusions that rest on small test sets or one seed \\
+\hline
+FYP evaluation panel & Verifiable method, honest results and stated limits & Uncontrolled references and inconclusive differences must be flagged \\
+\hline
+Researchers & Reproduce the work and extend it with other teachers or models & Need the track list, seeds, configuration files and evaluation protocol \\
+\hline
+Application developers & A cheap way to improve music embeddings & Cannot afford training from scratch; need to know whether general ability is kept \\
+\hline
+Dataset and model providers & Correct use of their licensed material & Non-commercial and redistribution limits \\
+\hline
+
+\end{tabular}
+
+\end{table}
+
+
+\subsection{Conclusion}
+This chapter defined the vision of the project: a single-GPU study of whether further pre-training M2D on 10,000 FMA tracks with noise, a frozen-teacher regularizer and a CQT musical teacher can approach music-specific models without losing general-audio ability. It fixed the goals, objectives, deliverables and exclusions, tied the work to SDG 9 and SDG 4, listed the constraints and described who benefits. The next chapter reviews the related research, datasets and tools on which these choices rest.
 
 \chapter{Literature Review / Related Work}
 \label{ch:lr}
