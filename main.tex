@@ -4,6 +4,7 @@
 \usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{needspace}
+\usepackage{placeins}
 \usepackage{rotating}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.17}
@@ -26,7 +27,18 @@
   m5ref/.style={m5box, fill=gray!15},
   m5arrow/.style={-{Stealth[length=2mm]}, thick, draw=black!70}
 }
+% IEEEtran.bst control (forces "et al." for more than six authors)
+\makeatletter
+\def\bstctlcite{\@ifnextchar[{\@bstctlcite}{\@bstctlcite[@auxout]}}
+\def\@bstctlcite[#1]#2{\@bsphack
+  \@for\@citeb:=#2\do{%
+    \edef\@citeb{\expandafter\@firstofone\@citeb}%
+    \if@filesw\immediate\write\csname #1\endcsname{\string\citation{\@citeb}}\fi}%
+  \@esphack}
+\makeatother
+\renewcommand{\bibname}{References}
 \begin{document}
+\bstctlcite{IEEEexample:BSTcontrol}
 \newcommand{\supervisor}{Mr. Hamad Ul Qudous}
 \newcommand{\university}{National University of Computer and Emerging Sciences, Lahore}
 \newcommand{\fyptitle}{VOX}
@@ -65,7 +77,7 @@ This is to declare that the above publication was produced under the:
 \bf Title: \fyptitle
 \end{flushleft}
 
-is the sole contribution of the author(s), and no part hereof has been reproduced as it is the basis (cut and paste) that can be considered Plagiarism. All referenced parts have been used to argue the idea and cited properly. I/We will be responsible and liable for any consequence if a violation of this declaration is determined.
+is the sole contribution of the author(s), and no part hereof has been reproduced as it is the basis (cut and paste) that can be considered Plagiarism. All referenced parts have been used to argue the idea and cited properly. We will be responsible and liable for any consequence if a violation of this declaration is determined.
 \\[4ex]
 %% FYPTODO add the date and your names here
 Date: October 10, 2026
@@ -90,19 +102,19 @@ Signature: \raisebox{-0.4\height}{\includegraphics[height=1.6cm]{Figures/Ezaan-s
 This states Authors’ declaration that the work presented in the report is their own, and has not been submitted/presented previously to any other institution or organization.
 \pagebreak
 \section*{Abstract}
-General-purpose audio models learn from large collections of general audio, yet little is known about what happens when they are adapted to a specific domain with a small amount of data. This project studies that effect for music. A pre-trained general audio model is further pretrained on a small set of openly licensed music tracks using a single GPU, and several training configurations are added to observe the effect. The further pretrained model is then tested on music tasks, to measure the effect of further pretraining on music. Public music-specific models serve only as reference points, not as competitors. The aim is to understand how small-scale domain adaptation changes a general audio model, and the findings will be reported once the experiments are complete.
+General-purpose audio models learn from large collections of general audio, yet little is known about what happens when they are adapted to a specific domain with a small amount of data. This project studies that effect for music. A pre-trained general audio model is further pre-trained on a small set of openly licensed music tracks using a single GPU, and several training configurations are added to observe the effect. The further pre-trained model is then tested on music tasks, to measure the effect of further pre-training on music. Public music-specific models serve only as reference points, not as competitors. The aim is to understand how small-scale domain adaptation changes a general audio model. In FYP-I, the evaluation pipeline has been validated by reproducing the published scores of the original model; the results of further pre-training will be reported in FYP-II.
 \pagebreak
 
 \section*{Executive Summary}
-General-purpose audio models, trained on large collections of general audio, already perform well on music tasks, while music-specific foundation models are trained from scratch on hundreds to hundreds of thousands of hours of music, often private, with multi-GPU budgets. Much less is known about what happens when a general model is adapted to music with only a small, open dataset and modest hardware. This project studies that effect. It does not try to outperform music-specific models; these appear only as reference points that put the size of any change in context. The central question is whether, and how, a small, single-GPU further pre-training step changes a general-audio model on music tasks. Three questions follow from it: whether further pre-training on a small music subset improves performance on music tasks, how the result compares with music-specific models, and how the effect depends on the amount of data.
+General-purpose audio models learn from large collections of everyday audio. They already do well on music tasks. Music-specific foundation models take a different route. They are trained from scratch on hundreds to hundreds of thousands of hours of music. This music is often private, and the training needs many GPUs. Little is known about adapting a general model to music with only a small open dataset and modest hardware. This project studies that case. It does not aim to beat music-specific models. These models serve only as reference points that show how large any change is. The main question asks whether and how a small further pre-training step on one GPU changes a general-audio model on music tasks. Four questions follow from it. The first asks whether further pre-training on a small music subset improves results on music tasks, and how much of the gap to music-specific models it closes. The second asks which components of the M2D-X recipe, background noise and a frozen-teacher regularizer, are needed on music. The third asks whether a musical teacher adds value, especially on pitch. The fourth asks how the effect depends on the amount of data.
 
-The project builds on the Masked Modeling Duo (M2D) model, pre-trained on AudioSet. A seeded, artist-capped pipeline selects 10,000 tracks (about 83 hours) from the training split of the Free Music Archive (FMA), with smaller nested subsets of 1,000, 2,500 and 5,000 tracks for studying the effect of data size. Each track is audited and converted with the same front-end that was used to pre-train M2D, so that any change in behavior comes from the training and not from a mismatch in the input. The proposed framework, called M2D-X-Music, further pre-trains M2D on music mixed with background noise from FSD50K. A frozen copy of the original model acts as a regularizing teacher on the clean input to limit overfitting to the small dataset, and a constant-Q transform (CQT) teacher, borrowed from MERT, encourages the model to capture pitch information. All training runs on a single 16~GB GPU.
+The project starts from the Masked Modeling Duo (M2D) model, which was pre-trained on AudioSet. A seeded pipeline with a limit on tracks per artist selects 10,000 tracks (about 83 hours) from the training split of the Free Music Archive (FMA). Smaller nested subsets of 1,000, 2,500 and 5,000 tracks are also built to study the effect of data size. Every track is checked and converted with the same front-end that was used to pre-train M2D. In this way, any change in behavior comes from the training and not from a mismatch in the input. The proposed framework is called M2D-X-Music. It further pre-trains M2D on music mixed with background noise from FSD50K. A frozen copy of the original model sees the clean input and acts as a teacher. This teacher limits overfitting to the small dataset. A second teacher, based on the constant-Q transform (CQT) and borrowed from MERT, helps the model capture pitch information. All training runs on one 16~GB GPU.
 
-The study is carried out as a single experiment. The full M2D-X-Music objective is trained on each of the nested subsets with the same training budget, so that the effect of the amount of music can be seen. The further pre-trained checkpoints, the original M2D and the reference models are evaluated with frozen features and a simple linear classifier, using the evaluation toolkit of the M2D authors. The tasks cover genre, instrument, pitch and tagging. The results are summarized as a music score and a gap-closure ratio to the reference models. The linear classifiers are trained with several random seeds, differences are reported with bootstrap confidence intervals, and negative or inconclusive outcomes will be reported openly.
+The study consists of a set of compute-matched further pre-training runs. Five arms on the 10,000 tracks switch the components on one at a time: naive continuation, background noise, the frozen-teacher regularizer, the CQT teacher, and the CQT teacher without the regularizer. The best arm is then repeated on the 1,000, 2,500 and 5,000-track subsets with the same training budget, which shows how the amount of music affects the result. The further pre-trained checkpoints, the original M2D and the reference models are then evaluated. Each model is kept frozen, and a simple linear classifier is trained on its features with the evaluation toolkit of the M2D authors. The tasks cover genre, instrument, pitch and tagging. The results are summarized as a music score and as a gap-closure ratio to the reference models. The linear classifiers are trained with several random seeds. Differences are reported with bootstrap confidence intervals. Negative or unclear outcomes will also be reported openly. In FYP-I, the data have been prepared and the evaluation pipeline has reproduced every published score of the original M2D, giving a baseline music score of 72.43; the further pre-training runs follow in FYP-II.
 
-A small web dashboard accompanies the study. It presents the results and lets a visitor run four music tasks on an uploaded or sample clip, comparing the original and the further pre-trained M2D side by side. It reuses the evaluation code and probes of the study, so it shows only what was actually evaluated. The project has clear limits: no model is trained from scratch or fine-tuned, frame-level tasks such as key detection and beat tracking are excluded, some test sets are small, and the reference models differ in size, data and context length, so comparisons with them are indicative rather than controlled.
+A small web dashboard supports the study. It presents the results. A visitor can also run four music tasks on an uploaded or sample clip and compare the original and the further pre-trained M2D side by side. The dashboard reuses the evaluation code and probes of the study. It therefore shows only what was actually evaluated. The project also has clear limits. No model is trained from scratch or fine-tuned. Frame-level tasks such as key detection and beat tracking are left out. Some test sets are small. The reference models also differ in size, data and context length. For this reason, comparisons with them are indicative rather than controlled.
 
-No reviewed work applies this recipe to music on a small open subset with a single GPU. The study therefore offers a controlled analysis of what small-scale domain adaptation does to a general-audio model. The track list, seeds and configuration files will be released so that others can repeat and extend the work, which supports SDG~9 (Industry, Innovation and Infrastructure) and SDG~4 (Quality Education) by lowering the compute and data barrier to audio research.
+No reviewed work applies this recipe to music with a small open subset and one GPU. This study therefore gives a controlled analysis of what small-scale domain adaptation does to a general-audio model. The track list, seeds and configuration files will be released so that others can repeat and extend the work. This lowers the compute and data barrier to audio research. In this way, the project supports SDG~9 (Industry, Innovation and Infrastructure) and SDG~4 (Quality Education).
 \pagebreak
 
 
@@ -121,39 +133,39 @@ No reviewed work applies this recipe to music on a small open subset with a sing
 
 \chapter{Introduction}
 \label{ch:intro}
-Self-supervised learning (SSL) lets a model learn useful representations from unlabeled data by solving a task built from the data itself, for example predicting masked parts of the input~\cite{ref:He:2022mae,ref:Baevski:2022data2vec}, which removes the need for costly manual annotation. In audio, SSL has produced foundation models such as Masked Modeling Duo (M2D)~\cite{ref:Niizumi:2023m2d,ref:Niizumi:2024m2dx}, which is pre-trained once on a large general-audio dataset, AudioSet~\cite{ref:Gemmeke:2017audioset}, and then reused for many downstream tasks in environmental sound, speech and music, often with the encoder kept frozen and only a small classifier trained on top~\cite{ref:Turian:2022hear}. Reusing one pre-trained encoder is cheaper and more practical than training a separate model for each task, which is usually held back by scarce labeled data and high training costs.
+Self-supervised learning (SSL) allows a model to learn useful representations from unlabeled data. The model solves a task built from the data itself, such as predicting masked parts of the input~\cite{ref:He:2022mae,ref:Baevski:2022data2vec}. This removes the need for costly manual labels. In audio, SSL has produced foundation models such as Masked Modeling Duo (M2D)~\cite{ref:Niizumi:2023m2d,ref:Niizumi:2024m2dx}. M2D is pre-trained once on AudioSet, a large general-audio dataset~\cite{ref:Gemmeke:2017audioset}. It is then reused for many downstream tasks in environmental sound, speech and music. Often the encoder stays frozen and only a small classifier is trained on top~\cite{ref:Turian:2022hear}. Reusing one pre-trained encoder is cheaper and more practical than training a separate model for each task. Separate models are usually limited by scarce labeled data and high training costs.
 
-Music-specific foundation models, such as MERT~\cite{ref:Li:2024mert}, MusicFM~\cite{ref:Won:2024musicfm}, MuQ~\cite{ref:Zhu:2025muq} and PupuM2D~\cite{ref:Gu:2026pupum2d}, perform strongly on music tasks. They are, however, pre-trained from scratch on large music collections, for example about 20,000 hours for the public MERT-v1-95M model~\cite{ref:MERTCard} and 100,000 to 160,000 hours of mostly private in-house music for the largest models~\cite{ref:Li:2024mert,ref:Won:2024musicfm,ref:Gu:2026pupum2d}, with multi-GPU budgets that few research groups have. At the same time, recent comparisons show that general-audio models trained by masked latent prediction are already close to these music models, and on some tasks above them~\cite{ref:Quelennec:2025matpacpp,ref:Gu:2026pupum2d}.
+Music-specific foundation models perform strongly on music tasks. Examples are MERT~\cite{ref:Li:2024mert}, MusicFM~\cite{ref:Won:2024musicfm}, MuQ~\cite{ref:Zhu:2025muq} and PupuM2D~\cite{ref:Gu:2026pupum2d}. However, they are pre-trained from scratch on large music collections. The public MERT-v1-95M model, for example, uses about 20,000 hours of music~\cite{ref:MERTCard}. The largest models use 100,000 to 160,000 hours, mostly of private in-house music~\cite{ref:Li:2024mert,ref:Won:2024musicfm,ref:Gu:2026pupum2d}. They also need multi-GPU budgets that few research groups have. At the same time, recent comparisons show that general-audio models trained by masked latent prediction are already close to these music models. On some tasks they even perform better~\cite{ref:Quelennec:2025matpacpp,ref:Gu:2026pupum2d}.
 
-This project explores a cheaper middle path. Instead of training a music model from scratch, it further pre-trains the general-audio M2D model on a small, open music dataset, a 10,000-track subset of the Free Music Archive (FMA)~\cite{ref:Defferrard:2017fma}, using a single GPU. Further pre-training on a small domain dataset risks overfitting and the loss of general ability~\cite{ref:Zhang:2025sonar}, and the M2D authors proposed the M2D-X recipe, which adds background noise and a frozen copy of the original model as a regularizer, for exactly this setting~\cite{ref:Niizumi:2024m2dx}. The project extends this recipe with a musical teacher in the style of MERT and studies how much it helps on music tasks and which problems arise along the way. A small web dashboard demonstrates the results and four music tasks. This chapter states the purpose of the report, its intended audience, the terms used, and the structure of the remaining chapters.
+This project explores a cheaper middle path. It does not train a music model from scratch. Instead, it further pre-trains the general-audio M2D model on a small open music dataset with a single GPU. The dataset is a 10,000-track subset of the Free Music Archive (FMA)~\cite{ref:Defferrard:2017fma}. Further pre-training on a small domain dataset can cause overfitting and a loss of general ability~\cite{ref:Zhang:2025sonar}. The M2D authors proposed the M2D-X recipe for exactly this setting~\cite{ref:Niizumi:2024m2dx}. It adds background noise and uses a frozen copy of the original model as a regularizer. This project extends the recipe with a musical teacher in the style of MERT. It then studies how much this teacher helps on music tasks and which problems appear along the way. A small web dashboard demonstrates the results and four music tasks. The rest of this chapter states the purpose of the report, its intended audience, the terms used and the structure of the remaining chapters.
 
 \section{Purpose of this Document}
 \label{sec:intro-purpose}
-The purpose of this document is to present the motivation, requirements, methodology and design of our Final Year Project (FYP), which investigates further pre-training of the AudioSet-pretrained M2D model on music; it also reports the prototype implemented so far, its test cases and the first experimental results, and the remaining experiments are added in FYP-II. The project develops M2D-X-Music, a framework that combines the background-noise and frozen-teacher regularization recipe of M2D-X~\cite{ref:Niizumi:2024m2dx} with a constant-Q transform (CQT) musical teacher in the style of MERT~\cite{ref:Li:2024mert}. The framework is trained on 10,000 tracks (about 83 hours) of FMA~\cite{ref:Defferrard:2017fma}, with background noise from FSD50K~\cite{ref:Fonseca:2022fsd50k}, on a single 16~GB GPU, and the resulting models are compared with the original M2D and with public music-specific models.
+The purpose of this document is to present the motivation, requirements, methodology and design of our Final Year Project (FYP), which investigates further pre-training of the AudioSet-pretrained M2D model on music; it also reports the prototype implemented so far and the first experimental results, and the remaining experiments are added in FYP-II. The project develops M2D-X-Music, a framework that combines the background-noise and frozen-teacher regularization recipe of M2D-X~\cite{ref:Niizumi:2024m2dx} with a constant-Q transform (CQT) musical teacher in the style of MERT~\cite{ref:Li:2024mert}. The framework is trained on 10,000 tracks (about 83 hours) of FMA~\cite{ref:Defferrard:2017fma}, with background noise from FSD50K~\cite{ref:Fonseca:2022fsd50k}, on a single 16~GB GPU, and the resulting models are compared with the original M2D and with public music-specific models.
 
 The central research question is: Can a small, open, single-GPU further pre-training step bring a general-purpose audio model closer to music-specific foundation models on music tasks? It is broken down into four sub-questions:
 \begin{itemize}
-  \item Does further pre-training a general-audio foundation model on a small music dataset improve its frozen-feature performance on music tasks, and how much of the gap to music-specific models does it close?
-  \item Which components of M2D-X, namely background noise and the frozen-teacher regularizer, are needed on music data?
-  \item Does a CQT musical teacher add value beyond M2D-X, especially on pitch-related tasks?
-  \item How does the benefit depend on the number of FMA tracks?
+  \item RQ1: Does further pre-training a general-audio foundation model on a small music dataset improve its frozen-feature performance on music tasks, and how much of the gap to music-specific models does it close?
+  \item RQ2: Which components of M2D-X, namely background noise and the frozen-teacher regularizer, are needed on music data?
+  \item RQ3: Does a CQT musical teacher add value beyond M2D-X, especially on pitch-related tasks?
+  \item RQ4: How does the benefit depend on the number of FMA tracks?
 \end{itemize}
 The methods are a seeded data pipeline, a set of compute-matched further pre-training runs that differ in one factor at a time, and a frozen-feature linear-probe evaluation on music tasks. The main limitations are the small test sets of some tasks, the uncontrolled differences between the reference models, and the single-GPU budget; the main assumption is that the public M2D checkpoint and the FMA audio are available and licensed for research use. Section~\ref{sec:intro-conclusion} outlines the order in which the report presents this work.
 
 \section{Intended Audience}
 \label{sec:intro-audience}
-The report is written for the following readers:
+This report is intended for the following groups of readers:
 \begin{itemize}
-  \item FYP evaluation panel and supervisor, who judge the project for technical soundness, reproducibility and clarity.
-  \item Researchers in audio representation learning and music information retrieval (MIR), who may reproduce the experiments or extend them with other teachers, base models or larger subsets.
-  \item Researchers in other data-scarce audio domains, such as bioacoustics, medical sounds (for example respiratory or heart sounds), low-resource speech, and regional or traditional music, who may reuse the recipe to adapt a general-audio model to their own small datasets.
-  \item Developers and companies in music technology, such as streaming, recommendation and tagging services, startups and independent developers, who need good music embeddings but cannot afford to pre-train a music foundation model from scratch.
-  \item Music archives, libraries and broadcasters, who need to organize and tag large audio collections at low cost.
-  \item Universities and research groups with limited computing resources, for whom a single-GPU recipe on open data is a realistic starting point.
-  \item Students and educators, including future FYP groups who may continue this work and teachers who need a reproducible example of modern self-supervised audio learning.
-  \item Visitors of the demonstration dashboard, including non-specialists, who can explore the results and try the music tasks without reading the technical chapters.
+  \item The FYP evaluation panel and the supervisor. They assess the project for technical quality, reproducibility and clarity.
+  \item Researchers in audio representation learning and music information retrieval (MIR). They can reproduce the experiments. They can also extend them with other teachers, other base models or larger datasets.
+  \item Researchers who work in other audio domains with little data. These domains include animal sounds (bioacoustics), medical sounds such as heart and breathing sounds, low-resource speech, and regional or traditional music. These researchers can apply the same recipe to adapt a general-audio model to their own small datasets.
+  \item Developers and companies in music technology. Examples are streaming, recommendation and tagging services, startups and independent developers. They need good music embeddings. However, they cannot afford to pre-train a music foundation model from scratch.
+  \item Music archives, libraries and broadcasters. They need a cheap way to organize and tag large audio collections.
+  \item Universities and research groups with limited computing power. A single-GPU recipe on open data gives them a realistic starting point.
+  \item Students and teachers. Future FYP groups can continue this work. Teachers can use it as a reproducible example of modern self-supervised audio learning.
+  \item Visitors to the demonstration dashboard, including non-specialists. They can view the results and try the music tasks without reading the technical chapters.
 \end{itemize}
-Readers of the technical chapters are assumed to know the basics of deep learning, such as transformers, self-supervised learning and linear probing, but not the details of M2D, MERT or FMA, which the report introduces where needed.
+The technical chapters assume that the reader knows the basics of deep learning, such as transformers, self-supervised learning and linear probing. No prior knowledge of M2D, MERT or FMA is needed. The report introduces these topics where they first appear.
 
 \section{Definitions, Acronyms, and Abbreviations}
 \label{sec:intro-defs}
@@ -202,11 +214,12 @@ Readers of the technical chapters are assumed to know the basics of deep learnin
 \textbf{UC}: Use Case\\
 \textbf{ViT}: Vision Transformer
 
+\FloatBarrier
 \section{Conclusion}
 \label{sec:intro-conclusion}
 This chapter introduced the problem and the motivation of the project. Music-specific foundation models perform strongly but rely on large, often private, music corpora and multi-GPU training, whereas general-audio models such as M2D are public and already strong on music. The project therefore investigates a low-cost middle path: further pre-training the AudioSet-pretrained M2D on 10,000 open FMA tracks on a single GPU with M2D-X-Music, which combines background noise and a frozen-teacher regularizer with a CQT musical teacher. Four research questions guide the study: the music gain and the remaining gap to music-specific models, the role of each M2D-X component, the value of the CQT teacher, and the effect of the amount of data.
 
-The rest of the report is organized as follows. Chapter~\ref{ch:vision} presents the project vision: the problem statement, goals and objectives, scope, sustainable development goals, constraints and stakeholders. Chapter~\ref{ch:lr} reviews the related research, datasets and benchmarks, and identifies the gap that this project addresses. Chapter~\ref{ch:srs} specifies the requirements of the demonstration dashboard, including its use cases, interface wireframes, database design and risks. Chapter~\ref{ch:m5} describes the proposed approach: the data pipeline, the M2D-X-Music framework, the experimental design and the evaluation protocol. Chapter~\ref{ch:design} presents the high-level and low-level design of the system. Chapter~\ref{ch:impl} describes the prototype implemented so far and its test cases, and Chapter~\ref{ch:manual} is the user manual of the dashboard. Chapter~\ref{ch:results} reports the experiments completed in FYP-I, namely the reproduction of the original M2D and the performance of the dashboard, and Chapter~\ref{ch:conclusions} concludes the report with the plan for FYP-II.
+The rest of the report is organized as follows. Chapter~\ref{ch:vision} presents the project vision: the problem statement, goals and objectives, scope, sustainable development goals, constraints and stakeholders. Chapter~\ref{ch:lr} reviews the related research, datasets and benchmarks, and identifies the gap that this project addresses. Chapter~\ref{ch:srs} specifies the requirements of the demonstration dashboard, including its use cases, interface wireframes, database design and risks. Chapter~\ref{ch:m5} describes the proposed approach: the data pipeline, the M2D-X-Music framework, the experimental design and the evaluation protocol. Chapter~\ref{ch:design} presents the high-level and low-level design of the system. Chapter~\ref{ch:impl} describes the prototype implemented so far. Chapter~\ref{ch:results} reports the experiments completed in FYP-I, namely the reproduction of the original M2D and the performance of the dashboard, and Chapter~\ref{ch:conclusions} concludes the report with the plan for FYP-II.
 
 \chapter{Project Vision}
 \label{ch:vision}
@@ -236,13 +249,13 @@ No reviewed work combines background noise, a frozen-teacher regularizer and a C
 
 \section{Goals and Objectives}
 \label{sec:vision-goals}
-The goals of Vox are as follows:
+The goals of the project, Vox, are as follows:
 \begin{itemize}
   \item Show whether, and to what extent, a single-GPU further pre-training step on a small open music subset can improve a general-purpose masked-latent-prediction audio model on music tasks and bring it closer to music-specific foundation models.
   \item Understand which parts of the further pre-training recipe are needed to avoid overfitting on a small music dataset.
   \item Make the findings easy to reproduce and to explore, through open data, released configuration files and a demonstration dashboard.
 \end{itemize}
-The objectives of Vox are as follows:
+The objectives of the project, Vox, are as follows:
 \begin{enumerate}
   \item Build a reproducible, resumable pipeline that selects, audits and converts 10,000 FMA tracks (nested subsets of 1,000, 2,500, 5,000 and 10,000) and a background-noise corpus into M2D-compatible log-mel arrays and CQT targets.
   \item Implement the M2D-X-Music objective on top of the official M2D code, adding the CQT musical teacher.
@@ -352,6 +365,7 @@ The main goal of each stakeholder, and the problem that stands in its way, are d
   \item Dataset and model providers expect correct use of their licensed material. The problem is that non-commercial and redistribution limits must be respected.
 \end{itemize}
 
+\FloatBarrier
 \section{Conclusion}
 \label{sec:vision-conclusion}
 This chapter defined the vision of the project: a single-GPU study of whether further pre-training M2D on 10,000 FMA tracks, with background noise, a frozen-teacher regularizer and a CQT musical teacher, improves a general-audio foundation model on music tasks. It broke the problem into sub-problems, fixed the goals, objectives, deliverables and exclusions, related the work to SDG 9 and SDG 4, listed the constraints, outlined the business opportunity and described the stakeholders. The next chapter reviews the related research, datasets and benchmarks on which these choices rest.
@@ -647,7 +661,7 @@ MARBLE, published in the NeurIPS 2023 Datasets and Benchmarks track, opens the g
 Yuan et al.~\cite{ref:Yuan:2023marble} proposed MARBLE, a benchmark of music representations built on a taxonomy of four levels (acoustic, performance, score and high-level description). It defines a unified protocol of 18 tasks on 12 public datasets, with frozen pre-trained models and simple downstream heads, and provides baselines for the open-source models pre-trained on music recordings; large-scale pre-trained musical language models performed best on most tasks, with room for improvement. Its tasks include key detection, emotion regression, instrument and mood tagging on MTG-Jamendo and beat tracking, and three of its datasets are used in this project. GTZAN~\cite{ref:Tzanetakis:2002genre} consists of 1,000 excerpts of 30~s in ten genres; Sturm~\cite{ref:Sturm:2013gtzan} catalogued its faults (exact, recording and version repetitions, repeated artists, mislabeled and distorted excerpts), and Kereliuk et al.~\cite{ref:Kereliuk:2015adversaries} proposed a fault-filtered split with 443 training, 197 validation and 290 test clips. MagnaTagATune~\cite{ref:Law:2009tagatune} consists of 25,863 clips cut from over 5,000 songs, with tags collected through the TagATune game, distributed as 16~kHz mono MP3 files; the standard task is tagging with the 50 most frequent tags. NSynth~\cite{ref:Engel:2017nsynth} contains 305,979 monophonic notes of 4~s from 1,006 instruments, annotated with pitch, velocity and one of 11 instrument families.
 
 \lrcritical
-MARBLE brings broad coverage to the evaluation of music representations: tagging, key detection, genre, emotion, instrument, pitch, beat tracking and structure tasks are all assessed under one protocol, with frozen models, simple downstream heads and a common leaderboard. Because its datasets are widely used, results can be compared with MERT, MuQ, MATPAC and earlier work, and NSynth in particular gives exact pitch labels. The taxonomy of acoustic, performance, score and high-level description levels also helps to show which kinds of musical knowledge a model has acquired. However, the breadth of the benchmark has a cost. Many tasks need large downloads and several downstream heads, which is expensive for a project with a single GPU. The implementation has also been revised, and later papers state that scores of the revised version are not strictly comparable with those of the original~\cite{ref:Gu:2026pupum2d}, so the version behind every published number must be checked before results are compared.
+MARBLE offers broad coverage for the evaluation of music representations. It assesses tagging, key detection, genre, emotion, instrument, pitch, beat tracking and structure tasks under one protocol. All tasks use frozen models, simple downstream heads and a common leaderboard. Its datasets are widely used. As a result, new results can be compared directly with MERT, MuQ, MATPAC and earlier work. NSynth in particular provides exact pitch labels. The four-level taxonomy of acoustic, performance, score and high-level description also shows which kinds of musical knowledge a model has learned. However, this breadth comes at a cost. Many tasks require large downloads and several downstream heads. This is expensive for a project with only one GPU. In addition, the implementation has been revised. Later papers state that scores from the revised version are not strictly comparable with scores from the original~\cite{ref:Gu:2026pupum2d}. Therefore, the version behind each published number must be checked before results are compared.
 
 Beyond the benchmark as a whole, the individual datasets used in this project have known problems that affect how their results can be read. GTZAN contains exact, recording and version repetitions, repeated artists, and mislabeled and distorted excerpts, as catalogued by Sturm, so results on random splits are optimistic. The fault-filtered split of Kereliuk et al.\ removes these problems, but its test set has only 290 clips, so differences of a few points between models may not be meaningful. MagnaTagATune is distributed as low-quality 16~kHz mono MP3 audio and contains several clips cut from each song, so any split must keep the clips of one song together to avoid leakage between training and test data. NSynth offers precise pitch and instrument labels, but it consists of isolated monophonic notes, far from polyphonic music, so good results on it do not guarantee that a model can recognize pitch or instruments in real recordings.
 
@@ -708,6 +722,7 @@ Yuan et al.~\cite{ref:Yuan:2023marble} & Benchmark: 18 tasks on 12 datasets, inc
 Turian et al.~\cite{ref:Turian:2022hear} & Benchmark: 29 models, 19 tasks, 16 datasets & First broad frozen-embedding comparison & 2021 models; few music tasks\\ \hline
 \end{longtable}}
 
+\FloatBarrier
 \section{Conclusion}
 \label{sec:lr-conclusion}
 The literature shows that masked latent prediction on spectrograms yields strong general-purpose audio representations, with M2D, MATPAC and MATPAC++ at the top of the AudioSet-trained models. These general-audio models are already strong on music: in the unified comparison of MATPAC++, the AudioSet-trained models were on a par with or above MERT, and music-only training added about 0.7 points on average~\cite{ref:Quelennec:2025matpacpp}; in the evaluation of PupuM2D, AudioSet-trained M2D, M2D-X and MATPAC++ checkpoints matched or exceeded MERT, MuQ and MusicFM on tagging and instrument classification, and a 100,000-hour in-domain model was clearly ahead mainly on valence in emotion recognition, while the frame-level tasks (key, beat) could not be compared with the general models~\cite{ref:Gu:2026pupum2d}. Music-specific models gain from modeling music audio and from music-oriented targets, such as the CQT of MERT and the Mel-RVQ tokens of MuQ~\cite{ref:Castellon:2021jukemir,ref:McCallum:2022mule,ref:Li:2024mert,ref:Zhu:2025muq}, but they rely on 900 to 160,000 hours of music, often private, and a model trained on FMA alone was weaker than one trained on a larger curated corpus~\cite{ref:Won:2024musicfm}.
@@ -758,7 +773,7 @@ The dashboard is a single-page web application with three views: Results, Demo a
 \begin{itemize}
   \item The aggregate music score $S_{\mathrm{mus}}$ (Section~\ref{sec:m5-eval}) of every model, a table of the per-task scores with their spread over probe seeds, and a bar chart, with a filter by model group (original M2D, further pre-trained M2D and reference models).
   \item Four task cards (genre, tagging, instrument and pitch) that show the dataset, the label set and the metric of each task.
-  \item Upload of a WAV or MP3 file, of which the first 6~s are used, or selection of a bundled, openly licensed 6-s sample clip, with in-browser playback and a log-mel spectrogram preview.
+  \item Upload of a WAV or MP3 file, of which the first 6.08~s are used, or selection of a bundled, openly licensed sample clip, with in-browser playback and a log-mel spectrogram preview.
   \item A choice between the original M2D checkpoint and the further pre-trained M2D.
   \item The top-5 genres with probabilities; the tags above the decision threshold together with the ten highest tag scores; the top-3 instrument families; and the top-3 pitches as MIDI number, note name and frequency. The inference time is shown with every prediction, and the label given by the source dataset is shown for sample clips.
   \item The same clip can be run through both models and the two outputs are shown side by side, with the labels predicted by only one model highlighted.
@@ -790,7 +805,7 @@ FR-05 & The system shall list the four demonstration tasks with their dataset, n
 FR-06 & The visitor shall be able to upload one audio file in WAV or MP3 format of at most 10~MB. & Visitor\\
 FR-07 & The visitor shall be able to select a bundled sample clip instead of uploading a file, and to play the chosen clip in the browser. & Visitor\\
 FR-08 & The system shall check the type, size and readability of an uploaded file and reject an invalid file with an error message that states the reason. & System\\
-FR-09 & The system shall convert the input to mono at the sampling rate of the selected model (16~kHz for M2D), keep at most the first 6~s, compute the log-mel spectrogram with the normalization used in evaluation, and show a preview of it. & System\\
+FR-09 & The system shall convert the input to mono at the sampling rate of the selected model (16~kHz for M2D), keep at most the first 6.08~s, compute the log-mel spectrogram with the normalization used in evaluation, and show a preview of it. & System\\
 FR-10 & The visitor shall be able to choose between the original M2D and the further pre-trained M2D for the prediction; the further pre-trained M2D shall be selected by default. & Visitor\\
 FR-11 & The system shall compute the clip embedding with the frozen encoder from one 6.08-s input window, padded if the clip is shorter, and apply the linear probe of the selected model and task. & System\\
 FR-12 & The system shall display the task-specific output: top-5 genres; tags whose probability exceeds the threshold of the probe and the ten highest tag scores; top-3 instrument families; top-3 pitches with MIDI number $m$, note name and frequency $440\cdot2^{(m-69)/12}$~Hz. It shall also display the inference time, the device used and, for sample clips, the source label. & Visitor\\
@@ -949,7 +964,7 @@ The use cases below cover the central behavior of the dashboard. Figure~\ref{fig
 \ucfield{Summary}{The visitor uploads an audio file or selects a bundled sample clip.}
 \ucfield{Pre-Conditions}{A task has been selected (UC-02).}
 \ucfield{Post-Conditions}{A valid clip is held by the server for the current request, and a player and a log-mel preview of it are displayed.}
-\ucfield{Special Requirements}{Accepted formats are WAV and MP3, with at most 10~MB per file; only the first 6~s of a clip are used. Uploaded files are deleted after the prediction.}
+\ucfield{Special Requirements}{Accepted formats are WAV and MP3, with at most 10~MB per file; only the first 6.08~s of a clip are used. Uploaded files are deleted after the prediction.}
 \ucbar{Basic Flow}
 \uchead
 \ucstep{1}{The visitor drags an audio file into the upload area, or clicks Browse and selects a file.}{2}{The system checks the type and size, decodes the audio, and displays its duration, a player and a log-mel preview.}
@@ -957,7 +972,7 @@ The use cases below cover the central behavior of the dashboard. Figure~\ref{fig
 \ucbar{Alternative Flow}
 \ucstep{1}{The visitor uploads a file in an unsupported format.}{2-A}{The system displays ``Unsupported file format. Please use WAV or MP3.''}
 \ucstep{1}{The visitor uploads a file larger than 10~MB.}{2-B}{The system displays ``File too large (maximum 10~MB).''}
-\ucstep{1}{The visitor uploads a clip longer than 6~s.}{2-C}{The system accepts the file and displays ``Only the first 6~s will be analyzed.''}
+\ucstep{1}{The visitor uploads a clip longer than 6.08~s.}{2-C}{The system accepts the file and displays ``Only the first 6.08~s will be analyzed.''}
 \ucstep{1}{The visitor uploads a corrupted file.}{2-D}{The system displays ``The file could not be read.''}
 \end{usecase}
 
@@ -1136,7 +1151,7 @@ The Demo screen (Figure~\ref{fig:srs-gui-input}) is organized in three steps: th
   \draw[black!55, dashed, fill=gray!4] (0.3,2.9) rectangle (6.8,5.4);
   \node[font=\scriptsize] at (3.55,4.85) {Drag and drop an audio file here};
   \node[wfbtn] at (3.55,4.15) {Browse};
-  \node[font=\tiny, text=black!70] at (3.55,3.35) {WAV or MP3; at most 10\,MB; only the first 6\,s are used};
+  \node[font=\tiny, text=black!70] at (3.55,3.35) {WAV or MP3; at most 10\,MB; only the first 6.08\,s are used};
   \node[wftext] at (7.1,5.25) {or choose a sample clip:};
   \draw[wf] (7.1,4.5) rectangle (13.7,4.95);
   \node[wftext] at (7.2,4.72) {Sample 3: FMA excerpt (CC), source label ``Rock''};
@@ -1352,13 +1367,13 @@ InferenceLog & log\_id & Integer & No & Primary key.\\
 
 \section{Risk Analysis}
 \label{sec:srs-risks}
-The dashboard is a small part of a research project with a fixed three-month schedule and a single GPU, so its risks are mostly about timing, faithfulness and licensing rather than scale. The main risks are described below and summarized with their mitigation in Table~\ref{tab:srs-risks}.
+The dashboard is a small part of a research project with a fixed FYP schedule and a single GPU, so its risks are mostly about timing, faithfulness and licensing rather than scale. The main risks are described below and summarized with their mitigation in Table~\ref{tab:srs-risks}.
 
 \subsection{Technical Risks}
 The dashboard depends on the outputs of the research: if the further pre-trained M2D or its probes are late, there is nothing to demonstrate for it. The dashboard is therefore developed first with the original M2D, whose probes are available early, and the further pre-trained M2D is added by import. A second risk is a silent mismatch between the preprocessing of the dashboard and that of the evaluation, which would make the demonstration show a model that behaves differently from the one evaluated; it is reduced by importing the evaluation code instead of copying it and by a check that the dashboard reproduces the cached embeddings of a few test clips. Finally, the GPU may be busy with training or unavailable at a presentation, in which case the CPU path is used, and some uploaded files may fail to decode, which is handled by the input checks.
 
 \subsection{Schedule Risks}
-The research has priority over the dashboard in the three-month schedule. The dashboard is kept minimal, with no accounts and a single page, and it is built in small steps (results view, then one task, then the other tasks, then comparison) so that a usable version exists at every stage.
+The research has priority over the dashboard in the FYP schedule. The dashboard is kept minimal, with no accounts and a single page, and it is built in small steps (results view, then one task, then the other tasks, then comparison) so that a usable version exists at every stage.
 
 \subsection{Legal and Licensing Risks}
 Bundled sample clips are redistributed to visitors, so they must have suitable licenses. Sample clips are taken only from openly licensed sources such as FMA~\cite{ref:Defferrard:2017fma} and NSynth~\cite{ref:Engel:2017nsynth} and shown with their license and attribution; GTZAN clips, which are excerpts of commercial recordings, are not bundled. Reference models appear only through their evaluation scores, so their weights, some of which are licensed for non-commercial use only~\cite{ref:MERTCard}, are neither used by nor distributed with the dashboard.
@@ -1386,6 +1401,7 @@ Single predictions taken as results & Medium & Medium & Disclaimers; Results tab
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
 \section{Conclusion}
 \label{sec:srs-conclusion}
 This chapter specified the M2D Music Dashboard, the small web application that accompanies the study. It presents the results of the further pre-training experiments and demonstrates four MARBLE tasks, namely genre, tagging, instrument and pitch, on clips that a visitor uploads or selects, with a side-by-side comparison of the original and the further pre-trained model. The requirements favor simplicity and faithfulness: there are no accounts, a single page with three tabs, a FastAPI backend that reuses the evaluation code and probes, a plain HTML and JavaScript frontend, and a small SQLite database whose results are imported unchanged from the evaluation. The use cases, wireframes, database design and risk analysis provide the basis for the design in the next chapters, while the research method that produces the models and results is described in Chapter~\ref{ch:m5}.
@@ -1714,7 +1730,7 @@ Initial weights & M2D/0.7 (\texttt{m2d\_vit\_base-80x608p16x16-221006-mr7}): onl
 Network & ViT-Base encoder, 768-dimensional tokens, about 86~M parameters; MAE-style predictor\\
 Input and masking & 80$\times$608 log-mel window, $16\times16$ patches ($N=190$), masking ratio 0.7 (57 visible, 133 masked)\\
 Optimizer & AdamW with $\beta=(0.9,0.95)$, weight decay 0.05, gradient-norm clipping at 3.0\\
-Learning rate & Base $3\times10^{-4}$ scaled to $1.5\times10^{-4}$; 24 warm-up epochs; cosine decay to zero\\
+Learning rate & Base $3\times10^{-4}$ scaled to $1.5\times10^{-4}$; 20 warm-up epochs; cosine decay to zero\\
 EMA decay & Linear from 0.99995 to 0.99999 over training\\
 \midrule
 Epochs and data per epoch & 600 epochs of 10,000 virtual samples, that is, 6.0~M sample views and 46,875 optimizer steps\\
@@ -1780,7 +1796,7 @@ S1--S3 & 0.3 & as A$^{*}$ & as A$^{*}$ & 1,000; 2,500; 5,000 & Data-size study w
 \end{tabularx}
 \end{table}
 
-The reported checkpoint of every arm is the one at epoch 600. If time is short, the arms are run in the order A3, A1, A4, A2, A5, then S1 to S3. Optional runs follow only if time remains: a noise pool without music-related FSD50K classes, a lower noise ratio $\eta=0.1$, the FMA normalization statistics, a 20,000-track run, a second pre-training seed for A3 and A4, and the distillation of frozen MERT features as a second teacher. The checkpoints are compared with public music-specific models, namely MERT-v1-95M and MERT-v0-public~\cite{ref:Li:2024mert,ref:MERTCard}, MusicFM trained on FMA~\cite{ref:Won:2024musicfm} and the music and general versions of MATPAC++~\cite{ref:Quelennec:2025matpacpp}, which are evaluated with the same protocol and are never further trained.
+Before the arms are started, a pilot run of 300 optimizer steps (about four epochs) tests the training code and measures time and memory on the A4000; if the throughput is too low, the number of epochs is reduced for all arms alike. The reported checkpoint of every arm is the one at epoch 600. If time is short, the arms are run in the order A3, A1, A4, A2, A5, then S1 to S3. Optional runs follow only if time remains: a noise pool without music-related FSD50K classes, a lower noise ratio $\eta=0.1$, the FMA normalization statistics, a 20,000-track run, a second pre-training seed for A3 and A4, and the distillation of frozen MERT features as a second teacher. The checkpoints are compared with public music-specific models, namely MERT-v1-95M and MERT-v0-public~\cite{ref:Li:2024mert,ref:MERTCard}, MusicFM trained on FMA~\cite{ref:Won:2024musicfm} and the music and general versions of MATPAC++~\cite{ref:Quelennec:2025matpacpp}, which are evaluated with the same protocol and are never further trained.
 
 \section{Evaluation Protocol}
 \label{sec:m5-eval}
@@ -1804,7 +1820,7 @@ MagnaTagATune~\cite{ref:Law:2009tagatune} & Music, tagging & 50 tags & mAP & One
 \end{tabularx}
 \end{table}
 
-Accuracy is reported for single-label tasks and mean average precision (mAP) for tagging, in percent, as the mean over the six probe seeds with a 95\,\% confidence interval. With $s_u(m)$ the score of model $m$ on task $u$, the music score is the mean over the music tasks $\mathcal{T}_{\mathrm{mus}}$,
+Accuracy is reported for single-label tasks and mean average precision (mAP) for tagging, in percent, as the mean over the six probe seeds with a 95\,\% confidence interval. With $s_u(m)$ the score of model $m$ on task $u$, the music score is the mean over the music tasks $\mathcal{T}_{\mathrm{mus}}=\{$GTZAN, MagnaTagATune, NSynth instrument, NSynth pitch$\}$,
 \begin{equation}
 S_{\mathrm{mus}}(m)=\frac{1}{|\mathcal{T}_{\mathrm{mus}}|}\sum_{u\in\mathcal{T}_{\mathrm{mus}}}s_u(m),
 \label{eq:m5-agg}
@@ -1816,6 +1832,7 @@ and, with $m_0$ the original M2D model, the gap-closure ratio
 \end{equation}
 expresses how far a further pre-trained model $m$ moves from the original model towards a reference model $r$, from 0 (no change) to 1 (parity), and is computed only on tasks where the reference leads the original model by at least one point. A difference between two models is tested with a paired bootstrap over the test clips with 10,000 resamples~\cite{ref:Efron:1993bootstrap} and is called supported only if its 95\,\% interval excludes zero. FMA-small is reported separately from the other music tasks because it shares its source with the pre-training data.
 
+\FloatBarrier
 \section{Conclusion}
 \label{sec:m5-conclusion}
 This chapter presented the proposed approach. A seeded, artist-capped procedure selects nested subsets of up to 10,000 tracks from the training split of the FMA medium subset, and a resumable pipeline converts them with the front-end of the original M2D model into log-mel arrays and CQT targets. The M2D-X-Music framework further pre-trains M2D on music mixed with background noise, regularizes it with a frozen copy of the original model, and adds a linear head that regresses the CQT of the clean audio in the manner of the musical teacher of MERT. Compute-matched arms switch these components on and off and vary the number of tracks, and every checkpoint and reference model is evaluated with the same frozen-feature linear protocol on music tasks. The next chapter presents the high-level and low-level design of the system that implements this approach.
@@ -1861,7 +1878,7 @@ A FastAPI backend serves a single-page HTML and JavaScript frontend, reads the i
 
 \section{Design Considerations}
 \label{sec:des-considerations}
-The design must fit a single GPU and a three-month schedule, keep the comparison between runs fair, and produce results that can be reproduced and traced. The considerations below shaped it.
+The design must fit a single GPU and the FYP schedule, keep the comparison between runs fair, and produce results that can be reproduced and traced. The considerations below shaped it.
 
 \subsection{Assumptions and Dependencies}
 The design relies on the following assumptions and dependencies.
@@ -1897,7 +1914,7 @@ The design follows the goals and guidelines below.
 \end{itemize}
 
 \subsection{Development Methods}
-The project follows an iterative, research-driven process. The data pipeline and its tests are built first; a pilot run of a few epochs then measures time and memory on the A4000 (Section~\ref{sec:m5-frame}); the runs are carried out in the order fixed in Chapter~\ref{ch:m5}, with evaluation of each checkpoint as it appears; and the dashboard is built in small steps once the first probes exist, starting with the original M2D model (Section~\ref{sec:srs-risks}). A strict waterfall process was rejected because the pilot run can change the schedule, for example by reducing the number of epochs for all runs. Parts whose correctness can be checked automatically, such as subset selection, shapes and losses, are developed with unit tests; the rest is checked with spectrogram galleries, training curves and the label-free feature statistics logged by the training script.
+The project follows an iterative, research-driven process. The data pipeline and its tests are built first; a pilot run of a few epochs then measures time and memory on the A4000 (Section~\ref{sec:m5-design}); the runs are carried out in the order fixed in Chapter~\ref{ch:m5}, with evaluation of each checkpoint as it appears; and the dashboard is built in small steps once the first probes exist, starting with the original M2D model (Section~\ref{sec:srs-risks}). A strict waterfall process was rejected because the pilot run can change the schedule, for example by reducing the number of epochs for all runs. Parts whose correctness can be checked automatically, such as subset selection, shapes and losses, are developed with unit tests; the rest is checked with spectrogram galleries, training curves and the label-free feature statistics logged by the training script.
 
 \section{System Architecture}
 \label{sec:des-arch}
@@ -1973,33 +1990,51 @@ Figure~\ref{fig:des-train} shows the modules of the training subsystem; the data
 \begin{figure}[htbp]
 \centering
 \singlespacing
-\resizebox{\linewidth}{!}{%
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \node[desfile, text width=2.9cm] (lists) at (-1.4,2.4) {CSV lists (\texttt{file\_name}, \texttt{cqt\_file}) and \texttt{.npy} arrays};
-  \node[m5train, text width=4.2cm] (cli) at (6.0,4.3) {\texttt{train\_audio.py}\\options of the run, run folder};
-  \node[m5train, text width=3.2cm] (ds) at (2.4,2.4) {\texttt{MusicMixedSpecDataset}\\noisy, clean and CQT crops};
-  \node[m5train, text width=3.4cm] (model) at (6.0,2.4) {\texttt{M2D\_X\_Music\_ViT}\\encoder, predictor, target, offline and CQT heads};
-  \node[m5ref, text width=3.0cm] (teach) at (9.8,2.4) {\texttt{RuntimeM2D}\\frozen M2D/0.7 teacher};
-  \node[m5ref, text width=3.2cm] (sds) at (2.4,0.4) {\texttt{SpectrogramDataset}, \texttt{log\_mixup\_exp}};
-  \node[m5train, text width=3.9cm] (eng) at (6.0,0.4) {\texttt{train\_one\_epoch\_m2dx\_music}\\accumulation, AMP, EMA};
-  \node[m5ref, text width=3.0cm] (save) at (9.8,0.4) {\texttt{misc.save\_model}, \texttt{quick\_eval.sh}};
-  \node[desfile, text width=3.0cm] (out) at (13.4,0.4) {\texttt{checkpoint-*.pth}, TensorBoard, console log};
-  \node[desfile, text width=3.0cm] (evar) at (13.4,2.4) {EVAR validation scores};
-  \draw[m5arrow] (cli) -- node[above left, font=\scriptsize] {builds} (ds);
-  \draw[m5arrow] (cli) -- (model);
-  \draw[m5arrow] (cli) -- node[above right, font=\scriptsize] {loads} (teach);
-  \draw[m5arrow] (lists) -- (ds);
-  \draw[m5arrow, dashed] (ds) -- node[left, font=\scriptsize] {uses} (sds);
-  \draw[m5arrow] (ds.south east) -- node[above, sloped, font=\scriptsize] {batches} (eng.north west);
-  \draw[m5arrow, {Stealth[length=2mm]}-{Stealth[length=2mm]}] (model) -- node[right, font=\scriptsize] {losses} (eng);
-  \draw[m5arrow] (teach.south west) -- node[above, sloped, font=\scriptsize] {$y^{\mathrm{off}}$} (eng.north east);
-  \draw[m5arrow] (eng) -- (save);
-  \draw[m5arrow] (save) -- (out);
-  \draw[m5arrow] (save.north east) -- (evar.south west);
+\begin{tikzpicture}[x=1cm, y=1cm,
+  mod/.style={draw=black!70, rounded corners=2pt, align=center, font=\scriptsize,
+    inner sep=4pt, minimum height=1.15cm},
+  modnew/.style={mod, fill=orange!14},
+  modold/.style={mod, fill=gray!15},
+  modfile/.style={mod, draw=black!50, fill=yellow!10, rounded corners=1pt},
+  c0/.style={text width=2.5cm}, c1/.style={text width=3.1cm},
+  c2/.style={text width=3.8cm}, c3/.style={text width=3.1cm},
+  lbl/.style={font=\scriptsize, fill=white, inner sep=1.5pt},
+  arr/.style={-{Stealth[length=2mm]}, thick, draw=black!70},
+  leg/.style={draw=black!60, rounded corners=1.5pt, font=\scriptsize, minimum width=0.55cm, minimum height=0.32cm}]
+  % row A
+  \node[modfile, c0] (lists) at (1.39,0) {CSV file lists\\and \texttt{.npy} arrays};
+  \node[modnew, c2]  (cli)   at (9.20,0) {\texttt{train\_audio.py}\\options of the run, run folder};
+  % row B
+  \node[modnew, c1]  (ds)    at (4.97,-2.1) {\texttt{MusicMixedSpecDataset}\\noisy, clean and CQT crops};
+  \node[modnew, c2]  (model) at (9.20,-2.1) {\texttt{M2D\_X\_Music\_ViT}\\encoder, predictor, target encoder, offline and CQT heads};
+  \node[modold, c3]  (teach) at (13.43,-2.1) {\texttt{RuntimeM2D}\\frozen M2D/0.7 teacher};
+  % row C
+  \node[modold, c0]  (sds)   at (1.39,-4.2) {\texttt{SpectrogramDataset}, \texttt{log\_mixup\_exp}};
+  \node[modnew, c2]  (eng)   at (9.20,-4.2) {\texttt{train\_one\_epoch\_m2dx\_music}\\accumulation, AMP, EMA update};
+  % row D
+  \node[modfile, c1] (evar)  at (4.97,-6.3) {EVAR validation scores};
+  \node[modold, c2]  (save)  at (9.20,-6.3) {\texttt{misc.save\_model},\\\texttt{quick\_eval.sh}};
+  \node[modfile, c3] (out)   at (13.43,-6.3) {\texttt{checkpoint-*.pth},\\TensorBoard and console log};
+  % arrows
+  \draw[arr] (lists.east) -| ([xshift=-0.7cm]ds.north);
+  \draw[arr] (cli.west) -| node[lbl, pos=0.3] {builds} ([xshift=0.7cm]ds.north);
+  \draw[arr] (cli) -- node[lbl] {builds} (model);
+  \draw[arr] (cli.east) -| node[lbl, pos=0.3] {loads} (teach.north);
+  \draw[arr, dashed] (ds.west) -| node[lbl, pos=0.3] {uses} (sds.north);
+  \draw[arr] (ds.south) |- node[lbl, pos=0.75] {batches} (eng.west);
+  \draw[arr] (teach.south) |- node[lbl, pos=0.75] {$y^{\mathrm{off}}$} (eng.east);
+  \draw[arr, {Stealth[length=2mm]}-{Stealth[length=2mm]}] (model) -- node[lbl] {losses} (eng);
+  \draw[arr] (eng) -- node[lbl] {every 100 epochs} (save);
+  \draw[arr] (save) -- (evar);
+  \draw[arr] (save) -- (out);
   % legend
-  \node[m5ref, text width=2.6cm, minimum height=0.5cm] at (-1.4,4.3) {reused from M2D};
-  \node[m5train, text width=2.6cm, minimum height=0.5cm] at (-1.4,3.55) {new or extended};
-\end{tikzpicture}}
+  \node[leg, fill=gray!15]   (l1) at (2.6,-7.75) {};
+  \node[anchor=west, font=\scriptsize] at (l1.east) {reused from M2D};
+  \node[leg, fill=orange!14] (l2) at (6.3,-7.75) {};
+  \node[anchor=west, font=\scriptsize] at (l2.east) {new or extended};
+  \node[leg, fill=yellow!10, draw=black!50] (l3) at (10.0,-7.75) {};
+  \node[anchor=west, font=\scriptsize] at (l3.east) {file};
+\end{tikzpicture}
 \caption[Modules of the further pre-training subsystem]{Modules of the further pre-training subsystem. Grey boxes are reused from the M2D code base, orange boxes are new or extended, and yellow boxes are files.}
 \label{fig:des-train}
 \end{figure}
@@ -2059,7 +2094,7 @@ A prediction request (Figure~\ref{fig:des-seq-predict}) involves six participant
   \draw[desmsg] (0,-0.7) -- node[deslbl, above] {task, clip, model; Run} (2.7,-0.7);
   \draw[desmsg] (2.7,-1.25) -- node[deslbl, above] {POST: file or sample, task, models} (5.6,-1.25);
   \draw[desmsg] (5.6,-1.5) -- ++(0.5,0) -- ++(0,-0.45) -- ++(-0.5,0);
-  \node[font=\scriptsize, anchor=west, align=left] at (6.2,-1.72) {check type and size, decode,\\mono 16 kHz, first 6 s};
+  \node[font=\scriptsize, anchor=west, align=left] at (6.2,-1.72) {check type and size, decode,\\mono 16 kHz, first 6.08 s};
   \desframe{-0.9}{-2.3}{15.3}{-8.6}{alt [invalid file]}
   \draw[desret] (5.6,-2.85) -- node[deslbl, above] {error message} (2.7,-2.85);
   \draw[desret] (2.7,-3.25) -- node[deslbl, above] {show message} (0,-3.25);
@@ -2164,7 +2199,7 @@ Python 3.10 or above and PyTorch~\cite{ref:Paszke:2019pytorch} are used througho
 The code follows PEP~8 and is checked with a linter; functions carry type hints and docstrings. Extensions of the M2D code follow its naming, for example \texttt{M2D\_X\_Music\_ViT} with the factory function \texttt{m2d\_x\_music\_vit\_base} and the option \texttt{--loss\_cqt}, so that they read like the existing \texttt{M2D\_X\_ViT}, \texttt{m2d\_x\_vit\_base} and \texttt{--loss\_off}. Changes to upstream files are kept in a patch file, in the same way as the M2D code base distributes its own changes to the MAE files, and new classes are placed in new files. Paths are never hard-coded; they come from options or the configuration file. Every source of randomness takes an explicit seed.
 
 \subsection{Testing}
-Unit tests with pytest cover the parts whose correctness can be checked automatically: the subset selection (nested lists, artist cap and identical output for the same seed); the audit rules on synthetic silent, short and duplicate files; the equal frame counts of log-mel and CQT arrays; the mixing function against Equation~\ref{eq:m5-mix}; the shapes of the CQT head output ($32\times38\times84$); and checkpoint loading, which must accept the M2D/0.7 weights with only the new heads missing. Two tests guard the comparison between runs. The first checks that, with the CQT weight set to zero, the loss of the new model equals that of \texttt{M2D\_X\_ViT} on the same batch and masks, so that the extension cannot change the runs without the musical teacher. The second checks which view each network receives: the dataset returns its views by name rather than by position, and the test asserts that the online network gets the noisy view and the teacher the clean view, because swapping two tensors of the same shape would raise no error. A smoke test runs one epoch on a list of a few tracks, and the pilot run of Chapter~\ref{ch:m5} serves as the system test of training. For the dashboard, API tests use the FastAPI test client, and a consistency test checks that the dashboard reproduces the cached EVAR embeddings of a few test clips. The full test cases are given in the next chapter.
+Unit tests with pytest cover the parts whose correctness can be checked automatically: the subset selection (nested lists, artist cap and identical output for the same seed); the audit rules on synthetic silent, short and duplicate files; the equal frame counts of log-mel and CQT arrays; the mixing function against Equation~\ref{eq:m5-mix}; the shapes of the CQT head output ($32\times38\times84$); and checkpoint loading, which must accept the M2D/0.7 weights with only the new heads missing. Two tests guard the comparison between runs. The first checks that, with the CQT weight set to zero, the loss of the new model equals that of \texttt{M2D\_X\_ViT} on the same batch and masks, so that the extension cannot change the runs without the musical teacher. The second checks which view each network receives: the dataset returns its views by name rather than by position, and the test asserts that the online network gets the noisy view and the teacher the clean view, because swapping two tensors of the same shape would raise no error. A smoke test runs one epoch on a list of a few tracks, and the pilot run of Chapter~\ref{ch:m5} serves as the system test of training. For the dashboard, API tests use the FastAPI test client, and a consistency test checks that the dashboard reproduces the cached EVAR embeddings of a few test clips.
 
 \subsection{Requirements Traceability}
 Each research question is linked to the further pre-training runs and comparisons that answer it (Section~\ref{sec:m5-design}), each contrast to rows of the results file, and each row to its checkpoint, task, split and probe seed. The functional requirements FR-01 to FR-18 of the dashboard (Table~\ref{tab:srs-fr}) map to the modules of Section~\ref{sec:des-arch}: results views to the API and repository, FR-06 to FR-15 to the API and inference modules, FR-16 to the repository, and FR-17 to the import script. The database keeps the source file of every imported score, so every number on the dashboard can be traced back to a run.
@@ -2175,14 +2210,15 @@ The repository contains the following folders: \texttt{fmaprep/} (preparation st
 \subsection{Maintenance}
 A new further pre-training run is added as one script in \texttt{runs/}, a new reference model as one wrapper class and configuration file, and a new dashboard task as task metadata, a saved probe and database rows. If the upstream code changes, the patch is re-applied at the new commit and the unit tests show whether the extension still behaves as before.
 
+\FloatBarrier
 \section{Conclusion}
 \label{sec:des-conclusion}
-This chapter presented the design of the system. A layered architecture separates data preparation, further pre-training, evaluation and presentation, which communicate only through files, so that each expensive step runs once and every result can be traced. The main strategies are a small extension of the M2D code base instead of a new framework, offline precomputation of spectrograms and CQT targets, experiments defined by command-line options and recorded in run folders, one evaluation interface for all models, and single-worker serving in the dashboard. The sequence and class diagrams show how the components collaborate, with one encoder path shared by training, evaluation and the dashboard, and the policies and tactics fix the tools, conventions, tests and traceability. Together with the method of Chapter~\ref{ch:m5} and the requirements of Chapter~\ref{ch:srs}, this design is the basis for the implementation and the test cases in the next chapter.
+This chapter presented the design of the system. A layered architecture separates data preparation, further pre-training, evaluation and presentation, which communicate only through files, so that each expensive step runs once and every result can be traced. The main strategies are a small extension of the M2D code base instead of a new framework, offline precomputation of spectrograms and CQT targets, experiments defined by command-line options and recorded in run folders, one evaluation interface for all models, and single-worker serving in the dashboard. The sequence and class diagrams show how the components collaborate, with one encoder path shared by training, evaluation and the dashboard, and the policies and tactics fix the tools, conventions, tests and traceability. Together with the method of Chapter~\ref{ch:m5} and the requirements of Chapter~\ref{ch:srs}, this design is the basis for the implementation described in the next chapter.
 
 \input{chapters_d3}
 
 {
-\bibliographystyle{ieeetr}
+\bibliographystyle{IEEEtran}
 \bibliography{fypbib} %specify your .bib file here
 }
 %ADD APPENDICES IF REQUIRED OTHERWISE COMMENT IT OUT

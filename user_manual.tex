@@ -1,0 +1,94 @@
+% Chapter "User Manual" removed from the report for now (not \input).
+% Figures fig:man-error and fig:man-about now live in Section 7.1.4 (chapters_d3.tex).
+% To restore, place \input{user_manual} after Chapter 7 in chapters_d3.tex.
+% =====================================================================
+\chapter{User Manual}
+\label{ch:manual}
+This chapter explains how to install, start and use the M2D Music Dashboard. It is written for two kinds of reader: a visitor, such as an evaluator or a student, who only opens the dashboard in a browser, and the developer, who installs it, adds probes and imports results. The manual describes version~1.0 of the dashboard as it stands at the end of FYP-I and will be updated in FYP-II when the further pre-trained model and its probes are added.
+
+\section{Installation}
+\label{sec:man-install}
+The dashboard runs on Windows, Linux and macOS with Python~3.12. A GPU is optional; on a recent laptop CPU a prediction takes well under a second (Section~\ref{sec:res-dash}). The installation is done once.
+\begin{enumerate}
+  \item Clone the repository and open a terminal in its folder.
+  \item Create a virtual environment:\\ \texttt{python -m venv .venv}
+  \item Install PyTorch (the CPU build, or the CUDA build on a GPU machine) and the other packages:\\ \texttt{.venv/Scripts/pip install -r requirements.txt}\\ On Linux and macOS the folder is \texttt{.venv/bin} instead of \texttt{.venv/Scripts}.
+  \item Download the M2D/0.7 weights and loader:\\ \texttt{.venv/Scripts/python backend/scripts/download\_models.py}\\ The files are placed in the user's cache folder and are not stored in the repository.
+  \item Optionally, check the installation:\\ \texttt{.venv/Scripts/python -m pytest backend/tests}\\ All 16 tests should pass.
+\end{enumerate}
+
+\section{Starting and Stopping}
+\label{sec:man-start}
+On Windows, double-click \texttt{start.bat}; on Linux, run \texttt{./start.sh}. The script starts the server at \texttt{http://127.0.0.1:8000} and opens the browser. The server loads the models once, which takes a few seconds, and then prints \emph{Application startup complete}. To stop it, press Ctrl+C in the terminal. If port 8000 is already in use, start the server by hand on another port:\\ \texttt{.venv/Scripts/python -m uvicorn backend.app:app --port 8001}
+
+\section{Using the Dashboard}
+\label{sec:man-use}
+The page has three tabs, Results, Demo and About, in the top bar (Figure~\ref{fig:impl-results}). Every tab can be reached from every other tab, and the browser's back button works between them.
+
+\subsection{Viewing the Results}
+The Results tab opens first. It shows the music score of each model as a bar and a table of the per-task scores, as mean $\pm$ standard deviation over the probe seeds. The \emph{Model group} menu at the top right restricts the view to the M2D models or to the reference models. FMA-small is shown in its own column and is not part of the music score, because it comes from the same source as the pre-training data; a note under the table says so. A model without results for all four music tasks has no bar.
+
+\subsection{Running a Prediction}
+The Demo tab guides the visitor through three numbered steps (Figure~\ref{fig:impl-demo}).
+\begin{enumerate}
+  \item \textbf{Choose a task.} Click one of the four task cards: Genre (GTZAN, 10 genres), Tagging (MagnaTagATune, 50 tags), Instrument (NSynth, 11 instrument families) or Pitch (NSynth, MIDI pitch). A card marked ``No classifier yet'' can be run, but it returns only the embedding.
+  \item \textbf{Provide audio.} Drop a WAV or MP3 file of at most 10~MB on the drop zone, click \emph{Browse files}, or click the sample clip. The file card shows the name, format, size, length and sampling rate, and the waveform marks the first 6.08~s, which is the part that is analyzed. The play button plays the clip. \emph{Replace file} chooses another clip.
+  \item \textbf{Choose a model and run.} Select the original or the further pre-trained M2D. A model that is not available yet is greyed out. Tick \emph{Compare with the other model} to run both models on the same clip. Click \emph{Run prediction}.
+\end{enumerate}
+While the server works, the panel \emph{What happens to your clip} shows the six steps of the pipeline: checking the file, decoding and resampling, keeping the first 6.08~s, computing the log-mel spectrogram, running the frozen encoder and applying the linear probe (Figure~\ref{fig:impl-running}). Completed steps show the time they took on the server. When the result arrives, the panel shows the embedding as a colored strip and the output of the task: the five most likely genres, instrument families or pitches, or the tags whose probability is above the threshold of 0.5. The table at the right gives the input, the analyzed part, the model, the device and the inference time (Figure~\ref{fig:impl-output}). In compare mode, the two outputs are shown side by side and labels that only one model predicts are highlighted.
+
+\subsection{Messages and Errors}
+Table~\ref{tab:man-messages} lists the messages that a visitor can see and what to do. Errors appear in red under the step that caused them (Figure~\ref{fig:man-error}).
+
+\begin{table}[htbp]
+\centering
+\caption[Messages shown by the dashboard]{Messages shown by the dashboard and the action to take.}
+\label{tab:man-messages}
+\small\singlespacing
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{5.6cm}Y}
+\toprule
+\textbf{Message} & \textbf{Meaning and action}\\
+\midrule
+Unsupported file format. Please use WAV or MP3. & The file is of another type. Convert it to WAV or MP3.\\
+File too large (maximum 10 MB). & Shorten the clip; only the first 6~s are used anyway.\\
+The file could not be read. & The file is damaged or not really audio. Try another file.\\
+No classifier yet & No probe has been trained for this task and model. The embedding is still shown.\\
+This model has not been trained yet. & The further pre-trained checkpoint is not registered; use the original model.\\
+Waiting in queue (position $n$) & Another prediction is running; the request starts automatically.\\
+The server is not running (banner) & Start the server as described in Section~\ref{sec:man-start} and reload the page.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{About Page}
+The About tab describes the project, the method, the models and datasets, how the demonstration works, and the credits and licenses of the weights, the sample music and the font (Figure~\ref{fig:man-about}). It also states that a prediction on a single clip illustrates the models but does not show which one is better; the benchmark scores on the Results tab do that.
+
+\section{Developer Tasks}
+\label{sec:man-dev}
+The developer maintains the dashboard with the script \texttt{backend/scripts/manage.py}. The web interface itself cannot change any data. Table~\ref{tab:man-commands} lists the commands. After registering probes or a checkpoint, restart the server so that it loads them.
+
+\begin{table}[htbp]
+\centering
+\caption[Developer commands]{Developer commands of \texttt{manage.py}.}
+\label{tab:man-commands}
+\small\singlespacing
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{6.3cm}Y}
+\toprule
+\textbf{Command} & \textbf{Effect}\\
+\midrule
+\texttt{init} & Creates the database and fills in the models, tasks and sample clip\\
+\texttt{register-probe --model M --task T --evar DIR [--labels F]} & Converts the probe that EVAR saved in \texttt{DIR} and registers it. For tagging, \texttt{F} is a text file with the 50 tag names in EVAR's order\\
+\texttt{import-results FILE.csv} & Imports scores with the columns \texttt{model, task, mean, std, ci\_low, ci\_high, n\_seeds}. Every row is checked first, and nothing is imported if any row is invalid\\
+\texttt{set-checkpoint --model further --path P} & Points the further pre-trained model at its checkpoint\\
+\texttt{add-sample --code C --file F --title T ...} & Adds a sample clip with its license and attribution\\
+\texttt{status} & Lists the models, checkpoints, probes, results and log size\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+To make the predictions of the original model real, the four probes are exported from EVAR by running its linear evaluation with saving switched on, for example \texttt{python lineareval.py config/m2d.yaml gtzan weight\_file=\ldots\ --save=True}, for GTZAN, NSynth instrument, NSynth pitch and MagnaTagATune, and each one is registered with \texttt{register-probe}.
+
+\section{Conclusion}
+\label{sec:man-conclusion}
+The dashboard is installed with four commands, started with one script and used through three tabs without an account. A visitor can read the research results, run the four music tasks on a clip of their own or on the bundled sample, and follow each step of the prediction with its measured time. The developer adds probes, checkpoints and results with one script, and the interface cannot alter them. The manual will be extended in FYP-II with the comparison of the original and the further pre-trained model once both have probes.
+
