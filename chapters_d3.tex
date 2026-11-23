@@ -40,7 +40,7 @@ This chapter describes the parts of the system that have been implemented and th
 
 \section{Implementation}
 \label{sec:impl}
-The implementation follows the layered design of Chapter~\ref{ch:design}: each layer writes files that the next layer reads, so every result can be traced back to the inputs and settings that produced it. All code is written in Python. The research code runs with PyTorch on a single RTX A4000 with 16~GB of memory, and the dashboard runs on any computer with Python~3.12, using the GPU when one is present and the CPU otherwise.
+The implementation follows the layered design of Chapter~\ref{ch:design}, in which each layer writes files that the next layer reads, so every result can be traced back to the inputs and settings that produced it. All code is written in Python. The research code runs with PyTorch on a single RTX A4000 with 16~GB of memory, and the dashboard runs on any computer with Python~3.12, using the GPU when one is present and the CPU otherwise.
 
 \subsection{Data Preparation Pipeline}
 \label{sec:impl-data}
@@ -57,22 +57,22 @@ The audit step decodes every file and writes one row per file with its frame cou
 \label{sec:impl-eval}
 The evaluation pipeline implements the protocol of Section~\ref{sec:m5-eval}. For each task it extracts frozen embeddings of the test, validation and training clips once and caches them, and it then trains the probes on the cached embeddings, which takes minutes instead of hours. Two probe protocols are implemented, so that our numbers can be checked against both kinds of published scores:
 \begin{itemize}
-  \item the EVAR linear probe, the protocol of the M2D authors: a single linear layer on standardized embeddings, trained with Adam at a learning rate of $3\times10^{-5}$ for at most 200 epochs, run with six seeds; and
-  \item the MARBLE probe, the protocol of the MARBLE benchmark~\cite{ref:Yuan:2023marble}: a multilayer perceptron with one hidden layer of 512 units and the per-task settings of the benchmark, run with five seeds.
+  \item the EVAR linear probe, the protocol of the M2D authors, which is a single linear layer on standardized embeddings, trained with Adam at a learning rate of $3\times10^{-5}$ for at most 200 epochs, run with six seeds; and
+  \item the MARBLE probe, the protocol of the MARBLE benchmark~\cite{ref:Yuan:2023marble}, which is a multilayer perceptron with one hidden layer of 512 units and the per-task settings of the benchmark, run with five seeds.
 \end{itemize}
-Each run writes its predictions on the test clips, so that the summary script can compute two kinds of uncertainty: the 95\,\% $t$-interval over the probe seeds, and a bootstrap interval over the test clips, which is the basis of the paired comparisons of Section~\ref{sec:m5-eval}. The summary script also checks each score against the published value of the original M2D model and marks it as reproduced when the absolute difference is at most twice the standard deviation over seeds plus 0.5 points. Every run saves an environment snapshot with the library versions and the hardware, and the summary is written both as a CSV file, which the dashboard can import, and as a Markdown table. The pipeline has been run on the original M2D/0.7 checkpoint (arm A0). Its results are presented in Chapter~\ref{ch:results}.
+Each run writes its predictions on the test clips, so that the summary script can compute two kinds of uncertainty, namely the 95\,\% $t$-interval over the probe seeds, and a bootstrap interval over the test clips, which is the basis of the paired comparisons of Section~\ref{sec:m5-eval}. The summary script also checks each score against the published value of the original M2D model and marks it as reproduced when the absolute difference is at most twice the standard deviation over seeds plus 0.5 points. Every run saves an environment snapshot with the library versions and the hardware, and the summary is written both as a CSV file, which the dashboard can import, and as a Markdown table. The pipeline has been run on the original M2D/0.7 checkpoint (arm A0). Its results are presented in Chapter~\ref{ch:results}.
 
-\subsection{Further Pre-training Framework}
+\subsection{Further Pre-Training Framework}
 \label{sec:impl-train}
 The further pre-training framework extends the public M2D code base as described in Section~\ref{sec:des-strategies}. Instead of copying the upstream code, a setup command downloads it, applies a small pinned patch and checks the patched files against stored SHA-256 hashes, so that every run uses identical upstream code. The model subclasses the M2D-X model of the code base and reuses its masking, EMA update and learning-rate schedule.
 
 The three components of M2D-X-Music (Section~\ref{sec:m5-frame}) are implemented. The noise mixing draws FSD50K windows by cycling through a newly shuffled list of the corpus on every pass and uses the noise-corpus mean $\mu_b$, which is computed once in advance. Every random choice is seeded with the run seed and a global sample index, so all arms see identical samples for any number of data-loader workers. The frozen teacher is loaded with the same loader as the evaluation pipeline. The CQT target is cropped from the same start position as the log-mel window, standardized per bin and pooled to 38 time steps of 84 bins. As in Figure~\ref{fig:m5-framework}, the online and target encoders receive the noisy mixture, while the teacher and the CQT target receive the clean window, and all inputs are normalized with the fixed statistics of Table~\ref{tab:m5-frontend}. The training script defines the arms A1--A5 and the data-size runs S1--S3. It resumes an interrupted run only if its settings are unchanged, and at start-up it checks that the features of the online encoder match those of the teacher, which confirms that the checkpoint was loaded correctly.
 
-The parts that do not need PyTorch pass their unit tests: the arm definitions, the data loading and noise mixing, the setup and the command-line interface. The tests of the model and the training loop need the GPU workstation and have not been run yet; they cover the teacher loss, the CQT head, the zero-CQT equivalence and view-routing tests of Section~\ref{sec:des-policies}, and a one-epoch smoke run. These tests and a pilot run of 300 steps are the first task of FYP-II (Table~\ref{tab:concl-plan}), followed by the further pre-training runs themselves.
+The parts that do not need PyTorch pass their unit tests, namely the arm definitions, the data loading and noise mixing, the setup and the command-line interface. The tests of the model and the training loop need the GPU workstation and have not been run yet; they cover the teacher loss, the CQT head, the zero-CQT equivalence and view-routing tests of Section~\ref{sec:des-policies}, and a one-epoch smoke run. These tests and a pilot run of 300 steps are the first task of FYP-II (Table~\ref{tab:concl-plan}), followed by the further pre-training runs themselves.
 
 \subsection{M2D Music Dashboard}
 \label{sec:impl-dash}
-The dashboard implements the requirements defined in Chapter~\ref{ch:srs}. Its code consists of a FastAPI backend, a plain HTML and JavaScript frontend, a SQLite database and two developer scripts. The implementation departs from the design of Chapter~\ref{ch:design} in two respects: the dashboard is kept in its own repository rather than in the \texttt{dashboard/} folder of the research repository, and the backend modules are split more finely. The inference module of the design corresponds to \texttt{vox/audio.py}, \texttt{vox/encoder.py}, \texttt{vox/probes.py} and \texttt{vox/service.py}, the repository module to \texttt{vox/db.py}, the API module to \texttt{app.py}, and the import script to \texttt{scripts/manage.py}. Table~\ref{tab:impl-modules} lists the modules.
+The dashboard implements the requirements defined in Chapter~\ref{ch:srs}. Its code consists of a FastAPI backend, a plain HTML and JavaScript frontend, a SQLite database and two developer scripts. The implementation departs from the design of Chapter~\ref{ch:design} in two respects. The dashboard is kept in its own repository rather than in the \texttt{dashboard/} folder of the research repository, and the backend modules are split more finely. The inference module of the design corresponds to \texttt{vox/audio.py}, \texttt{vox/encoder.py}, \texttt{vox/probes.py} and \texttt{vox/service.py}, the repository module to \texttt{vox/db.py}, the API module to \texttt{app.py}, and the import script to \texttt{scripts/manage.py}. Table~\ref{tab:impl-modules} lists the modules.
 
 \begin{table}[htbp]
 \centering
@@ -91,64 +91,64 @@ The dashboard implements the requirements defined in Chapter~\ref{ch:srs}. Its c
 \texttt{app.py} & JSON API, single-worker queue, deletion of uploads and the anonymous inference log & FR-01--FR-04, FR-07, FR-14--FR-16\\
 \texttt{frontend/} & Results, Demo and About views, the step-by-step animation of the pipeline and the output panel & FR-01--FR-13, FR-18\\
 \texttt{scripts/manage.py} & Developer commands: register a probe, import results, set a checkpoint, add a sample, show the status & FR-17\\
-\texttt{scripts/download\_models.py} & Downloads the M2D weights and loader at a pinned commit & --\\
+\texttt{scripts/\allowbreak download\_models.py} & Downloads the M2D weights and loader at a pinned commit & --\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-A prediction follows the steps that the visitor sees in the interface (Figure~\ref{fig:impl-running}). The uploaded file is first checked by its extension and by its size, which the server counts while it receives the file, so that an oversized upload is stopped without being stored in full. The file is decoded, averaged over channels, resampled to 16~kHz and cut to its first $16{,}000\times6.08=97{,}280$ samples. The log-mel spectrogram is computed with the front-end of M2D (400-sample window, 160-sample hop, 80 mel bands from 50~Hz to 8~kHz) and normalized with the statistics of the released model. Because 6.08~s of audio give 609 frames, the last frame is dropped to obtain the 608 frames that the encoder expects. The encoder returns 3,840-dimensional frame features, whose mean over time is the clip embedding, exactly as in the linear evaluation of M2D. The probe of the selected task then standardizes the embedding with the statistics saved during its training and applies its linear layer, followed by a softmax for single-label tasks or a sigmoid for tagging. The response contains the top labels, all scores, the embedding (quantized to 8 bits for display), and the time spent in decoding, in the log-mel stage and in the encoder.
+A prediction follows the steps that the visitor sees in the interface (Figure~\ref{fig:impl-running}). While the server computes the result, the interface draws the log-mel spectrogram of the analyzed window and shows the measured time of each completed step. The uploaded file is first checked by its extension and by its size, which the server counts while it receives the file, so that an oversized upload is stopped without being stored in full. The file is decoded, averaged over channels, resampled to 16~kHz and cut to its first $16{,}000\times6.08=97{,}280$ samples. The log-mel spectrogram is computed with the front-end of M2D (400-sample window, 160-sample hop, 80 mel bands from 50~Hz to 8~kHz) and normalized with the statistics of the released model. Because 6.08~s of audio give 609 frames, the last frame is dropped to obtain the 608 frames that the encoder expects. The encoder returns 3,840-dimensional frame features, whose mean over time is the clip embedding, exactly as in the linear evaluation of M2D. The probe of the selected task then standardizes the embedding with the statistics saved during its training and applies its linear layer, followed by a softmax for single-label tasks or a sigmoid for tagging. The response contains the top labels, all scores, the embedding (quantized to 8 bits for display), and the time spent in decoding, in the log-mel stage and in the encoder.
 
 The dashboard reuses the probes of the evaluation instead of training new ones, so that a prediction on the dashboard comes from the same classifier as the scores in the results chapter. EVAR saves a probe as a pickled Python object together with its scaler and label encoder. To avoid unpickling files on the server, the developer script converts each such file once into a plain tensor file holding the weight matrix, the bias, the scaler statistics and the label names, and the server loads it with PyTorch's safe loading mode. The conversion refuses probes with hidden layers and tagging probes without tag names, because both would give wrong outputs without an error.
 
-When a task has no registered probe, the encoder still runs and the embedding is shown, but the output panel states that no classifier exists yet instead of showing invented scores (Figure~\ref{fig:impl-output}). In the same way, the further pre-trained model is shown as not yet available until its checkpoint is registered. At the time of writing the probes of the original model have not yet been exported from EVAR, so the dashboard runs the real encoder but does not yet produce labels.
+When a task has no registered probe, the encoder still runs and the embedding is shown, but the output panel states that no classifier exists yet instead of showing invented scores (Figure~\ref{fig:impl-output}). In this case the panel shows the real 3,840-dimensional embedding of the clip as a strip, here for the original M2D. In the same way, the further pre-trained model is shown as not yet available until its checkpoint is registered. At the time of writing the probes of the original model have not yet been exported from EVAR, so the dashboard runs the real encoder but does not yet produce labels.
 
 Inference requests are served by one worker behind an asynchronous lock. Each request is told its position in the queue, and requests wait instead of competing for the GPU memory (FR-14). Uploads are written under random names to a temporary folder and deleted in a \texttt{finally} block as soon as the response is ready, and a background task removes any file older than ten minutes (FR-15). Every prediction adds one row to the inference log with the task, the model, the input source, the clip duration, the device, the latency and the status, but no audio, file name or IP address (FR-16).
 
-The Results tab reads the scores that the developer has imported from the evaluation summary (UC-06). The music score $S_{\mathrm{mus}}$ of a model is computed by the server and is shown only when all four music tasks are present, so that a partial set of results is never averaged into a misleading number. Figure~\ref{fig:impl-results} shows the view with the reproduced scores of the original model. The Demo tab guides the visitor through choosing a task, providing a clip and choosing a model (Figure~\ref{fig:impl-demo}); an invalid file is reported directly under the drop zone (Figure~\ref{fig:man-error}). The About tab describes the project, the models and datasets, and the credits and licenses of the weights and the sample music (Figure~\ref{fig:man-about}).
+The Results tab reads the scores that the developer has imported from the evaluation summary (UC-06). The music score $S_{\mathrm{mus}}$ of a model is computed by the server and is shown only when all four music tasks are present, so that a partial set of results is never averaged into a misleading number. Figure~\ref{fig:impl-results} shows the view with the reproduced EVAR linear-probe scores of the original model (arm A0), given as the mean $\pm$ standard deviation over six probe seeds. The Demo tab guides the visitor through choosing a task, providing a clip and choosing a model (Figure~\ref{fig:impl-demo}). The waveform of a selected clip marks the 6.08-s window that is analyzed, and tasks without a registered probe are labeled ``No classifier yet''. An invalid file is reported directly under the drop zone (Figure~\ref{fig:man-error}). The About tab describes the project, the models and datasets, and the credits and licenses of the weights and the sample music (Figure~\ref{fig:man-about}).
 
-\begin{figure}[htbp]
+\begin{sidewaysfigure}
 \centering
-\includegraphics[width=\linewidth]{Figures/gui/gui_results.png}
-\caption[Results tab of the dashboard]{Results tab of the implemented dashboard with the reproduced EVAR linear-probe scores of the original M2D (arm A0). Values are mean $\pm$ standard deviation over six probe seeds.}
+\includegraphics[width=\textheight,height=14.2cm,keepaspectratio]{Figures/gui/gui_results.png}
+\caption[Results tab of the dashboard]{Results tab with the reproduced scores of the original M2D.}
 \label{fig:impl-results}
-\end{figure}
+\end{sidewaysfigure}
 
-\begin{figure}[htbp]
+\begin{sidewaysfigure}
 \centering
-\includegraphics[width=0.92\linewidth]{Figures/gui/gui_form_clip.png}
-\caption[Demo tab with a selected clip]{Demo tab with the bundled sample clip selected. The waveform marks the 6.08-s window that is analyzed, and tasks without a registered probe are labeled ``No classifier yet''.}
+\includegraphics[width=\textheight,height=14.2cm,keepaspectratio]{Figures/gui/gui_form_clip.png}
+\caption[Demo tab with a selected clip]{Demo tab with the bundled sample clip selected.}
 \label{fig:impl-demo}
-\end{figure}
+\end{sidewaysfigure}
 
-\begin{figure}[htbp]
+\begin{sidewaysfigure}
 \centering
-\includegraphics[width=\linewidth]{Figures/gui/gui_panel_running.png}
-\caption[Pipeline animation during a prediction]{Pipeline animation during a prediction: the log-mel spectrogram of the analyzed window is drawn while the server computes the result. Completed steps show their measured time.}
+\includegraphics[width=\textheight,height=14.2cm,keepaspectratio]{Figures/gui/gui_panel_running.png}
+\caption[Pipeline animation during a prediction]{Pipeline animation during a prediction.}
 \label{fig:impl-running}
-\end{figure}
+\end{sidewaysfigure}
 
-\begin{figure}[htbp]
+\begin{sidewaysfigure}
 \centering
-\includegraphics[width=\linewidth]{Figures/gui/gui_panel_output.png}
-\caption[Output panel of a prediction]{Output panel after a prediction with the original M2D. The strip shows the real 3,840-dimensional embedding; because no probe is registered yet, the panel says so instead of showing scores.}
+\includegraphics[width=\textheight,height=14.2cm,keepaspectratio]{Figures/gui/gui_panel_output.png}
+\caption[Output panel of a prediction]{Output panel of a prediction without a registered probe.}
 \label{fig:impl-output}
-\end{figure}
+\end{sidewaysfigure}
 
-\begin{figure}[htbp]
+\begin{sidewaysfigure}
 \centering
-\includegraphics[width=0.85\linewidth]{Figures/gui/gui_form_error.png}
+\includegraphics[width=\textheight,height=14.2cm,keepaspectratio]{Figures/gui/gui_form_error.png}
 \caption[Error message for an unsupported file]{Error message after choosing a file of an unsupported type.}
 \label{fig:man-error}
-\end{figure}
+\end{sidewaysfigure}
 
-\begin{figure}[htbp]
+\begin{sidewaysfigure}
 \centering
-\includegraphics[width=\linewidth]{Figures/gui/gui_about.png}
+\includegraphics[width=\textheight,height=14.2cm,keepaspectratio]{Figures/gui/gui_about.png}
 \caption[About tab of the dashboard]{About tab of the dashboard.}
 \label{fig:man-about}
-\end{figure}
+\end{sidewaysfigure}
 
-Table~\ref{tab:impl-tools} lists the tools used by the dashboard. The versions are those of the development environment.
+Table~\ref{tab:impl-tools} lists the tools used by the dashboard, with the versions of the development environment. The backend uses the same Python and PyTorch stack as the research code, so that the encoder and the probes are loaded exactly as in the evaluation. The frontend is written in plain HTML, CSS and JavaScript, without a framework or a build step, so that the dashboard runs on any computer with Python and a web browser.
 
 \begin{table}[htbp]
 \centering
@@ -348,7 +348,6 @@ Git and GitHub & -- & Version control; work is merged into \texttt{main} through
 % \end{tabular}
 % \end{table}
 
-\FloatBarrier
 \section{Conclusion}
 \label{sec:impl-conclusion}
 FYP-I has produced three working components. The data pipeline has acquired and audited the corpora and converted them with the front-end of the original model. The evaluation pipeline implements both the EVAR linear protocol and the MARBLE probe, with seed and bootstrap intervals and an automatic check against published scores, and it has been run on the original M2D. The dashboard runs the real M2D encoder behind a small API, deletes uploads, queues requests and shows only results that exist. What remains is the further pre-training itself, the export of the probes into the dashboard and the tests that depend on them, which are part of the plan for FYP-II.
@@ -360,11 +359,11 @@ This chapter presents the experiments carried out during FYP-I. Following the gu
 
 \section{Experimental Setup}
 \label{sec:res-setup}
-The original checkpoint \texttt{m2d\_vit\_base-80x608p16x16-221006-mr7} (epoch 300) was evaluated with frozen features on the five tasks of Table~\ref{tab:m5-tasks}, using the two probe protocols of Section~\ref{sec:impl-eval}: the EVAR linear probe with six seeds and the MARBLE probe (one hidden layer of 512 units) with five seeds. All scores are percentages: accuracy for GTZAN, NSynth instrument (NSynthI), NSynth pitch (NSynthP) and FMA-small, and mean average precision (mAP) for MagnaTagATune (MTT). Each score is reported as the mean over seeds with the half-width of the 95\,\% $t$-interval, together with the 95\,\% bootstrap interval over test clips. The music score $S_{\mathrm{mus}}$ is the mean of the primary scores of GTZAN, MTT, NSynthI and NSynthP (Equation~\ref{eq:m5-agg}); FMA-small is reported separately. A score counts as reproduced when it differs from the published value by at most twice the seed standard deviation plus 0.5 points.
+The original checkpoint \texttt{m2d\_vit\_base-80x608p16x16-221006-mr7} (epoch 300) was evaluated with frozen features on the five tasks of Table~\ref{tab:m5-tasks}, using the two probe protocols of Section~\ref{sec:impl-eval}, namely the EVAR linear probe with six seeds and the MARBLE probe (one hidden layer of 512 units) with five seeds. All scores are percentages, given as accuracy for GTZAN, NSynth instrument (NSynthI), NSynth pitch (NSynthP) and FMA-small, and mAP for MagnaTagATune (MTT). Each score is reported as the mean over seeds with the half-width of the 95\,\% $t$-interval, together with the 95\,\% bootstrap interval over test clips. The music score $S_{\mathrm{mus}}$ is the mean of the primary scores of GTZAN, MTT, NSynthI and NSynthP (Equation~\ref{eq:m5-agg}); FMA-small is reported separately. A score counts as reproduced when it differs from the published value by at most twice the seed standard deviation plus 0.5 points.
 
 \section{Reproduction of the Original M2D}
 \label{sec:res-a0}
-Table~\ref{tab:res-a0} gives the primary scores and Figure~\ref{fig:res-a0} compares them with the published values. Every score for which a published value exists was reproduced. With the EVAR linear probe, GTZAN reached 84.71\,\% against a published 84.1\,\% and NSynthI 75.86\,\% against 75.7\,\%. With the MARBLE probe, the differences were $-1.57$ points on GTZAN, $-0.01$ on MTT mAP, $+0.05$ on MTT ROC-AUC, $+0.22$ on NSynthI and $+0.02$ on NSynthP. The largest difference, on GTZAN, is well inside the tolerance because GTZAN has only 290 test clips and its scores vary by one to two points between seeds. The music score of the original model is 72.43 with the linear probe and 72.04 with the MARBLE probe.
+Table~\ref{tab:res-a0} gives the primary scores and Figure~\ref{fig:res-a0} compares them with the published values, with error bars that show the 95\,\% $t$-interval over probe seeds. Every score for which a published value exists was reproduced. With the EVAR linear probe, GTZAN reached 84.71\,\% against a published 84.1\,\% and NSynthI 75.86\,\% against 75.7\,\%. With the MARBLE probe, the differences were $-1.57$ points on GTZAN, $-0.01$ on MTT mAP, $+0.05$ on MTT ROC-AUC, $+0.22$ on NSynthI and $+0.02$ on NSynthP. The largest difference, on GTZAN, is well inside the tolerance because GTZAN has only 290 test clips and its scores vary by one to two points between seeds. The music score of the original model is 72.43 with the linear probe and 72.04 with the MARBLE probe.
 
 \begin{table}[htbp]
 \centering
@@ -412,7 +411,7 @@ MARBLE MLP & GTZAN (acc.) & 79.93 $\pm$ 2.85 & 76.14--83.66 & 81.5 & yes\\
 \legend{Published, Reproduced (this study)}
 \end{axis}
 \end{tikzpicture}
-\caption[Published and reproduced scores of the original M2D]{Published and reproduced scores of the original M2D/0.7. Error bars show the 95\,\% $t$-interval over probe seeds.}
+\caption[Published and reproduced scores of the original M2D]{Published and reproduced scores of the original M2D/0.7.}
 \label{fig:res-a0}
 \end{figure}
 
@@ -422,7 +421,7 @@ Reproducing the published numbers was the first goal of the experiments, because
 
 The music scores of the two protocols are almost equal (72.43 and 72.04), but the tasks behave differently. The linear probe is 4.8 points better on GTZAN, while the MLP probe is 2.6 points better on NSynthI and 0.9 points better on MTT mAP. GTZAN has only 443 training clips, too few to fit a hidden layer of 512 units reliably, and the MLP results on GTZAN also have twice the seed spread of the linear ones. NSynthI and MTT have tens of thousands of training examples, and there the extra capacity of the MLP can exploit structure that a linear layer cannot. For the main comparisons we therefore keep the linear probe of Section~\ref{sec:m5-eval}, which measures the frozen features most directly and matches the M2D papers, and we report the MARBLE probe as a secondary view that is comparable to the MARBLE literature.
 
-On NSynthP the accuracy is 89.5\,\% but the balanced accuracy is only 80.8\,\% (Table~\ref{tab:res-secondary}). Notes in the middle of the MIDI range are frequent and well recognized, whereas the rare very high and very low notes are often wrong, and accuracy hides this. On MTT, the macro F1 at a threshold of 0.5 is low (32.6 with the linear probe), because most of the 50 tags are rare and their probabilities seldom pass 0.5; mAP, which does not depend on a threshold, is the better primary metric here, as in MARBLE. These observations matter for FYP-II because the CQT teacher is meant to improve pitch: an improvement on the rare pitches would show up in the balanced accuracy before it shows up in the accuracy.
+On NSynthP the accuracy is 89.5\,\% but the balanced accuracy is only 80.8\,\% (Table~\ref{tab:res-secondary}). Notes in the middle of the MIDI range are frequent and well recognized, whereas the rare very high and very low notes are often wrong, and accuracy hides this. On MTT, the macro F1 at a threshold of 0.5 is low (32.6 with the linear probe), because most of the 50 tags are rare and their probabilities seldom pass 0.5; mAP, which does not depend on a threshold, is the better primary metric here, as in MARBLE. These observations matter for FYP-II because the CQT teacher is meant to improve pitch, and an improvement on the rare pitches would show up in the balanced accuracy before it shows up in the accuracy.
 
 \begin{table}[htbp]
 \centering
@@ -444,7 +443,7 @@ FMA-small & 57.62 & 57.62 & 57.33 & 57.23\\
 
 The width of the bootstrap intervals sets the smallest change that FYP-II will be able to call supported. On GTZAN the interval spans about 6.7 points, so only a gain of several points could be supported on GTZAN alone; on NSynthI and NSynthP the intervals span about 2.5 and 1.7 points, and on MTT about 2.2 points. Because the paired bootstrap of Section~\ref{sec:m5-eval} compares two models on the same clips, it cancels much of the clip-to-clip variation and will be more sensitive than these unpaired intervals suggest, but the numbers show that GTZAN alone cannot carry a conclusion. This supports the decision to judge the arms by the music score and to treat GTZAN results with caution.
 
-The original model reaches 57.6\,\% on FMA-small, far below its scores on the other genre task. FMA-small has eight broad genres with an artist filter, and its audio comes from the same archive as our pre-training data, so it is the task on which further pre-training is most likely to help. It is reported separately for exactly this reason: a gain on FMA-small alone would show adaptation to the archive rather than better music features in general.
+The original model reaches 57.6\,\% on FMA-small, far below its scores on the other genre task. FMA-small has eight broad genres with an artist filter, and its audio comes from the same archive as our pre-training data, so it is the task on which further pre-training is most likely to help. It is reported separately for exactly this reason, because a gain on FMA-small alone would show adaptation to the archive rather than better music features in general.
 
 \section{Performance of the Dashboard}
 \label{sec:res-dash}
@@ -519,7 +518,7 @@ Three directions follow from the design. The first two are optional runs of Sect
 
 \section{Plan for FYP-II}
 \label{sec:concl-plan}
-Table~\ref{tab:concl-plan} gives the plan for FYP-II. The arms are run in the priority order of Section~\ref{sec:m5-design}, so that the comparisons that answer the research questions are available first even if time runs short. Figure~\ref{fig:concl-gantt} shows the same plan as a timeline.
+Table~\ref{tab:concl-plan} gives the plan for FYP-II. The arms are run in the priority order of Section~\ref{sec:m5-design}, so that the comparisons that answer the research questions are available first even if time runs short. Figure~\ref{fig:concl-gantt} shows the same plan as a timeline, in which orange bars are training runs, green bars evaluation, blue bars software work, and red bars analysis and writing.
 
 \begin{table}[htbp]
 \centering
@@ -563,11 +562,11 @@ Table~\ref{tab:concl-plan} gives the plan for FYP-II. The arms are run in the pr
   \gbar{8}{8. Research questions}{3.8}{4.8}{red!45}
   \gbar{9}{9. Final report and demo}{4.0}{6.0}{red!45}
 \end{tikzpicture}
-\caption[Timeline of FYP-II]{Timeline of FYP-II. Orange bars are training runs, green bars evaluation, blue bars software work and red bars analysis and writing.}
+\caption[Timeline of FYP-II]{Timeline of FYP-II.}
 \label{fig:concl-gantt}
 \end{figure}
 
 \FloatBarrier
 \section{Conclusion}
 \label{sec:concl-conclusion}
-FYP-I has put in place everything that the experiments need: the data, a validated evaluation pipeline, a reproduced baseline with known uncertainty, and a working demonstration dashboard. The remaining work is the further pre-training itself and its analysis, which the plan for FYP-II schedules in order of importance. If the further pre-trained models improve on the baseline of 72.43, the project will have shown a low-cost route to better music representations; if they do not, the controlled arms will show which component failed and why, which is equally useful to others with a single GPU.
+FYP-I has put in place everything that the experiments need, namely the data, a validated evaluation pipeline, a reproduced baseline with known uncertainty, and a working demonstration dashboard. The remaining work is the further pre-training itself and its analysis, which the plan for FYP-II schedules in order of importance. If the further pre-trained models improve on the baseline of 72.43, the project will have shown a low-cost route to better music representations; if they do not, the controlled arms will show which component failed and why, which is equally useful to others with a single GPU.
